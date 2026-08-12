@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SmartFlex — ผู้ช่วยดูแลท่านั่ง</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g900:#176340;--g700:#1D7C50;--g600:#26A369;--g500:#30CF85;--g100:#CFF1E1;--g50:#F3FBF7;
+  --ink:#241414;--ink-soft:#5C4C4C;--line:#E4EDE8;
+  --good:#1FA971;--warn:#C8A02E;--bad:#E5484D;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--g50);color:var(--ink);font-family:'Noto Sans Thai','Noto Sans',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+.scr{display:none;flex:1;flex-direction:column}
+.scr.on{display:flex}
+.pad{padding:20px 20px 96px;display:flex;flex-direction:column;gap:14px;overflow:auto;flex:1}
+.h1{font-size:22px;font-weight:800;color:var(--g900);margin:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--g600)}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px}
+.btn{height:50px;border:none;border-radius:16px;background:var(--g900);color:#fff;font-size:15px;font-weight:800;width:100%}
+.btn.sec{background:#fff;color:var(--g900);border:1.5px solid var(--line)}
+.chip{padding:11px 12px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:var(--ink-soft);font-size:12.5px;font-weight:700;flex:1;line-height:1.35}
+.chip.on{background:var(--g600);border-color:var(--g600);color:#fff}
+.row{display:flex;gap:8px}
+.field{display:flex;flex-direction:column;gap:6px;flex:1}
+.field label{font-size:12px;font-weight:700}
+.field input{padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13.5px;background:#fff}
+.pill{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--g100);border-radius:16px;background:#EAF4EF;width:100%;text-align:left;font-size:12.5px;color:var(--ink-soft)}
+.dot{width:9px;height:9px;border-radius:5px;flex:none;background:var(--warn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.stat b{display:block;font-size:22px;color:var(--g900)}
+.stat span{font-size:11.5px;color:var(--ink-soft)}
+/* live */
+#live{background:#12261c;position:fixed;inset:0;max-width:460px;margin:0 auto;display:none}
+#live.on{display:block}
+#vid,#cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#vid{transform:scaleX(-1)}#cv{transform:scaleX(-1)}
+.livetop{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;flex-direction:column;gap:10px;z-index:5}
+.liverow{display:flex;align-items:center;gap:10px}
+.icobtn{width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.14);color:#fff;font-size:15px}
+.band{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:18px;background:rgba(31,169,113,.94);box-shadow:0 8px 22px rgba(16,40,34,.35)}
+.band b{color:#fff;font-size:16px;display:block}
+.band small{color:rgba(255,255,255,.85);font-size:12px}
+.band i{color:#fff;font-size:30px;font-weight:800;font-style:normal}
+.metrics{position:absolute;left:16px;right:16px;bottom:100px;display:flex;gap:7px;z-index:5}
+.met{flex:1;padding:9px 6px;border-radius:13px;background:rgba(10,26,19,.7);border:1px solid rgba(255,255,255,.12);text-align:center}
+.met b{display:block;font-size:13.5px;color:#CFF1E1}
+.met span{font-size:9.5px;color:rgba(207,241,225,.7)}
+.livebtm{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 24px);z-index:5}
+.overlay{position:absolute;inset:0;z-index:20;background:rgba(8,21,15,.74);backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;color:#fff}
+.overlay.on{display:flex}
+.overlay h2{margin:0;font-size:22px}
+.overlay p{margin:0;font-size:13px;color:rgba(207,241,225,.85);line-height:1.55}
+.sheetbox{position:fixed;left:0;right:0;bottom:0;max-width:460px;margin:0 auto;background:#fff;border-radius:26px 26px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom) + 24px);box-shadow:0 -14px 40px rgba(8,21,15,.25);display:none;z-index:30}
+.sheetbox.on{display:block}
+.tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
+.tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
+.tabs button.on{color:var(--g600)}
+.tabs i{width:20px;height:20px;border:2px solid currentColor;border-radius:7px;display:block}
+.tabs button:nth-child(3) i,.tabs button:nth-child(4) i{border-radius:50%}
+.ring{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;flex:none}
+.ring div{width:88px;height:88px;border-radius:44px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring b{font-size:34px;color:var(--g900);line-height:1}
+.ring span{font-size:10.5px;color:var(--ink-soft)}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:absolute;left:16px;right:16px;top:150px;bottom:150px;overflow:auto;z-index:5;align-content:start}
+.person{border-radius:14px;background:rgba(10,26,19,.66);border:1.5px solid var(--good);padding:10px}
+.person b{display:block;font-size:12.5px;color:#fff}
+.person span{font-size:10.5px;color:rgba(207,241,225,.7)}
+.hidden{display:none!important}
+.note{font-size:11.5px;color:var(--ink-soft);line-height:1.55}
+.sesrow{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:18px;background:#fff;border:1px solid var(--line)}
+.sesrow b{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<section class="scr on" id="scr-home">
+  <div class="pad">
+    <div style="display:flex;align-items:center;gap:10px;padding-top:26px">
+      <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--g500),var(--g700))"></div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--g900)">SmartFlex</div>
+      <div style="font-size:11px;color:var(--ink-soft)" id="todayLabel">—</div></div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,var(--g900),#0E3C27);border:none;border-radius:26px;color:#fff">
+      <div class="eyebrow" style="color:rgba(207,241,225,.8)">สัปดาห์นี้ · THIS WEEK</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px">
+        <div style="font-size:15px">คะแนนเฉลี่ย <b id="avgScore">—</b></div>
+        <div style="font-size:44px;font-weight:800;color:var(--g500);line-height:.9" id="sessionCount">0</div>
+      </div>
+      <div style="font-size:11px;color:rgba(207,241,225,.75);margin-top:4px">เซสชันที่บันทึกไว้ในเครื่อง</div>
+    </div>
+    <button class="card" id="btnStart" style="display:flex;align-items:center;gap:14px;border-radius:26px;text-align:left;padding:18px">
+      <span style="width:52px;height:52px;border-radius:26px;background:#E7F8F0;display:flex;align-items:center;justify-content:center;flex:none">
+        <span style="width:0;height:0;border-left:15px solid var(--good);border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></span></span>
+      <span><b style="display:block;font-size:17px;color:var(--g900)">เริ่มตรวจท่านั่ง</b>
+      <small style="font-size:12.5px;color:var(--ink-soft)">ประมวลผลบนเครื่อง ไม่อัปโหลดวิดีโอ</small></span>
+    </button>
+    <button class="pill" id="pillHome"><span class="dot" id="dotHome"></span><b>Google Sheets:</b><span id="sheetTxtHome" style="flex:1">—</span>›</button>
+    <div class="eyebrow">เซสชันล่าสุด · RECENT</div>
+    <div id="recentList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="scr" id="scr-setup">
+  <div class="pad">
+    <h1 class="h1" style="padding-top:26px">จัดกล้อง · Set up</h1>
+    <div class="eyebrow">โหมดการใช้งาน</div>
+    <div class="row">
+      <button class="chip on" data-mode="personal">โหมดส่วนบุคคล (ตรวจเดี่ยว)</button>
+      <button class="chip" data-mode="classroom">โหมดห้องเรียน (ตรวจหมู่)</button>
+    </div>
+    <div class="row" id="personalFields">
+      <div class="field"><label for="inName">ชื่อ</label><input id="inName" placeholder="ชื่อผู้ใช้"></div>
+      <div class="field"><label for="inId">รหัสผู้ใช้</label><input id="inId" placeholder="SF-0001"></div>
+    </div>
+    <div class="eyebrow">มุมกล้อง</div>
+    <div class="row">
+      <button class="chip on" data-angle="auto">อัตโนมัติ</button>
+      <button class="chip" data-angle="side">มุมข้าง</button>
+      <button class="chip" data-angle="front">มุมตรง</button>
+      <button class="chip" data-angle="full">เต็มตัว</button>
+    </div>
+    <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
+      <div class="note">ภาพวิเคราะห์บนเครื่องนี้เท่านั้น ไม่มีการอัปโหลดวิดีโอ ระบบส่งเฉพาะสรุปตัวเลขไปยัง Google Sheets</div>
+    </div>
+    <button class="pill" id="pillSetup"><span class="dot" id="dotSetup"></span><b>Google Sheets:</b><span id="sheetTxtSetup" style="flex:1">—</span>›</button>
+    <button class="btn" id="btnGoLive">เริ่มตรวจ · Start</button>
+    <button class="btn sec" data-goto="home">ย้อนกลับ</button>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="scr" id="scr-history">
+  <div class="pad">
+    <h1 class="h1" style="padding-top:26px">ผล · Results</h1>
+    <div id="historyList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="scr" id="scr-settings">
+  <div class="pad">
+    <h1 class="h1" style="padding-top:26px">ตั้งค่า · Settings</h1>
+    <div class="eyebrow">การเชื่อมต่อ GOOGLE SHEETS</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dotSet"></span><b id="sheetTxtSet" style="font-size:13px">—</b></div>
+      <div class="field"><label for="inUrl">Apps Script Web App URL (ลงท้าย /exec)</label>
+      <input id="inUrl" style="font-size:11px"></div>
+      <div class="row">
+        <button class="btn" id="btnTest" style="flex:1">ทดสอบการเชื่อมต่อ</button>
+        <button class="btn sec" id="btnSync" style="flex:1">ส่งคิวค้าง (<span id="pendCount">0</span>)</button>
+      </div>
+      <div class="note">ออฟไลน์ได้ — เซสชันจะเก็บเป็นคิวในเครื่อง แล้วส่งเองเมื่อกลับมาออนไลน์</div>
+    </div>
+    <div class="eyebrow">คอลัมน์ที่บันทึก</div>
+    <div class="card note" id="colList"></div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section class="scr" id="scr-summary">
+  <div class="pad">
+    <div class="eyebrow" style="padding-top:26px">จบเซสชัน · SESSION DONE</div>
+    <h1 class="h1" id="sumHead">—</h1>
+    <div class="card" style="display:flex;align-items:center;gap:18px;border-radius:26px">
+      <div class="ring" id="sumRing"><div><b id="sumScore">0</b><span>คะแนน</span></div></div>
+      <div style="flex:1"><div class="note" id="sumNote">—</div></div>
+    </div>
+    <div class="eyebrow">แก้ 2 อย่างนี้ · FIX THESE TWO</div>
+    <div id="fixList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="card" id="saveRow" style="background:#E7F8F0;border-color:var(--g100)"><span class="note" id="saveTxt">กำลังบันทึก…</span></div>
+    <button class="btn sec" data-goto="home">กลับหน้าหลัก</button>
+  </div>
+</section>
+
+<!-- LIVE -->
+<div id="live">
+  <video id="vid" playsinline muted></video>
+  <canvas id="cv"></canvas>
+  <div class="livetop">
+    <div class="liverow">
+      <button class="icobtn" id="btnEnd">✕</button>
+      <div style="flex:1"><b style="color:#fff;font-size:14.5px" id="liveMode">กำลังตรวจ</b>
+      <div style="color:rgba(207,241,225,.75);font-size:10.5px" id="liveAngle">—</div></div>
+      <div style="padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700" id="clock">0:00</div>
+    </div>
+    <div class="band" id="band"><span style="flex:1"><b id="coachTh">กำลังตรวจจับ…</b><small id="coachEn">Detecting…</small></span><i id="liveScore">–</i></div>
+  </div>
+  <div class="metrics" id="metrics"></div>
+  <div class="people hidden" id="people"></div>
+  <div class="livebtm"><button class="btn" id="btnFlip" style="background:rgba(255,255,255,.16);backdrop-filter:blur(12px)">สลับกล้อง</button></div>
+  <div class="overlay" id="ovl"><h2 id="ovlH">นั่งท่ามาตรฐานค้างไว้</h2><p id="ovlP">กำลังตั้งค่าพื้นฐาน (baseline)</p></div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button data-goto="home" class="on"><i></i>หน้าหลัก</button>
+  <button data-goto="history"><i></i>ผล</button>
+  <button data-goto="setup"><i></i>ตรวจ</button>
+  <button data-goto="settings"><i></i>ตั้งค่า</button>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.11.0/dist/tf-core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@4.11.0/dist/tf-converter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.11.0/dist/tf-backend-webgl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+<script>
+(function(){
+'use strict';
+var DEFAULT_URL='https://script.google.com/macros/s/AKfycbwt7xgVaQJ0QRTK6M-WfpIp5rOFmJfXG1LdhB888Uk7XO-3uBuukP5SpDXUgJz2lomcQw/exec';
+var COLS=['sessionId','savedAt','appMode','userId','name','activityMode','totalSeconds','goodSeconds','badSeconds','unknownSeconds','score','alertCount','mainIssue','startedAt','endedAt'];
+var LS={url:'sf.url',prof:'sf.profile',pend:'sf.pending',hist:'sf.history'};
+var $=function(id){return document.getElementById(id)};
+var store={
+  get:function(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+var state={mode:'personal',angle:'auto',facing:'user',running:false,detector:null,
+  startedAt:null,total:0,good:0,bad:0,unknown:0,alerts:0,issues:{},baseline:null,badRun:0,lastTick:0};
+
+/* ---------- navigation ---------- */
+function goto(name){
+  ['home','setup','history','settings','summary'].forEach(function(s){
+    $('scr-'+s).classList.toggle('on',s===name);
+  });
+  Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+    b.classList.toggle('on',b.getAttribute('data-goto')===name);
+  });
+  $('tabs').classList.remove('hidden');
+  if(name==='home')renderHome();
+  if(name==='history')renderHistory();
+  window.scrollTo(0,0);
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-goto]');
+  if(b)goto(b.getAttribute('data-goto'));
+  var m=e.target.closest('[data-mode]');
+  if(m){state.mode=m.getAttribute('data-mode');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'),function(x){x.classList.toggle('on',x===m)});
+    $('personalFields').style.display=state.mode==='personal'?'flex':'none';}
+  var a=e.target.closest('[data-angle]');
+  if(a){state.angle=a.getAttribute('data-angle');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-angle]'),function(x){x.classList.toggle('on',x===a)});}
+});
+$('pillHome').onclick=function(){goto('settings')};
+$('pillSetup').onclick=function(){goto('settings')};
+$('btnStart').onclick=function(){goto('setup')};
+
+/* ---------- sheets ---------- */
+function sheetUrl(){return store.get(LS.url,DEFAULT_URL)}
+function jsonp(url,timeout){
+  return new Promise(function(res,rej){
+    var cb='sfcb'+Date.now()+Math.floor(Math.random()*1e4);
+    var s=document.createElement('script');
+    var to=setTimeout(function(){cleanup();rej(new Error('หมดเวลาเชื่อมต่อ Google Sheets'))},timeout||12000);
+    function cleanup(){clearTimeout(to);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s)}
+    window[cb]=function(d){cleanup();res(d)};
+    s.onerror=function(){cleanup();rej(new Error('เชื่อมต่อ Google Sheets ไม่สำเร็จ'))};
+    s.src=url+(url.indexOf('?')<0?'?':'&')+'callback='+cb;
+    document.head.appendChild(s);
+  });
+}
+function rowToQuery(row){
+  return COLS.map(function(c){return encodeURIComponent(c)+'='+encodeURIComponent(row[c]==null?'':row[c])}).join('&');
+}
+function pushRow(row){
+  return jsonp(sheetUrl()+'?action=save&'+rowToQuery(row));
+}
+function queue(row){var p=store.get(LS.pend,[]);p.push(row);store.set(LS.pend,p);paintSheet()}
+function flushQueue(){
+  var p=store.get(LS.pend,[]);
+  if(!p.length)return Promise.resolve(0);
+  var sent=0;
+  return p.reduce(function(chain,row){
+    return chain.then(function(){return pushRow(row).then(function(){sent++})});
+  },Promise.resolve()).then(function(){
+    store.set(LS.pend,[]);paintSheet();return sent;
+  }).catch(function(){
+    store.set(LS.pend,p.slice(sent));paintSheet();return sent;
+  });
+}
+function paintSheet(txt,ok){
+  var pend=store.get(LS.pend,[]).length;
+  var label=txt||(navigator.onLine?(pend?('เชื่อมต่อแล้ว · ค้างส่ง '+pend+' รายการ'):'พร้อมส่ง'):'ออฟไลน์ · เก็บคิวไว้ '+pend);
+  var color=ok===false?'var(--bad)':(pend||!navigator.onLine?'var(--warn)':'var(--good)');
+  ['Home','Setup','Set'].forEach(function(sfx){
+    var t=$('sheetTxt'+sfx),d=$('dot'+sfx);
+    if(t)t.textContent=label; if(d)d.style.background=color;
+  });
+  $('pendCount').textContent=pend;
+}
+$('btnTest').onclick=function(){
+  store.set(LS.url,$('inUrl').value.trim()||DEFAULT_URL);
+  paintSheet('กำลังทดสอบ…');
+  jsonp(sheetUrl()+'?action=ping').then(function(){paintSheet('เชื่อมต่อสำเร็จ',true)})
+    .catch(function(e){paintSheet(e.message,false)});
+};
+$('btnSync').onclick=function(){
+  paintSheet('กำลังส่ง…');
+  flushQueue().then(function(n){paintSheet('ส่งแล้ว '+n+' รายการ',true)});
+};
+window.addEventListener('online',function(){flushQueue()});
+
+/* ---------- posture math ---------- */
+function ang(a,b,c){
+  var ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);
+  var d=Math.abs(ab-cb)*180/Math.PI; return d>180?360-d:d;
+}
+function tilt(a,b){return Math.abs(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)}
+var K={nose:0,leftEye:1,rightEye:2,leftEar:3,rightEar:4,leftShoulder:5,rightShoulder:6,
+  leftElbow:7,rightElbow:8,leftWrist:9,rightWrist:10,leftHip:11,rightHip:12,leftKnee:13,rightKnee:14,leftAnkle:15,rightAnkle:16};
+function pick(kp,i){var p=kp[i];return p&&p.score>0.35?p:null}
+function analyse(kp){
+  var ear=pick(kp,K.leftEar)||pick(kp,K.rightEar);
+  var sh=pick(kp,K.leftShoulder)||pick(kp,K.rightShoulder);
+  var hip=pick(kp,K.leftHip)||pick(kp,K.rightHip);
+  var knee=pick(kp,K.leftKnee)||pick(kp,K.rightKnee);
+  var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
+  var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar);
+  var m={},bad=[];
+  if(ear&&sh&&hip){m.forwardHead=Math.round(ang(ear,sh,hip));if(Math.abs(m.forwardHead-165)>20)bad.push('คอยื่น')}
+  if(sh&&hip&&knee){m.hipAngle=Math.round(ang(sh,hip,knee));if(Math.abs(m.hipAngle-95)>30)bad.push('มุมสะโพก')}
+  if(sl&&sr){m.shoulderTilt=Math.round(tilt(sl,sr));if(m.shoulderTilt>8)bad.push('ไหล่เอียง')}
+  if(el&&er){m.headTilt=Math.round(tilt(el,er));if(m.headTilt>10)bad.push('ศีรษะเอียง')}
+  if(sh&&hip){var lean=Math.round(Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI));m.torsoLean=lean;if(lean>15)bad.push('หลังค่อม')}
+  var known=Object.keys(m).length;
+  return {metrics:m,bad:bad,status:known?(bad.length?(bad.length>1?'bad':'warn'):'good'):'unknown'};
+}
+var COACH={
+  'คอยื่น':['ยกหน้าจอขึ้น','Raise your screen'],
+  'หลังค่อม':['ยืดหลังให้ตรง','Sit tall'],
+  'ไหล่เอียง':['ปรับไหล่ให้เท่ากัน','Level your shoulders'],
+  'ศีรษะเอียง':['ตั้งศีรษะให้ตรง','Straighten your head'],
+  'มุมสะโพก':['ปรับความสูงเก้าอี้','Adjust chair height']
+};
+
+/* ---------- live ---------- */
+var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,tickTimer=null;
+async function ensureDetector(){
+  if(state.detector)return state.detector;
+  showOverlay('กำลังโหลดระบบ AI','MoveNet · ครั้งแรกอาจใช้เวลาสักครู่');
+  await tf.setBackend('webgl');await tf.ready();
+  state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,
+    {modelType:state.mode==='classroom'?poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING:poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,enableTracking:state.mode==='classroom'});
+  return state.detector;
+}
+function showOverlay(h,p){$('ovlH').textContent=h;$('ovlP').textContent=p||'';$('ovl').classList.add('on')}
+function hideOverlay(){$('ovl').classList.remove('on')}
+async function startCamera(){
+  if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
+  var stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:state.facing,width:{ideal:1280},height:{ideal:720}}});
+  vid.srcObject=stream;await vid.play();
+  cv.width=vid.videoWidth;cv.height=vid.videoHeight;
+}
+$('btnFlip').onclick=function(){state.facing=state.facing==='user'?'environment':'user';startCamera()};
+$('btnGoLive').onclick=async function(){
+  var prof={name:$('inName').value||'ผู้ใช้',userId:$('inId').value||'SF-0001'};
+  store.set(LS.prof,prof);
+  $('live').classList.add('on');$('tabs').classList.add('hidden');
+  $('people').classList.toggle('hidden',state.mode!=='classroom');
+  $('metrics').classList.toggle('hidden',state.mode==='classroom');
+  $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · Classroom':'กำลังตรวจ · Live';
+  $('liveAngle').textContent=({auto:'ตรวจมุมอัตโนมัติ',side:'มุมข้าง',front:'มุมตรง',full:'เต็มตัว'})[state.angle];
+  try{
+    await startCamera();
+    await ensureDetector();
+    if(state.mode==='personal'){showOverlay('นั่งท่ามาตรฐานค้างไว้ 5 วินาที','กำลังตั้งค่าพื้นฐาน (baseline)');
+      setTimeout(hideOverlay,5000);}
+    else hideOverlay();
+    beginSession();
+  }catch(err){showOverlay('เปิดกล้องไม่สำเร็จ',err.message)}
+};
+function beginSession(){
+  state.running=true;state.startedAt=new Date();
+  state.total=state.good=state.bad=state.unknown=state.alerts=0;state.issues={};state.badRun=0;
+  loop();
+  tickTimer=setInterval(tick,1000);
+}
+function tick(){
+  if(!state.running)return;
+  state.total++;
+  var s=Math.floor((Date.now()-state.startedAt)/1000);
+  $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+}
+async function loop(){
+  if(!state.running)return;
+  try{
+    var poses=await state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?6:1});
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(state.mode==='classroom')paintClass(poses);else paintPersonal(poses[0]);
+  }catch(e){}
+  rafId=requestAnimationFrame(loop);
+}
+var EDGES=[[5,7],[7,9],[6,8],[8,10],[5,6],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16],[0,5],[0,6]];
+function drawSkeleton(kp,color){
+  ctx.strokeStyle=color;ctx.lineWidth=Math.max(3,cv.width/220);ctx.fillStyle=color;
+  EDGES.forEach(function(e){
+    var a=kp[e[0]],b=kp[e[1]];
+    if(a&&b&&a.score>0.35&&b.score>0.35){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+  });
+  kp.forEach(function(p){if(p.score>0.35){ctx.beginPath();ctx.arc(p.x,p.y,ctx.lineWidth*1.4,0,6.3);ctx.fill()}});
+}
+var TONE={good:'#30CF85',warn:'#E8C24B',bad:'#E5484D',unknown:'#9BAFA5'};
+var BAND={good:'rgba(31,169,113,.94)',warn:'rgba(200,160,46,.95)',bad:'rgba(229,72,77,.94)',unknown:'rgba(10,26,19,.8)'};
+function paintPersonal(pose){
+  if(!pose){state.unknown++;setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],'–');return}
+  var r=analyse(pose.keypoints);
+  drawSkeleton(pose.keypoints,TONE[r.status]);
+  if(r.status==='good')state.good++;else if(r.status==='unknown')state.unknown++;else state.bad++;
+  r.bad.forEach(function(b){state.issues[b]=(state.issues[b]||0)+1});
+  if(r.status==='bad'){state.badRun++;if(state.badRun===60){state.alerts++;chime()}}else state.badRun=0;
+  var main=r.bad[0];
+  var c=main?COACH[main]||[main,'']:['ท่านี้ดี รักษาไว้','Good posture — hold it'];
+  var score=Math.round(100*state.good/Math.max(1,state.good+state.bad));
+  setBand(r.status,c,score);
+  var m=r.metrics,cells=[['คอยื่น',m.forwardHead],['หลังค่อม',m.torsoLean],['ไหล่เอียง',m.shoulderTilt],['สะโพก',m.hipAngle]];
+  $('metrics').innerHTML=cells.map(function(x){
+    return '<div class="met"><b>'+(x[1]==null?'–':x[1]+'°')+'</b><span>'+x[0]+'</span></div>'}).join('');
+}
+function paintClass(poses){
+  var counts={good:0,warn:0,bad:0};var html='';
+  poses.forEach(function(p,i){
+    var r=analyse(p.keypoints);
+    drawSkeleton(p.keypoints,TONE[r.status]);
+    if(r.status!=='unknown')counts[r.status]++;
+    html+='<div class="person" style="border-color:'+TONE[r.status]+'"><b>คนที่ '+(i+1)+'</b><span>'+(r.bad[0]||'ท่าดี')+'</span></div>';
+  });
+  $('people').innerHTML=html;
+  state.good+=counts.good;state.bad+=counts.bad+counts.warn;
+  setBand(counts.bad?'bad':counts.warn?'warn':'good',
+    ['ในเฟรม '+poses.length+' คน','ท่าดี '+counts.good+' · ต้องแก้ '+(counts.bad+counts.warn)],poses.length);
+}
+function setBand(st,c,score){
+  $('band').style.background=BAND[st];
+  $('coachTh').textContent=c[0];$('coachEn').textContent=c[1];
+  $('liveScore').textContent=score;
+}
+var actx=null;
+function chime(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    var o=actx.createOscillator(),g=actx.createGain();
+    o.frequency.value=660;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(.001,actx.currentTime);g.gain.exponentialRampToValueAtTime(.25,actx.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.5);o.start();o.stop(actx.currentTime+.5);
+  }catch(e){}
+  if(navigator.vibrate)navigator.vibrate(180);
+}
+$('btnEnd').onclick=function(){endSession()};
+function endSession(){
+  state.running=false;cancelAnimationFrame(rafId);clearInterval(tickTimer);
+  if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
+  $('live').classList.remove('on');$('tabs').classList.remove('hidden');
+  var ended=new Date(),prof=store.get(LS.prof,{name:'ผู้ใช้',userId:'SF-0001'});
+  var score=Math.round(100*state.good/Math.max(1,state.good+state.bad));
+  var issues=Object.keys(state.issues).sort(function(a,b){return state.issues[b]-state.issues[a]});
+  var row={};
+  row.sessionId=prof.userId+'-'+state.startedAt.getTime();
+  row.savedAt=ended.toISOString();row.appMode=state.mode;row.userId=prof.userId;row.name=prof.name;
+  row.activityMode=state.angle;row.totalSeconds=state.total;
+  row.goodSeconds=Math.round(state.total*state.good/Math.max(1,state.good+state.bad+state.unknown));
+  row.badSeconds=state.total-row.goodSeconds;row.unknownSeconds=0;
+  row.score=score;row.alertCount=state.alerts;row.mainIssue=issues[0]||'-';
+  row.startedAt=state.startedAt.toISOString();row.endedAt=ended.toISOString();
+  var hist=store.get(LS.hist,[]);hist.unshift(row);store.set(LS.hist,hist.slice(0,60));
+  showSummary(row,issues);
+  $('saveTxt').textContent='กำลังบันทึกลง Google Sheets…';
+  pushRow(row).then(function(){$('saveTxt').textContent='บันทึกลง Google Sheets แล้ว · แถว '+row.sessionId})
+    .catch(function(e){queue(row);$('saveTxt').textContent='ออฟไลน์/ส่งไม่สำเร็จ — เก็บคิวไว้แล้ว ('+e.message+')'});
+}
+function showSummary(row,issues){
+  goto('summary');$('tabs').classList.remove('hidden');
+  var mins=Math.floor(row.totalSeconds/60),secs=row.totalSeconds%60;
+  $('sumHead').textContent=mins+' นาที '+secs+' วินาที · '+({auto:'อัตโนมัติ',side:'มุมข้าง',front:'มุมตรง',full:'เต็มตัว'})[row.activityMode];
+  $('sumScore').textContent=row.score;
+  $('sumRing').style.background='conic-gradient(var(--good) 0 '+row.score+'%,#E7EFEA '+row.score+'% 100%)';
+  $('sumNote').textContent='นั่งดี '+row.score+'% ของเวลา · เตือน '+row.alertCount+' ครั้ง';
+  $('fixList').innerHTML=(issues.length?issues.slice(0,2):['-']).map(function(is,i){
+    var c=COACH[is]||[is,''];
+    return '<div class="card" style="display:flex;gap:13px"><span style="width:34px;height:34px;border-radius:17px;background:#FDEAEA;color:var(--bad);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span><span><b style="display:block;font-size:15px">'+is+'</b><small class="note">'+c[0]+' · '+c[1]+'</small></span></div>';
+  }).join('');
+}
+
+/* ---------- lists ---------- */
+function rowCard(r){
+  return '<div class="sesrow"><b>'+r.score+'</b><span style="flex:1"><b style="display:block;font-size:14.5px">'+
+    new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+
+    '</b><small class="note">'+Math.round(r.totalSeconds/60)+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+r.mainIssue+'</small></span></div>';
+}
+function renderHome(){
+  var h=store.get(LS.hist,[]);
+  $('todayLabel').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
+  $('sessionCount').textContent=h.length;
+  $('avgScore').textContent=h.length?Math.round(h.reduce(function(a,r){return a+r.score},0)/h.length):'—';
+  $('recentList').innerHTML=h.slice(0,3).map(rowCard).join('')||'<div class="note">ยังไม่มีเซสชัน กดเริ่มตรวจได้เลย</div>';
+}
+function renderHistory(){
+  var h=store.get(LS.hist,[]);
+  $('historyList').innerHTML=h.map(rowCard).join('')||'<div class="note">ยังไม่มีข้อมูล</div>';
+}
+
+/* ---------- boot ---------- */
+var prof=store.get(LS.prof,{name:'',userId:''});
+$('inName').value=prof.name||'';$('inId').value=prof.userId||'';
+$('inUrl').value=sheetUrl();
+$('colList').textContent=COLS.join(' · ');
+paintSheet();renderHome();
+if(navigator.onLine)flushQueue();
+})();
+</script>
+</body>
+</html>
