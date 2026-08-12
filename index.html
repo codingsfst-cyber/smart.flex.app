@@ -70,25 +70,20 @@ a:hover{color:var(--g900)}
 .tabs button.on{color:var(--g600)}
 @media(min-width:760px){
   body{background:#E7EFEA}
-  .app{max-width:960px;padding-bottom:0}
-  .pad{padding:28px 32px 120px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
-  .pad>.h1,.pad>.eyebrow,.pad>#recentList,.pad>#historyList,.pad>#guideList,.pad>#detailBody,.pad>#histStats,.pad>#analysisBox,.pad>#fixList,.pad>#nameRows,.pad>.full{grid-column:1/-1}
-  .pad>.full-head{grid-column:1/-1;align-self:start}
+  .app{max-width:100%}
+  .pad{max-width:600px;margin:0 auto;width:100%;padding:32px 24px 130px}
   #recentList,#historyList,#guideList{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   #live{max-width:100%;inset:0}
   #vid,#cv{object-fit:contain;background:#0c1c14}
-  .livetop{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px)}
-  .metrics,.livebtm{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px)}
-  .people{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px);grid-template-columns:repeat(3,1fr)}
-  .tabs{max-width:960px;padding:10px 24px calc(env(safe-area-inset-bottom) + 12px)}
-  .tabs button{flex-direction:row;gap:9px;font-size:13px}
-  .sheetbox{max-width:960px}
+  .livetop,.metrics,.livebtm{max-width:640px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px)}
+  .people{max-width:640px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px);grid-template-columns:repeat(3,1fr)}
+  .tabs{max-width:600px;border:1px solid var(--line);border-radius:22px;bottom:16px;padding:8px 12px}
+  .tabs button{flex-direction:row;gap:8px;font-size:13px}
+  .sheetbox{max-width:600px;border-radius:26px;bottom:16px}
 }
 @media(min-width:1180px){
-  .app{max-width:1120px}
-  .pad{grid-template-columns:repeat(3,1fr);padding:32px 40px 120px}
-  #recentList,#historyList,#guideList{grid-template-columns:repeat(3,1fr)}
-  .tabs{max-width:1120px}
+  .pad{max-width:680px}
+  .tabs,.sheetbox{max-width:680px}
 }
 .tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
 .ring{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -139,6 +134,7 @@ a:hover{color:var(--g900)}
       <small style="font-size:12.5px;color:var(--ink-soft)">ประมวลผลบนเครื่อง ไม่อัปโหลดวิดีโอ</small></span>
     </button>
     <button class="pill" id="pillHome"><span class="dot" id="dotHome"></span><b>Google Sheets:</b><span id="sheetTxtHome" style="flex:1">—</span>›</button>
+    <button class="btn sec" data-goto="guide">ดูท่านั่งที่ถูกต้อง · คำแนะนำ 5 ข้อ</button>
     <div class="grid2">
       <div class="stat"><b id="avgScore">—</b><span>คะแนนเฉลี่ย · Avg score</span></div>
       <div class="stat"><b id="weekHours">0 ชม.</b><span>นั่งสัปดาห์นี้ · Sat this week</span></div>
@@ -207,6 +203,7 @@ a:hover{color:var(--g900)}
       </label>
     </div>
     <button class="pill" id="pillSetup"><span class="dot" id="dotSetup"></span><b>Google Sheets:</b><span id="sheetTxtSetup" style="flex:1">—</span>›</button>
+    <button class="btn sec" data-goto="guide">ดูท่านั่งที่ถูกต้องก่อนเริ่ม</button>
     <button class="btn" id="btnGoLive">เริ่มตรวจ · Start</button>
     <button class="btn sec" data-goto="home">ย้อนกลับ</button>
   </div>
