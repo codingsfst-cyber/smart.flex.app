@@ -272,7 +272,7 @@ a:hover{color:var(--g900)}
     <h1 class="h1" style="padding-top:26px">ท่านั่งที่เหมาะสม</h1>
     <div class="note">หลัก 5 ข้อที่ระบบใช้เป็นเกณฑ์ในการให้คะแนน</div>
     <div class="card" style="padding:0;overflow:hidden">
-      <div id="guideImg" style="height:210px;background:repeating-linear-gradient(135deg,#E7EFEA 0 10px,#F3FBF7 10px 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+      <div id="guideImg" style="background:repeating-linear-gradient(135deg,#E7EFEA 0 10px,#F3FBF7 10px 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:210px">
         <span class="note" style="font-size:12px">ภาพอินโฟกราฟิกท่านั่งที่ถูกต้อง</span>
         <span class="note" style="font-size:11px;color:#9BAFA5">วางไฟล์ชื่อ guide.jpg ไว้ข้าง index.html แล้วภาพจะขึ้นเอง</span>
       </div>
@@ -280,8 +280,9 @@ a:hover{color:var(--g900)}
     <div id="guideList" style="display:flex;flex-direction:column;gap:12px"></div>
     <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
       <div class="note">ที่มาของเกณฑ์และภาพตัวอย่าง · SOURCE<br>
-      • โรงพยาบาลกรุงเทพจันทบุรี — ท่านั่งที่ถูกต้องและออฟฟิศซินโดรม<br>
-      <a href="https://www.bangkokhospital-chanthaburi.com/" target="_blank" rel="noopener">bangkokhospital-chanthaburi.com</a><br>
+      • โรงพยาบาลกรุงเทพจันทบุรี — ท่าทางการนั่งที่ถูกต้อง<br>
+      <a href="https://www.bangkokhospital.com/th/chanthaburi/content/article-247-bch" target="_blank" rel="noopener">bangkokhospital.com/th/chanthaburi · article-247-bch</a><br>
+      • ภาพอินโฟกราฟิก: BDMS Wellness Clinic / PPTV HD36<br>
       • เกณฑ์มุมข้อต่อที่ใช้ในแอป: คอ 145–185°, หลัง &lt;15°, ไหล่ &lt;8°, ศีรษะ &lt;10°, สะโพก 65–125°</div>
     </div>
   </div>
@@ -1035,7 +1036,7 @@ var GUIDE=[
 ];
 function renderGuide(){
   var img=new Image();
-  img.onload=function(){$('guideImg').innerHTML='<img src="guide.jpg" style="width:100%;height:100%;object-fit:cover;display:block" alt="ท่านั่งที่ถูกต้อง">'};
+  img.onload=function(){$('guideImg').innerHTML='<img src="guide.jpg" style="width:100%;display:block" alt="ท่าทางการนั่งที่ถูกต้อง">'};
   img.src='guide.jpg';
   $('guideList').innerHTML=GUIDE.map(function(g,i){
     return '<div class="card" style="display:flex;gap:13px">'+
