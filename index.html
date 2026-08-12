@@ -18,6 +18,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--g50);color:var(--ink);font-family:'Noto Sans Thai','Noto Sans',system-ui,sans-serif}
 button{font-family:inherit;cursor:pointer}
+a{color:var(--g600);text-decoration:underline}
+a:hover{color:var(--g900)}
 .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
 .scr{display:none;flex:1;flex-direction:column}
 .scr.on{display:flex}
@@ -31,6 +33,7 @@ button{font-family:inherit;cursor:pointer}
 .chip.on{background:var(--g600);border-color:var(--g600);color:#fff}
 .row{display:flex;gap:8px}
 .field{display:flex;flex-direction:column;gap:6px;flex:1}
+.pad>.field,.pad>.row,.pad>.card,.pad>.grid2,.pad>.btn,.pad>.pill{flex:none}
 .field label{font-size:12px;font-weight:700}
 .field input{padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:13.5px;background:#fff}
 .pill{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--g100);border-radius:16px;background:#EAF4EF;width:100%;text-align:left;font-size:12.5px;color:var(--ink-soft)}
@@ -76,6 +79,10 @@ button{font-family:inherit;cursor:pointer}
 .person span{font-size:10.5px;color:rgba(207,241,225,.7)}
 .hidden{display:none!important}
 .note{font-size:11.5px;color:var(--ink-soft);line-height:1.55}
+.pillscore{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none}
+.pillscore.warn{background:#FDF3E7;color:#B07A18}
+.pillscore.bad{background:#FDEAEA;color:var(--bad)}
+#histStats{display:flex;flex-direction:column;gap:12px}
 .sesrow{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:18px;background:#fff;border:1px solid var(--line)}
 .sesrow .pillscore{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none}
 .sesrow .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -94,12 +101,14 @@ button{font-family:inherit;cursor:pointer}
       <div style="font-size:11px;color:var(--ink-soft)" id="todayLabel">—</div></div>
     </div>
     <div class="card" style="background:linear-gradient(135deg,var(--g900),#0E3C27);border:none;border-radius:26px;color:#fff">
-      <div class="eyebrow" style="color:rgba(207,241,225,.8)">สัปดาห์นี้ · THIS WEEK</div>
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:12px">
-        <div style="font-size:15px">คะแนนเฉลี่ย <b id="avgScore" style="font-size:19px">—</b></div>
-        <div style="font-size:40px;font-weight:800;color:var(--g500);line-height:.9" id="sessionCount">0</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div class="eyebrow" style="color:rgba(207,241,225,.8)">สถิติต่อเนื่อง · STREAK</div>
+          <div style="font-size:15px;margin-top:4px" id="streakTxt">นั่งดีติดกัน 0 วัน</div>
+        </div>
+        <div style="font-size:44px;font-weight:800;color:var(--g500);line-height:.9" id="streakNum">0</div>
       </div>
-      <div style="font-size:11px;color:rgba(207,241,225,.75);margin-top:4px">เซสชันที่บันทึกไว้ในเครื่อง</div>
+      <div id="weekCard" style="margin-top:14px"></div>
     </div>
     <button class="card" id="btnStart" style="display:flex;align-items:center;gap:14px;border-radius:26px;text-align:left;padding:18px">
       <span style="width:52px;height:52px;border-radius:26px;background:#E7F8F0;display:flex;align-items:center;justify-content:center;flex:none">
@@ -108,6 +117,10 @@ button{font-family:inherit;cursor:pointer}
       <small style="font-size:12.5px;color:var(--ink-soft)">ประมวลผลบนเครื่อง ไม่อัปโหลดวิดีโอ</small></span>
     </button>
     <button class="pill" id="pillHome"><span class="dot" id="dotHome"></span><b>Google Sheets:</b><span id="sheetTxtHome" style="flex:1">—</span>›</button>
+    <div class="grid2">
+      <div class="stat"><b id="avgScore">—</b><span>คะแนนเฉลี่ย · Avg score</span></div>
+      <div class="stat"><b id="weekHours">0 ชม.</b><span>นั่งสัปดาห์นี้ · Sat this week</span></div>
+    </div>
     <div class="eyebrow">เซสชันล่าสุด · RECENT</div>
     <div id="recentList" style="display:flex;flex-direction:column;gap:10px"></div>
   </div>
@@ -125,6 +138,14 @@ button{font-family:inherit;cursor:pointer}
     <div class="row" id="personalFields">
       <div class="field"><label for="inName">ชื่อ</label><input id="inName" placeholder="ชื่อผู้ใช้"></div>
       <div class="field"><label for="inId">รหัสผู้ใช้</label><input id="inId" placeholder="SF-0001"></div>
+    </div>
+    <div id="classFields" style="display:none;flex-direction:column;gap:10px">
+      <div class="row">
+        <div class="field"><label for="inRoom">ห้อง / โรงเรียน</label><input id="inRoom" placeholder="ม.5/2"></div>
+        <div class="field"><label for="inCount">จำนวนคน (1–6)</label><input id="inCount" type="number" min="1" max="6" value="3" inputmode="numeric"></div>
+      </div>
+      <div id="nameRows" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="note">เรียงชื่อตามที่นั่งจริง จากซ้ายไปขวา · ระบบจับคู่ด้วยตำหน่งที่นั่ง ไม่ใช้การจดจำใบหน้า จึงต้องนั่งตำแหน่งเดิมตลอดเซสชัน</div>
     </div>
     <div class="eyebrow">มุมกล้อง</div>
     <div class="row" style="flex-wrap:wrap">
@@ -173,6 +194,17 @@ button{font-family:inherit;cursor:pointer}
 <section class="scr" id="scr-history">
   <div class="pad">
     <h1 class="h1" style="padding-top:26px">ผล · Results</h1>
+    <div class="field"><input id="inSearch" placeholder="ค้นหาชื่อ / รหัส / ห้อง"></div>
+    <div class="row">
+      <button class="chip on" data-hm="all">ทั้งหมด</button>
+      <button class="chip" data-hm="personal">ส่วนบุคคล</button>
+      <button class="chip" data-hm="classroom">ห้องเรียน</button>
+    </div>
+    <div id="histStats"></div>
+    <div class="row">
+      <button class="btn sec" id="btnCSV" style="flex:1">ส่งออก CSV</button>
+      <button class="btn sec" id="btnPrintAll" style="flex:1">พิมพ์รายงาน</button>
+    </div>
     <div id="historyList" style="display:flex;flex-direction:column;gap:10px"></div>
   </div>
 </section>
@@ -215,6 +247,27 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </section>
 
+<!-- GUIDE -->
+<section class="scr" id="scr-guide">
+  <div class="pad">
+    <h1 class="h1" style="padding-top:26px">ท่านั่งที่เหมาะสม</h1>
+    <div class="note">หลัก 5 ข้อที่ระบบใช้เป็นเกณฑ์ในการให้คะแนน</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="guideImg" style="height:210px;background:repeating-linear-gradient(135deg,#E7EFEA 0 10px,#F3FBF7 10px 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <span class="note" style="font-size:12px">ภาพอินโฟกราฟิกท่านั่งที่ถูกต้อง</span>
+        <span class="note" style="font-size:11px;color:#9BAFA5">วางไฟล์ชื่อ guide.jpg ไว้ข้าง index.html แล้วภาพจะขึ้นเอง</span>
+      </div>
+    </div>
+    <div id="guideList" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
+      <div class="note">ที่มาของเกณฑ์และภาพตัวอย่าง · SOURCE<br>
+      • โรงพยาบาลกรุงเทพจันทบุรี — ท่านั่งที่ถูกต้องและออฟฟิศซินโดรม<br>
+      <a href="https://www.bangkokhospital-chanthaburi.com/" target="_blank" rel="noopener">bangkokhospital-chanthaburi.com</a><br>
+      • เกณฑ์มุมข้อต่อที่ใช้ในแอป: คอ 145–185°, หลัง &lt;15°, ไหล่ &lt;8°, ศีรษะ &lt;10°, สะโพก 65–125°</div>
+    </div>
+  </div>
+</section>
+
 <!-- DETAIL -->
 <section class="scr" id="scr-detail">
   <div class="pad" id="detailBody"></div>
@@ -229,7 +282,11 @@ button{font-family:inherit;cursor:pointer}
       <div class="ring" id="sumRing"><div><b id="sumScore">0</b><span>คะแนน</span></div></div>
       <div style="flex:1"><div class="note" id="sumNote">—</div></div>
     </div>
-    <div class="eyebrow">แก้ 2 อย่างนี้ · FIX THESE TWO</div>
+    <div class="eyebrow">ท่านั่งที่ถูกต้อง</div>
+    <button class="btn sec" data-goto="guide">ดูท่านั่งที่ถูกต้อง · คำแนะนำ 5 ข้อ</button>
+    <div class="eyebrow">วิเคราะห์ท่านั่ง · ANALYSIS</div>
+    <div id="analysisBox" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="eyebrow">คำแนะนำ · ควรปรับอะไร</div>
     <div id="fixList" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="card" id="saveRow" style="background:#E7F8F0;border-color:var(--g100)"><span class="note" id="saveTxt">กำลังบันทึก…</span></div>
     <button class="btn" id="btnFullReport">ดูรายงานละเอียด · Full report</button>
@@ -293,7 +350,7 @@ var state={mode:'personal',angle:'auto',facing:'user',running:false,detector:nul
 
 /* ---------- navigation ---------- */
 function goto(name){
-  ['home','setup','history','settings','summary','detail'].forEach(function(s){
+  ['home','setup','history','settings','summary','detail','guide'].forEach(function(s){
     $('scr-'+s).classList.toggle('on',s===name);
   });
   Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
@@ -301,6 +358,7 @@ function goto(name){
   });
   $('tabs').classList.remove('hidden');
   if(name==='home')renderHome();
+  if(name==='guide')renderGuide();
   if(name==='history')renderHistory();
   window.scrollTo(0,0);
 }
@@ -310,7 +368,9 @@ document.addEventListener('click',function(e){
   var m=e.target.closest('[data-mode]');
   if(m){state.mode=m.getAttribute('data-mode');
     Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'),function(x){x.classList.toggle('on',x===m)});
-    $('personalFields').style.display=state.mode==='personal'?'flex':'none';}
+    $('personalFields').style.display=state.mode==='personal'?'flex':'none';
+    $('classFields').style.display=state.mode==='classroom'?'flex':'none';
+    if(state.mode==='classroom')paintNameRows();}
   var a=e.target.closest('[data-angle]');
   if(a){state.angle=a.getAttribute('data-angle');
     Array.prototype.forEach.call(document.querySelectorAll('[data-angle]'),function(x){x.classList.toggle('on',x===a)});
@@ -325,6 +385,10 @@ document.addEventListener('click',function(e){
   });
   var op=e.target.closest('[data-open]');
   if(op)openDetail(op.getAttribute('data-open'));
+  var hm=e.target.closest('[data-hm]');
+  if(hm){state.histMode=hm.getAttribute('data-hm');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hm]'),function(x){x.classList.toggle('on',x===hm)});
+    renderHistory();}
 });
 $('pillHome').onclick=function(){goto('settings')};
 $('pillSetup').onclick=function(){goto('settings')};
@@ -498,6 +562,11 @@ $('btnGoLive').onclick=async function(){
   if(speech.on)say('เริ่มตรวจท่านั่ง',true);
   var prof={name:$('inName').value||'ผู้ใช้',userId:$('inId').value||'SF-0001'};
   store.set(LS.prof,prof);
+  if(state.mode==='classroom'){
+    state.names=classNames();state.ids=classIds();
+    state.room=($('inRoom').value||'').trim()||'ห้องเรียน';
+    state.perPerson={};
+  }
   $('live').classList.add('on');$('tabs').classList.add('hidden');
   $('people').classList.toggle('hidden',state.mode!=='classroom');
   $('metrics').classList.toggle('hidden',state.mode==='classroom');
@@ -633,7 +702,11 @@ function paintClass(poses){
     var r=analyse(p.keypoints);
     drawSkeleton(p.keypoints,r.flags,true);
     if(r.status!=='unknown')counts[r.status]++;
-    html+='<div class="person" style="border-color:'+TONE[r.status]+'"><b>คนที่ '+(i+1)+'</b><span>'+(r.bad[0]||'ท่าดี')+'</span></div>';
+    var who=(state.names&&state.names[i])||('คนที่ '+(i+1));
+    if(!state.perPerson)state.perPerson={};
+    var rec=state.perPerson[i]||(state.perPerson[i]={name:who,seatNo:i+1,studentId:(state.ids&&state.ids[i])||String(i+1),good:0,bad:0,issues:{}});
+    if(r.status==='good')rec.good++;else if(r.status!=='unknown'){rec.bad++;(r.bad||[]).forEach(function(b){rec.issues[b]=(rec.issues[b]||0)+1})}
+    html+='<div class="person" style="border-color:'+TONE[r.status]+'"><b>'+who+'</b><span>'+(r.bad[0]||'ท่าดี')+'</span></div>';
   });
   $('people').innerHTML=html;
   state.good+=counts.good;state.bad+=counts.bad+counts.warn;
@@ -710,6 +783,31 @@ $('btnSaveMin').onclick=function(){
   var v=Math.max(0,Math.min(240,Math.round(Number($('inMinutes').value)||0)));
   store.set('sf.minutes',v);paintMinutes();
 };
+function paintNameRows(){
+  var n=Math.max(1,Math.min(6,Number($('inCount').value)||3));
+  var saved=store.get('sf.classNames',[]);
+  var html='';
+  for(var i=0;i<n;i++){
+    html+='<div class="row"><div class="field" style="flex:0 0 84px"><label>เลขที่</label>'+
+      '<input data-sid="'+i+'" value="'+((store.get('sf.classIds',[])[i])||(i+1))+'" inputmode="numeric"></div>'+
+      '<div class="field"><label>ชื่อคนที่ '+(i+1)+' (ซ้าย→ขวา)</label>'+
+      '<input data-nm="'+i+'" placeholder="ชื่อนักเรียน" value="'+(saved[i]||'')+'"></div></div>';
+  }
+  $('nameRows').innerHTML=html;
+}
+function classNames(){
+  return Array.prototype.map.call(document.querySelectorAll('[data-nm]'),function(el,i){
+    return el.value.trim()||('คนที่ '+(i+1));});
+}
+function classIds(){
+  return Array.prototype.map.call(document.querySelectorAll('[data-sid]'),function(el,i){
+    return el.value.trim()||String(i+1);});
+}
+document.addEventListener('input',function(e){
+  if(e.target.id==='inCount')paintNameRows();
+  if(e.target.getAttribute&&e.target.getAttribute('data-nm')!==null)store.set('sf.classNames',classNames());
+  if(e.target.getAttribute&&e.target.getAttribute('data-sid')!==null)store.set('sf.classIds',classIds());
+});
 function paintVoiceBtn(){
   $('btnVoice').textContent='เสียงพูด: '+(speech.on?'เปิด':'ปิด');
 }
@@ -733,17 +831,45 @@ function endSession(){
   row.goodSeconds=Math.round(state.total*state.good/Math.max(1,state.good+state.bad+state.unknown));
   row.badSeconds=state.total-row.goodSeconds;row.unknownSeconds=0;
   row.score=score;row.alertCount=state.alerts;row.mainIssue=issues[0]||'-';
+  row.grade=score>=90?'ดีมาก':score>=80?'ดี':score>=60?'ควรปรับ':'ควรปรับทันที';
+  row.coverage=Math.round(100*(state.good+state.bad)/Math.max(1,state.good+state.bad+state.unknown));
+  row.room=state.room||'';row.activity=state.act||'';row.device=state.dev||'';row.cameraAngle=state.angle;
+  row.advice=(ADVICE[issues[0]]||'รักษาท่านี้ไว้');
   row.startedAt=state.startedAt.toISOString();row.endedAt=ended.toISOString();
   var hist=store.get(LS.hist,[]);
   row._samples=(state.samples||[]).slice(-120);
   row._worst=state.worst||[];
   hist.unshift(row);store.set(LS.hist,hist.slice(0,60));
   state.lastSessionId=row.sessionId;
+  if(state.mode==='classroom'&&state.perPerson){
+    row._students=Object.keys(state.perPerson).map(function(k){
+      var r=state.perPerson[k];
+      var sc=Math.round(100*r.good/Math.max(1,r.good+r.bad));
+      var iss=Object.keys(r.issues).sort(function(a,b){return r.issues[b]-r.issues[a]})[0]||'-';
+      return {seatNo:r.seatNo,studentId:r.studentId,name:r.name,score:sc,
+        grade:sc>=90?'ดีมาก':sc>=80?'ดี':sc>=60?'ควรปรับ':'ควรปรับทันที',
+        mainIssue:iss,advice:ADVICE[iss]||'-'};
+    });
+    hist[0]._students=row._students;store.set(LS.hist,hist.slice(0,60));
+    row._students.forEach(function(s){
+      jsonp(sheetUrl()+'?action=saveStudent&sessionId='+encodeURIComponent(row.sessionId)+
+        '&room='+encodeURIComponent(row.room)+'&seatNo='+s.seatNo+'&studentId='+encodeURIComponent(s.studentId)+
+        '&name='+encodeURIComponent(s.name)+'&score='+s.score+'&grade='+encodeURIComponent(s.grade)+
+        '&mainIssue='+encodeURIComponent(s.mainIssue)+'&advice='+encodeURIComponent(s.advice)).catch(function(){});
+    });
+  }
   showSummary(row,issues);
   $('saveTxt').textContent='กำลังบันทึกลง Google Sheets…';
   pushRow(row).then(function(){store.set('sf.lastError','');$('saveTxt').textContent='บันทึกลง Google Sheets แล้ว · แถว '+row.sessionId})
     .catch(function(e){store.set('sf.lastError',String(e&&e.message||e));queue(row);$('saveTxt').textContent='ออฟไลน์/ส่งไม่สำเร็จ — เก็บคิวไว้แล้ว ('+e.message+')'});
 }
+var ADVICE={
+  'คอยื่น':'ยกจอขึ้นให้ขอบบนอยู่ระดับสายตา เก็บคางเข้า และเลื่อนเก้าอี้เข้าใกล้โต๊ะ',
+  'หลังค่อม':'ดันสะโพกเข้าในสุด ให้พนักพิงรองรับหลังส่วนล่าง ยืดอกขึ้น',
+  'ไหล่เอียง':'ลดที่เท้าแขนข้างที่สูงกว่า วางแขนสองข้างบนโต๊ะให้สมดุล',
+  'ศีรษะเอียง':'ตั้งหัวตรง หลีกเอียงคอคุยโทรศัพท์ ใช้หูฟังแทน',
+  'มุมสะโพก':'ปรับความสูงเก้าอี้ให้สะโพกสูงกว่าเข่าเล็กน้อย เท้าวางเต็มพื้น'
+};
 function showSummary(row,issues){
   goto('summary');$('tabs').classList.remove('hidden');
   var mins=Math.floor(row.totalSeconds/60),secs=row.totalSeconds%60;
@@ -753,15 +879,29 @@ function showSummary(row,issues){
   $('sumNote').textContent='นั่งดี '+row.score+'% ของเวลา · เตือน '+row.alertCount+' ครั้ง';
   $('fixList').innerHTML=(issues.length?issues.slice(0,2):['-']).map(function(is,i){
     var c=COACH[is]||[is,''];
-    return '<div class="card" style="display:flex;gap:13px"><span style="width:34px;height:34px;border-radius:17px;background:#FDEAEA;color:var(--bad);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span><span><b style="display:block;font-size:15px">'+is+'</b><small class="note">'+c[0]+' · '+c[1]+'</small></span></div>';
+    return '<div class="card" style="display:flex;gap:13px"><span style="width:34px;height:34px;border-radius:17px;background:#FDEAEA;color:var(--bad);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span><span><b style="display:block;font-size:15px">'+is+'</b><small class="note">'+(ADVICE[is]||c[0])+'</small></span></div>';
   }).join('');
+  var goodPart=row.score>=80?'นั่งได้ดีตลอด รักษาระดับนี้ไว้':'มีช่วงที่นั่งถูกท่า '+row.goodSeconds+' วินาที';
+  var analysis=[
+    ['ระดับคะแนน',row.score+' คะแนน · '+row.grade],
+    ['ความครบของข้อมูล',row.coverage+'% ของเวลาที่ AI ตรวจเห็นชัด'],
+    ['เวลาท่าดี / ควรปรับ',row.goodSeconds+' วิ / '+row.badSeconds+' วิ'],
+    ['สิ่งที่ทำได้ดี',goodPart],
+    ['เป้าหมายครั้งหน้า',(issues[0]?('ลด "'+issues[0]+'" ให้น้อยลง และทำคะแนนให้ถึง '+Math.min(100,row.score+8)):'รักษาคะแนน 80 ขึ้นไป')]
+  ];
+  $('analysisBox').innerHTML=analysis.map(function(a){
+    return '<div class="card" style="display:flex;justify-content:space-between;gap:12px;padding:13px 15px">'+
+      '<b style="font-size:13px;flex:none">'+a[0]+'</b><span class="note" style="text-align:right">'+a[1]+'</span></div>';
+  }).join('')+(row._students?('<div class="card"><b style="font-size:13px">ผลรายบุคคล</b>'+row._students.map(function(s){
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line)"><span style="font-size:13px">'+s.seatNo+'. '+s.name+'</span><span class="note">'+s.score+' · '+s.mainIssue+'</span></div>';
+  }).join('')+'</div>'):'');
 }
 
 /* ---------- lists ---------- */
 function rowCard(r){
   var when=new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
   var mins=Math.max(1,Math.round(r.totalSeconds/60));
-  return '<div class="sesrow" data-open="'+r.sessionId+'" style="cursor:pointer"><span class="pillscore">'+r.score+'</span>'+
+  return '<div class="sesrow" data-open="'+r.sessionId+'" style="cursor:pointer"><span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+r.score+'</span>'+
     '<span class="txt"><span class="when">'+when+'</span>'+
     '<span class="note">'+mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-')+'</span></span>'+
     '<span style="color:#B9CCC2;font-size:18px">›</span></div>';
@@ -860,16 +1000,101 @@ function openDetail(id){
   $('btnPrint').onclick=function(){window.print()};
   goto('detail');
 }
+var GUIDE=[
+  ['สายตาระดับขอบบนจอ','ขอบบนของจอควรอยู่ระดับสายตาหรือต่ำกว่าเล็กน้อย ห่างประมาณหนึ่งช่วงแขน ช่วยลดการก้มคอ','คอยื่น'],
+  ['หลังตรง สะโพกชิดพนักพิง','ดันสะโพกเข้าในสุด ให้พนักพิงรองรับหลังส่วนล่าง ไม่นั่งครึ่งเก้าอี้','หลังค่อม'],
+  ['ไหล่ผ่อน ศอกแนบลำตัว','ต้นแขนแนบข้างลำตัว ศอกงอประมาณ 90–120° วางแขนบนโต๊ะหรือที่เท้าแขน','ไหล่เอียง'],
+  ['สะโพกและเข่าตั้งฉาก','มุมสะโพกและเข่าประมาณ 90–100° เท้าวางราบเต็มพื้น ไม่ไขว้ห้างนาน','มุมสะโพก'],
+  ['ลุกเปลี่ยนอิริยาบถทุก 30–45 นาที','ท่าที่ดีที่สุดคือท่าถัดไป — ลุกยืดเหยียด มองไกล พักสายตา','ทั่วไป']
+];
+function renderGuide(){
+  var img=new Image();
+  img.onload=function(){$('guideImg').innerHTML='<img src="guide.jpg" style="width:100%;height:100%;object-fit:cover;display:block" alt="ท่านั่งที่ถูกต้อง">'};
+  img.src='guide.jpg';
+  $('guideList').innerHTML=GUIDE.map(function(g,i){
+    return '<div class="card" style="display:flex;gap:13px">'+
+      '<span style="width:34px;height:34px;border-radius:17px;background:#E7F8F0;color:var(--good);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span>'+
+      '<span><b style="display:block;font-size:15px">'+g[0]+'</b>'+
+      '<span class="note">'+g[1]+'</span>'+
+      '<span class="note" style="display:block;margin-top:6px;color:var(--g600)">เกี่ยวกับ: '+g[2]+'</span></span></div>';
+  }).join('');
+}
+
+function renderWeek(hist){
+  var days=[],now=new Date();
+  for(var i=6;i>=0;i--){
+    var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);
+    var key=d.toDateString();
+    var rows=hist.filter(function(r){return new Date(r.startedAt).toDateString()===key});
+    var avg=rows.length?Math.round(rows.reduce(function(a,r){return a+r.score},0)/rows.length):null;
+    days.push({dow:['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()],avg:avg,n:rows.length});
+  }
+  var any=days.some(function(d){return d.avg!==null});
+  if(!any)return '<div style="display:flex;gap:7px;align-items:flex-end;height:64px">'+days.map(function(d){
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">'+
+      '<div style="width:100%;height:18px;border-radius:7px;background:rgba(207,241,225,.28)"></div>'+
+      '<span style="font-size:10px;color:rgba(207,241,225,.7)">'+d.dow+'</span></div>';
+  }).join('')+'</div>';
+  return '<div style="display:flex;gap:7px;align-items:flex-end;height:78px">'+days.map(function(d){
+    var h=d.avg===null?14:Math.max(16,Math.round(d.avg*0.52));
+    var c=d.avg===null?'rgba(207,241,225,.28)':(d.avg>=80?'var(--g500)':d.avg>=60?'#E8C24B':'#E5484D');
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">'+
+      '<div style="width:100%;height:'+h+'px;border-radius:7px;background:'+c+'"></div>'+
+      '<span style="font-size:10px;color:rgba(207,241,225,.7)">'+d.dow+'</span></div>';
+  }).join('')+'</div>';
+}
 function renderHome(){
   var h=store.get(LS.hist,[]);
   $('todayLabel').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
-  $('sessionCount').textContent=h.length;
+  var streak=0,cursor=new Date();
+  for(var i=0;i<60;i++){
+    var key=cursor.toDateString();
+    var day=h.filter(function(r){return new Date(r.startedAt).toDateString()===key});
+    if(day.length&&day.reduce(function(a,r){return a+r.score},0)/day.length>=80)streak++;
+    else if(i>0)break;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  $('streakNum').textContent=streak;
+  $('streakTxt').textContent=streak?('นั่งดีติดกัน '+streak+' วัน'):'เริ่มสะสมสถิติวันนี้';
+  var wk=h.filter(function(r){return Date.now()-new Date(r.startedAt).getTime()<7*864e5});
+  var hrs=wk.reduce(function(a,r){return a+(r.totalSeconds||0)},0)/3600;
+  $('weekHours').textContent=(hrs<1?Math.round(hrs*60)+' น.':hrs.toFixed(1)+' ชม.');
   $('avgScore').textContent=h.length?Math.round(h.reduce(function(a,r){return a+r.score},0)/h.length):'—';
+  $('weekCard').innerHTML=renderWeek(h);
   $('recentList').innerHTML=h.slice(0,3).map(rowCard).join('')||'<div class="note">ยังไม่มีเซสชัน กดเริ่มตรวจได้เลย</div>';
+}
+function toCSV(){
+  var h=store.get(LS.hist,[]);
+  var cols=['sessionId','startedAt','appMode','room','name','totalSeconds','goodSeconds','badSeconds','coverage','score','grade','alertCount','mainIssue','advice'];
+  var lines=[cols.join(',')];
+  h.forEach(function(r){lines.push(cols.map(function(c){return '"'+String(r[c]==null?'':r[c]).replace(/"/g,'""')+'"'}).join(','))});
+  var blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='smartflex-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 function renderHistory(){
   var h=store.get(LS.hist,[]);
-  $('historyList').innerHTML=h.map(rowCard).join('')||'<div class="note">ยังไม่มีข้อมูล</div>';
+  var q=($('inSearch')&&$('inSearch').value||'').toLowerCase();
+  var mode=state.histMode||'all';
+  var list=h.filter(function(r){
+    if(mode!=='all'&&r.appMode!==mode)return false;
+    if(!q)return true;
+    return ((r.name||'')+' '+(r.userId||'')+' '+(r.room||'')).toLowerCase().indexOf(q)>-1;
+  });
+  var avg=list.length?Math.round(list.reduce(function(a,r){return a+r.score},0)/list.length):0;
+  var alerts=list.reduce(function(a,r){return a+(r.alertCount||0)},0);
+  var freq={};list.forEach(function(r){if(r.mainIssue&&r.mainIssue!=='-')freq[r.mainIssue]=(freq[r.mainIssue]||0)+1});
+  var top=Object.keys(freq).sort(function(a,b){return freq[b]-freq[a]});
+  $('histStats').innerHTML='<div class="grid2">'+
+    '<div class="stat"><b>'+(list.length?avg:'—')+'</b><span>คะแนนเฉลี่ย</span></div>'+
+    '<div class="stat"><b>'+list.length+'</b><span>เซสชัน</span></div>'+
+    '<div class="stat"><b>'+alerts+'</b><span>ครั้งที่เตือน</span></div>'+
+    '<div class="stat"><b style="font-size:15px">'+(top[0]||'—')+'</b><span>ปัญหาที่พบบ่อย</span></div></div>'+
+    (list.length>1?'<div class="card"><b style="font-size:13px">แนวโน้มคะแนน (เก่า→ใหม่)</b><div style="display:flex;gap:3px;height:44px;align-items:flex-end;margin-top:8px">'+
+      list.slice(0,20).reverse().map(function(r){
+        return '<div style="flex:1;height:'+Math.max(6,Math.round(r.score*0.42))+'px;border-radius:3px;background:'+(r.score>=80?'var(--good)':r.score>=60?'var(--warn)':'var(--bad)')+'"></div>';
+      }).join('')+'</div></div>':'');
+  $('historyList').innerHTML=list.map(rowCard).join('')||'<div class="note">ยังไม่มีข้อมูล</div>';
 }
 
 /* ---------- boot ---------- */
@@ -877,6 +1102,9 @@ var prof=store.get(LS.prof,{name:'',userId:''});
 $('inName').value=prof.name||'';$('inId').value=prof.userId||'';
 $('urlView').textContent=DEFAULT_URL.replace(/\/s\/([^/]{10})[^/]+\//,'/s/$1…/');
 $('colList').textContent=COLS.join(' · ');
+$('btnCSV').onclick=toCSV;
+$('btnPrintAll').onclick=function(){window.print()};
+$('inSearch').oninput=renderHistory;
 renderAngleInfo();
 $('btnFullReport').onclick=function(){if(state.lastSessionId)openDetail(state.lastSessionId);else goto('history')};
 paintMinutes();
