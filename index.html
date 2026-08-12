@@ -62,8 +62,7 @@ button{font-family:inherit;cursor:pointer}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
-.tabs i{width:20px;height:20px;border:2px solid currentColor;border-radius:7px;display:block}
-.tabs button:nth-child(3) i,.tabs button:nth-child(4) i{border-radius:50%}
+.tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
 .ring{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;flex:none}
 .ring div{width:88px;height:88px;border-radius:44px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ring b{font-size:34px;color:var(--g900);line-height:1}
@@ -75,7 +74,9 @@ button{font-family:inherit;cursor:pointer}
 .hidden{display:none!important}
 .note{font-size:11.5px;color:var(--ink-soft);line-height:1.55}
 .sesrow{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:18px;background:#fff;border:1px solid var(--line)}
-.sesrow b{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+.sesrow .pillscore{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none}
+.sesrow .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sesrow .txt .when{font-size:14.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -91,9 +92,9 @@ button{font-family:inherit;cursor:pointer}
     </div>
     <div class="card" style="background:linear-gradient(135deg,var(--g900),#0E3C27);border:none;border-radius:26px;color:#fff">
       <div class="eyebrow" style="color:rgba(207,241,225,.8)">สัปดาห์นี้ · THIS WEEK</div>
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px">
-        <div style="font-size:15px">คะแนนเฉลี่ย <b id="avgScore">—</b></div>
-        <div style="font-size:44px;font-weight:800;color:var(--g500);line-height:.9" id="sessionCount">0</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:12px">
+        <div style="font-size:15px">คะแนนเฉลี่ย <b id="avgScore" style="font-size:19px">—</b></div>
+        <div style="font-size:40px;font-weight:800;color:var(--g500);line-height:.9" id="sessionCount">0</div>
       </div>
       <div style="font-size:11px;color:rgba(207,241,225,.75);margin-top:4px">เซสชันที่บันทึกไว้ในเครื่อง</div>
     </div>
@@ -153,13 +154,30 @@ button{font-family:inherit;cursor:pointer}
     <div class="eyebrow">การเชื่อมต่อ GOOGLE SHEETS</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dotSet"></span><b id="sheetTxtSet" style="font-size:13px">—</b></div>
-      <div class="field"><label for="inUrl">Apps Script Web App URL (ลงท้าย /exec)</label>
-      <input id="inUrl" style="font-size:11px"></div>
+      <div class="field"><label>ปลายทางบันทึก (ตั้งค่าโดยผู้ดูแลระบบ)</label>
+      <div id="urlView" style="padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;background:#F8FBF9;font-size:11px;color:var(--ink-soft);word-break:break-all;line-height:1.5"></div></div>
       <div class="row">
         <button class="btn" id="btnTest" style="flex:1">ทดสอบการเชื่อมต่อ</button>
         <button class="btn sec" id="btnSync" style="flex:1">ส่งคิวค้าง (<span id="pendCount">0</span>)</button>
       </div>
       <div class="note">ออฟไลน์ได้ — เซสชันจะเก็บเป็นคิวในเครื่อง แล้วส่งเองเมื่อกลับมาออนไลน์</div>
+    </div>
+    <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row" style="align-items:flex-end">
+        <div class="field"><label for="inMinutes">ตั้งเวลา (นาที)</label><input id="inMinutes" type="number" min="0" max="240" step="1" inputmode="numeric"></div>
+        <button class="btn sec" id="btnSaveMin" style="width:110px;height:44px">บันทึก</button>
+      </div>
+      <div class="row" style="flex-wrap:wrap">
+        <button class="chip" data-min="1" style="flex:0 0 auto">1 นาที</button>
+        <button class="chip" data-min="5" style="flex:0 0 auto">5 นาที</button>
+        <button class="chip" data-min="10" style="flex:0 0 auto">10 นาที</button>
+        <button class="chip" data-min="15" style="flex:0 0 auto">15 นาที</button>
+        <button class="chip" data-min="25" style="flex:0 0 auto">25 นาที</button>
+        <button class="chip" data-min="45" style="flex:0 0 auto">45 นาที</button>
+        <button class="chip" data-min="0" style="flex:0 0 auto">ไม่จำกัด</button>
+      </div>
+      <div class="note">ตั้งได้ 1–240 นาที · ครบเวลาแล้วแอปจะหยุดเองแล้วพาไปหน้าสรุป · หน้าตรวจนับเวลาถอยหลังให้</div>
     </div>
     <div class="eyebrow">คอลัมน์ที่บันทึก</div>
     <div class="card note" id="colList"></div>
@@ -194,18 +212,27 @@ button{font-family:inherit;cursor:pointer}
       <div style="padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700" id="clock">0:00</div>
     </div>
     <div class="band" id="band"><span style="flex:1"><b id="coachTh">กำลังตรวจจับ…</b><small id="coachEn">Detecting…</small></span><i id="liveScore">–</i></div>
+    <div style="display:flex;gap:12px;align-items:center;padding:0 4px;color:rgba(207,241,225,.85);font-size:10.5px">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#30CF85;border-radius:2px"></span>ถูกท่า</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#E5484D;border-radius:2px"></span>ต้องแก้</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:repeating-linear-gradient(90deg,#fff 0 4px,transparent 4px 7px)"></span>เส้นเงาท่าที่ถูก</span>
+      <button id="btnVoice" style="margin-left:auto;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:5px 10px">เสียงพูด: เปิด</button>
+    </div>
   </div>
   <div class="metrics" id="metrics"></div>
   <div class="people hidden" id="people"></div>
-  <div class="livebtm"><button class="btn" id="btnFlip" style="background:rgba(255,255,255,.16);backdrop-filter:blur(12px)">สลับกล้อง</button></div>
-  <div class="overlay" id="ovl"><h2 id="ovlH">นั่งท่ามาตรฐานค้างไว้</h2><p id="ovlP">กำลังตั้งค่าพื้นฐาน (baseline)</p></div>
+  <div class="livebtm" style="display:flex;gap:9px">
+    <button class="btn" id="btnStop" style="flex:1;background:#fff;color:var(--g900)">หยุดตรวจ · Stop</button>
+    <button class="btn" id="btnFlip" style="width:120px;background:rgba(255,255,255,.16);backdrop-filter:blur(12px)">สลับกล้อง</button>
+  </div>
+  <div class="overlay" id="ovl"><h2 id="ovlH">นั่งท่ามาตรฐานค้างไว้</h2><p id="ovlP">กำลังตั้งค่าพื้นฐาน (baseline)</p><button class="btn" id="btnOvlBack" style="display:none;max-width:220px;background:#fff;color:var(--g900)">ย้อนกลับ</button></div>
 </div>
 
 <div class="tabs" id="tabs">
-  <button data-goto="home" class="on"><i></i>หน้าหลัก</button>
-  <button data-goto="history"><i></i>ผล</button>
-  <button data-goto="setup"><i></i>ตรวจ</button>
-  <button data-goto="settings"><i></i>ตั้งค่า</button>
+  <button data-goto="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6.5 9.6V20h11V9.6"/><path d="M10 20v-5h4v5"/></svg>หน้าหลัก</button>
+  <button data-goto="history"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20V12"/><path d="M12 20V6"/><path d="M17 20v-5"/></svg>ผล</button>
+  <button data-goto="setup"><svg viewBox="0 0 24 24"><path d="M3 8.5A2 2 0 0 1 5 6.5h2.2l1.3-2h7l1.3 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.5" r="3.4"/></svg>ตรวจ</button>
+  <button data-goto="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>ตั้งค่า</button>
 </div>
 </div>
 
@@ -225,7 +252,7 @@ var store={
   set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 };
 var state={mode:'personal',angle:'auto',facing:'user',running:false,detector:null,
-  startedAt:null,total:0,good:0,bad:0,unknown:0,alerts:0,issues:{},baseline:null,badRun:0,lastTick:0};
+  startedAt:null,total:0,good:0,bad:0,unknown:0,alerts:0,issues:{},baseline:null,badSince:0,lastAlert:0};
 
 /* ---------- navigation ---------- */
 function goto(name){
@@ -250,13 +277,15 @@ document.addEventListener('click',function(e){
   var a=e.target.closest('[data-angle]');
   if(a){state.angle=a.getAttribute('data-angle');
     Array.prototype.forEach.call(document.querySelectorAll('[data-angle]'),function(x){x.classList.toggle('on',x===a)});}
+  var mn=e.target.closest('[data-min]');
+  if(mn){store.set('sf.minutes',Number(mn.getAttribute('data-min')));paintMinutes()}
 });
 $('pillHome').onclick=function(){goto('settings')};
 $('pillSetup').onclick=function(){goto('settings')};
 $('btnStart').onclick=function(){goto('setup')};
 
 /* ---------- sheets ---------- */
-function sheetUrl(){return store.get(LS.url,DEFAULT_URL)}
+function sheetUrl(){return DEFAULT_URL}
 function jsonp(url,timeout){
   return new Promise(function(res,rej){
     var cb='sfcb'+Date.now()+Math.floor(Math.random()*1e4);
@@ -299,7 +328,6 @@ function paintSheet(txt,ok){
   $('pendCount').textContent=pend;
 }
 $('btnTest').onclick=function(){
-  store.set(LS.url,$('inUrl').value.trim()||DEFAULT_URL);
   paintSheet('กำลังทดสอบ…');
   jsonp(sheetUrl()+'?action=ping').then(function(){paintSheet('เชื่อมต่อสำเร็จ',true)})
     .catch(function(e){paintSheet(e.message,false)});
@@ -326,35 +354,73 @@ function analyse(kp){
   var knee=pick(kp,K.leftKnee)||pick(kp,K.rightKnee);
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
   var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar);
-  var m={},bad=[];
-  if(ear&&sh&&hip){m.forwardHead=Math.round(ang(ear,sh,hip));if(Math.abs(m.forwardHead-165)>20)bad.push('คอยื่น')}
-  if(sh&&hip&&knee){m.hipAngle=Math.round(ang(sh,hip,knee));if(Math.abs(m.hipAngle-95)>30)bad.push('มุมสะโพก')}
-  if(sl&&sr){m.shoulderTilt=Math.round(tilt(sl,sr));if(m.shoulderTilt>8)bad.push('ไหล่เอียง')}
-  if(el&&er){m.headTilt=Math.round(tilt(el,er));if(m.headTilt>10)bad.push('ศีรษะเอียง')}
-  if(sh&&hip){var lean=Math.round(Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI));m.torsoLean=lean;if(lean>15)bad.push('หลังค่อม')}
+  var m={},bad=[],flags={};
+  if(ear&&sh&&hip){m.forwardHead=Math.round(ang(ear,sh,hip));if(Math.abs(m.forwardHead-165)>20){bad.push('คอยื่น');flags.neck=1}}
+  if(sh&&hip&&knee){m.hipAngle=Math.round(ang(sh,hip,knee));if(Math.abs(m.hipAngle-95)>30){bad.push('มุมสะโพก');flags.hip=1}}
+  if(sl&&sr){m.shoulderTilt=Math.round(tilt(sl,sr));if(m.shoulderTilt>8){bad.push('ไหล่เอียง');flags.shoulder=1}}
+  if(el&&er){m.headTilt=Math.round(tilt(el,er));if(m.headTilt>10){bad.push('ศีรษะเอียง');flags.neck=1}}
+  if(sh&&hip){var lean=Math.round(Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI));m.torsoLean=lean;if(lean>15){bad.push('หลังค่อม');flags.torso=1}}
   var known=Object.keys(m).length;
-  return {metrics:m,bad:bad,status:known?(bad.length?(bad.length>1?'bad':'warn'):'good'):'unknown'};
+  return {metrics:m,bad:bad,flags:flags,status:known?(bad.length?(bad.length>1?'bad':'warn'):'good'):'unknown'};
 }
 var COACH={
-  'คอยื่น':['ยกหน้าจอขึ้น','Raise your screen'],
-  'หลังค่อม':['ยืดหลังให้ตรง','Sit tall'],
-  'ไหล่เอียง':['ปรับไหล่ให้เท่ากัน','Level your shoulders'],
-  'ศีรษะเอียง':['ตั้งศีรษะให้ตรง','Straighten your head'],
-  'มุมสะโพก':['ปรับความสูงเก้าอี้','Adjust chair height']
+  'คอยื่น':['ยกหน้าจอขึ้น','Raise your screen','คอยื่นไปข้างหน้า ยกจอขึ้นและเก็บคางเข้า'],
+  'หลังค่อม':['ยืดหลังให้ตรง','Sit tall','หลังค่อม ยืดหลังขึ้นให้ตรง'],
+  'ไหล่เอียง':['ปรับไหล่ให้เท่ากัน','Level your shoulders','ไหล่เอียง ปรับไหล่สองข้างให้เท่ากัน'],
+  'ศีรษะเอียง':['ตั้งศีรษะให้ตรง','Straighten your head','ศีรษะเอียง ตั้งหัวให้ตรง'],
+  'มุมสะโพก':['ปรับความสูงเก้าอี้','Adjust chair height','มุมสะโพกไม่พอดี ปรับความสูงเก้าอี้']
 };
+
+/* ---------- เสียงพูดเตือน (Thai TTS) ---------- */
+var speech={on:store.get('sf.voice',true),last:'',at:0,voice:null};
+function pickVoice(){
+  if(!('speechSynthesis' in window))return null;
+  var vs=speechSynthesis.getVoices()||[];
+  speech.voice=vs.filter(function(v){return /th/i.test(v.lang)})[0]||vs[0]||null;
+  return speech.voice;
+}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(text,force){
+  if(!speech.on||!('speechSynthesis' in window)||!text)return;
+  var now=Date.now();
+  if(!force&&text===speech.last&&now-speech.at<12000)return;
+  if(!force&&now-speech.at<3500)return;
+  speech.last=text;speech.at=now;
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang='th-TH';u.rate=1;u.pitch=1;
+    if(speech.voice)u.voice=speech.voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
 
 /* ---------- live ---------- */
 var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,tickTimer=null;
 async function ensureDetector(){
   if(state.detector)return state.detector;
-  showOverlay('กำลังโหลดระบบ AI','MoveNet · ครั้งแรกอาจใช้เวลาสักครู่');
+  showOverlay('กำลังโหลดระบบ AI','MoveNet · ครั้งแรกอาจใช้เวลาสักครู่',true);
   await tf.setBackend('webgl');await tf.ready();
   state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,
     {modelType:state.mode==='classroom'?poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING:poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,enableTracking:state.mode==='classroom'});
   return state.detector;
 }
-function showOverlay(h,p){$('ovlH').textContent=h;$('ovlP').textContent=p||'';$('ovl').classList.add('on')}
-function hideOverlay(){$('ovl').classList.remove('on')}
+function showOverlay(h,p,recoverable){
+  $('ovlH').textContent=h;$('ovlP').textContent=p||'';
+  $('btnOvlBack').style.display=recoverable?'block':'none';
+  $('ovl').classList.add('on');
+}
+function hideOverlay(){$('ovl').classList.remove('on');$('btnOvlBack').style.display='none'}
+function leaveLive(){
+  state.running=false;
+  if(rafId)cancelAnimationFrame(rafId);
+  if(tickTimer)clearInterval(tickTimer);
+  if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
+  hideOverlay();
+  $('live').classList.remove('on');$('tabs').classList.remove('hidden');
+  goto('setup');
+}
+$('btnOvlBack').onclick=leaveLive;
 async function startCamera(){
   if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
   var stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:state.facing,width:{ideal:1280},height:{ideal:720}}});
@@ -363,13 +429,16 @@ async function startCamera(){
 }
 $('btnFlip').onclick=function(){state.facing=state.facing==='user'?'environment':'user';startCamera()};
 $('btnGoLive').onclick=async function(){
+  unlockAudio();
+  paintVoiceBtn();
+  if(speech.on)say('เริ่มตรวจท่านั่ง',true);
   var prof={name:$('inName').value||'ผู้ใช้',userId:$('inId').value||'SF-0001'};
   store.set(LS.prof,prof);
   $('live').classList.add('on');$('tabs').classList.add('hidden');
   $('people').classList.toggle('hidden',state.mode!=='classroom');
   $('metrics').classList.toggle('hidden',state.mode==='classroom');
   $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · Classroom':'กำลังตรวจ · Live';
-  $('liveAngle').textContent=({auto:'ตรวจมุมอัตโนมัติ',side:'มุมข้าง',front:'มุมตรง',full:'เต็มตัว'})[state.angle];
+  $('liveAngle').textContent=({auto:'ตรวจมุมอัตโนมัติ',side:'มุมข้าง',front:'มุมตรง',full:'เต็มตัว'})[state.angle]+(durationMin()?' · '+durationMin()+' นาที':' · ไม่จำกัดเวลา');
   try{
     await startCamera();
     await ensureDetector();
@@ -377,11 +446,11 @@ $('btnGoLive').onclick=async function(){
       setTimeout(hideOverlay,5000);}
     else hideOverlay();
     beginSession();
-  }catch(err){showOverlay('เปิดกล้องไม่สำเร็จ',err.message)}
+  }catch(err){showOverlay('เปิดกล้องหรือโมเดลไม่สำเร็จ',(err&&err.message||'')+' · ตรวจการอนุญาตกล้องแล้วลองอีกครั้ง',true)}
 };
 function beginSession(){
   state.running=true;state.startedAt=new Date();
-  state.total=state.good=state.bad=state.unknown=state.alerts=0;state.issues={};state.badRun=0;
+  state.total=state.good=state.bad=state.unknown=state.alerts=0;state.issues={};state.badSince=0;state.lastAlert=0;
   loop();
   tickTimer=setInterval(tick,1000);
 }
@@ -389,7 +458,15 @@ function tick(){
   if(!state.running)return;
   state.total++;
   var s=Math.floor((Date.now()-state.startedAt)/1000);
-  $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  var limit=durationMin()*60;
+  if(limit>0){
+    var left=Math.max(0,limit-s);
+    $('clock').textContent='เหลือ '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+    if(left===60)say('อีกหนึ่งนาทีจะครบเวลา',true);
+    if(left<=0){say('ครบเวลาตรวจแล้ว',true);chime();endSession();return}
+  }else{
+    $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  }
 }
 async function loop(){
   if(!state.running)return;
@@ -400,24 +477,71 @@ async function loop(){
   }catch(e){}
   rafId=requestAnimationFrame(loop);
 }
-var EDGES=[[5,7],[7,9],[6,8],[8,10],[5,6],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16],[0,5],[0,6]];
-function drawSkeleton(kp,color){
-  ctx.strokeStyle=color;ctx.lineWidth=Math.max(3,cv.width/220);ctx.fillStyle=color;
+var EDGES=[[5,7,'arm'],[7,9,'arm'],[6,8,'arm'],[8,10,'arm'],[5,6,'shoulder'],[5,11,'torso'],[6,12,'torso'],[11,12,'torso'],[11,13,'hip'],[13,15,'hip'],[12,14,'hip'],[14,16,'hip'],[0,5,'neck'],[0,6,'neck']];
+var GOOD='#30CF85',BADC='#E5484D';
+function drawSkeleton(kp,flags,single){
+  var lw=Math.max(3,cv.width/220);
+  ctx.lineWidth=lw;ctx.lineCap='round';
   EDGES.forEach(function(e){
     var a=kp[e[0]],b=kp[e[1]];
-    if(a&&b&&a.score>0.35&&b.score>0.35){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+    if(!(a&&b&&a.score>0.35&&b.score>0.35))return;
+    var wrong=single&&flags&&flags[e[2]];
+    ctx.strokeStyle=wrong?BADC:GOOD;
+    ctx.shadowColor=wrong?'rgba(229,72,77,.6)':'rgba(48,207,133,.5)';ctx.shadowBlur=lw*2;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
   });
-  kp.forEach(function(p){if(p.score>0.35){ctx.beginPath();ctx.arc(p.x,p.y,ctx.lineWidth*1.4,0,6.3);ctx.fill()}});
+  ctx.shadowBlur=0;
+  kp.forEach(function(p,i){
+    if(p.score<=0.35)return;
+    var part=i===0||i===3||i===4?'neck':(i===5||i===6?'shoulder':(i===11||i===12?'torso':(i>=13?'hip':'arm')));
+    ctx.fillStyle=(single&&flags&&flags[part])?BADC:GOOD;
+    ctx.beginPath();ctx.arc(p.x,p.y,lw*1.4,0,6.3);ctx.fill();
+  });
+}
+
+/* เส้นเงาบอกท่าที่ถูก — กระดูกเป้าหมายจากสะโพก/ไหล่ของผู้ใช้เอง */
+function drawGuide(kp){
+  var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
+  var hl=pick(kp,K.leftHip),hr=pick(kp,K.rightHip);
+  var sh=sl&&sr?{x:(sl.x+sr.x)/2,y:(sl.y+sr.y)/2}:(sl||sr);
+  var hip=hl&&hr?{x:(hl.x+hr.x)/2,y:(hl.y+hr.y)/2}:(hl||hr);
+  var ear=pick(kp,K.leftEar)||pick(kp,K.rightEar);
+  if(!sh||!hip)return;
+  var torso=Math.hypot(sh.x-hip.x,sh.y-hip.y);
+  var gsh={x:hip.x,y:hip.y-torso};
+  var neck=ear?Math.hypot(ear.x-sh.x,ear.y-sh.y):torso*0.55;
+  var gear={x:gsh.x,y:gsh.y-neck};
+  var half=sl&&sr?Math.hypot(sl.x-sr.x,sl.y-sr.y)/2:torso*0.35;
+  var lw=Math.max(3,cv.width/240);
+  ctx.save();
+  ctx.setLineDash([lw*2.4,lw*2.4]);ctx.lineWidth=lw;ctx.lineCap='round';
+  ctx.strokeStyle='rgba(255,255,255,.62)';
+  ctx.beginPath();ctx.moveTo(hip.x,hip.y);ctx.lineTo(gsh.x,gsh.y);ctx.lineTo(gear.x,gear.y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gsh.x-half,gsh.y);ctx.lineTo(gsh.x+half,gsh.y);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  [gsh,gear].forEach(function(p){ctx.beginPath();ctx.arc(p.x,p.y,lw*1.6,0,6.3);ctx.fill()});
+  ctx.restore();
 }
 var TONE={good:'#30CF85',warn:'#E8C24B',bad:'#E5484D',unknown:'#9BAFA5'};
 var BAND={good:'rgba(31,169,113,.94)',warn:'rgba(200,160,46,.95)',bad:'rgba(229,72,77,.94)',unknown:'rgba(10,26,19,.8)'};
 function paintPersonal(pose){
   if(!pose){state.unknown++;setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],'–');return}
   var r=analyse(pose.keypoints);
-  drawSkeleton(pose.keypoints,TONE[r.status]);
+  drawGuide(pose.keypoints);
+  drawSkeleton(pose.keypoints,r.flags,true);
   if(r.status==='good')state.good++;else if(r.status==='unknown')state.unknown++;else state.bad++;
   r.bad.forEach(function(b){state.issues[b]=(state.issues[b]||0)+1});
-  if(r.status==='bad'){state.badRun++;if(state.badRun===60){state.alerts++;chime()}}else state.badRun=0;
+  if(r.status==='bad'||r.status==='warn'){
+    if(!state.badSince)state.badSince=Date.now();
+    var held=Date.now()-state.badSince;
+    if(held>4000)say((COACH[r.bad[0]]||[,,r.bad[0]])[2]);
+    if(r.status==='bad'&&held>5000&&Date.now()-(state.lastAlert||0)>20000){state.lastAlert=Date.now();state.alerts++;chime()}
+    state.wasBad=true;
+  }else{
+    if(state.wasBad&&state.badSince&&Date.now()-state.badSince>4000){say('ท่าถูกแล้ว รักษาไว้นี่นะ',true);state.wasBad=false}
+    state.badSince=0;
+  }
   var main=r.bad[0];
   var c=main?COACH[main]||[main,'']:['ท่านี้ดี รักษาไว้','Good posture — hold it'];
   var score=Math.round(100*state.good/Math.max(1,state.good+state.bad));
@@ -430,7 +554,7 @@ function paintClass(poses){
   var counts={good:0,warn:0,bad:0};var html='';
   poses.forEach(function(p,i){
     var r=analyse(p.keypoints);
-    drawSkeleton(p.keypoints,TONE[r.status]);
+    drawSkeleton(p.keypoints,r.flags,true);
     if(r.status!=='unknown')counts[r.status]++;
     html+='<div class="person" style="border-color:'+TONE[r.status]+'"><b>คนที่ '+(i+1)+'</b><span>'+(r.bad[0]||'ท่าดี')+'</span></div>';
   });
@@ -445,8 +569,17 @@ function setBand(st,c,score){
   $('liveScore').textContent=score;
 }
 var actx=null;
+function unlockAudio(){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    var b=actx.createBuffer(1,1,22050),s=actx.createBufferSource();
+    s.buffer=b;s.connect(actx.destination);s.start(0);
+  }catch(e){}
+}
 function chime(){
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
     var o=actx.createOscillator(),g=actx.createGain();
     o.frequency.value=660;o.connect(g);g.connect(actx.destination);
     g.gain.setValueAtTime(.001,actx.currentTime);g.gain.exponentialRampToValueAtTime(.25,actx.currentTime+.02);
@@ -455,7 +588,29 @@ function chime(){
   if(navigator.vibrate)navigator.vibrate(180);
 }
 $('btnEnd').onclick=function(){endSession()};
+$('btnStop').onclick=function(){endSession()};
+function durationMin(){var v=Number(store.get('sf.minutes',25));return isNaN(v)||v<0?25:Math.round(v)}
+function paintMinutes(){
+  var m=durationMin();
+  $('inMinutes').value=m;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-min]'),function(b){
+    b.classList.toggle('on',Number(b.getAttribute('data-min'))===m);
+  });
+}
+$('btnSaveMin').onclick=function(){
+  var v=Math.max(0,Math.min(240,Math.round(Number($('inMinutes').value)||0)));
+  store.set('sf.minutes',v);paintMinutes();
+};
+function paintVoiceBtn(){
+  $('btnVoice').textContent='เสียงพูด: '+(speech.on?'เปิด':'ปิด');
+}
+$('btnVoice').onclick=function(){
+  speech.on=!speech.on;store.set('sf.voice',speech.on);paintVoiceBtn();
+  if(speech.on)say('เปิดเสียงพูดเตือน',true);else if('speechSynthesis' in window)speechSynthesis.cancel();
+};
+paintVoiceBtn();
 function endSession(){
+  if('speechSynthesis' in window)speechSynthesis.cancel();
   state.running=false;cancelAnimationFrame(rafId);clearInterval(tickTimer);
   if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
   $('live').classList.remove('on');$('tabs').classList.remove('hidden');
@@ -491,9 +646,11 @@ function showSummary(row,issues){
 
 /* ---------- lists ---------- */
 function rowCard(r){
-  return '<div class="sesrow"><b>'+r.score+'</b><span style="flex:1"><b style="display:block;font-size:14.5px">'+
-    new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+
-    '</b><small class="note">'+Math.round(r.totalSeconds/60)+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+r.mainIssue+'</small></span></div>';
+  var when=new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  var mins=Math.max(1,Math.round(r.totalSeconds/60));
+  return '<div class="sesrow"><span class="pillscore">'+r.score+'</span>'+
+    '<span class="txt"><span class="when">'+when+'</span>'+
+    '<span class="note">'+mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-')+'</span></span></div>';
 }
 function renderHome(){
   var h=store.get(LS.hist,[]);
@@ -510,8 +667,9 @@ function renderHistory(){
 /* ---------- boot ---------- */
 var prof=store.get(LS.prof,{name:'',userId:''});
 $('inName').value=prof.name||'';$('inId').value=prof.userId||'';
-$('inUrl').value=sheetUrl();
+$('urlView').textContent=DEFAULT_URL.replace(/\/s\/([^/]{10})[^/]+\//,'/s/$1…/');
 $('colList').textContent=COLS.join(' · ');
+paintMinutes();
 paintSheet();renderHome();
 if(navigator.onLine)flushQueue();
 })();
