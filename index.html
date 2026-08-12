@@ -68,6 +68,28 @@ a:hover{color:var(--g900)}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
+@media(min-width:760px){
+  body{background:#E7EFEA}
+  .app{max-width:960px;padding-bottom:0}
+  .pad{padding:28px 32px 120px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
+  .pad>.h1,.pad>.eyebrow,.pad>#recentList,.pad>#historyList,.pad>#guideList,.pad>#detailBody,.pad>#histStats,.pad>#analysisBox,.pad>#fixList,.pad>#nameRows,.pad>.full{grid-column:1/-1}
+  .pad>.full-head{grid-column:1/-1;align-self:start}
+  #recentList,#historyList,#guideList{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #live{max-width:100%;inset:0}
+  #vid,#cv{object-fit:contain;background:#0c1c14}
+  .livetop{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px)}
+  .metrics,.livebtm{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px)}
+  .people{max-width:760px;left:50%;transform:translateX(-50%);right:auto;width:calc(100% - 32px);grid-template-columns:repeat(3,1fr)}
+  .tabs{max-width:960px;padding:10px 24px calc(env(safe-area-inset-bottom) + 12px)}
+  .tabs button{flex-direction:row;gap:9px;font-size:13px}
+  .sheetbox{max-width:960px}
+}
+@media(min-width:1180px){
+  .app{max-width:1120px}
+  .pad{grid-template-columns:repeat(3,1fr);padding:32px 40px 120px}
+  #recentList,#historyList,#guideList{grid-template-columns:repeat(3,1fr)}
+  .tabs{max-width:1120px}
+}
 .tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
 .ring{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;flex:none}
 .ring div{width:88px;height:88px;border-radius:44px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -95,12 +117,12 @@ a:hover{color:var(--g900)}
 <!-- HOME -->
 <section class="scr on" id="scr-home">
   <div class="pad">
-    <div style="display:flex;align-items:center;gap:10px;padding-top:26px">
+    <div class="full-head" style="display:flex;align-items:center;gap:10px;padding-top:26px">
       <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--g500),var(--g700));display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:14px;font-weight:800;letter-spacing:.02em;font-family:'Noto Sans',Arial,sans-serif">SF</div>
       <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--g900)">SmartFlex</div>
       <div style="font-size:11px;color:var(--ink-soft)" id="todayLabel">—</div></div>
     </div>
-    <div class="card" style="background:linear-gradient(135deg,var(--g900),#0E3C27);border:none;border-radius:26px;color:#fff">
+    <div class="card full" style="background:linear-gradient(135deg,var(--g900),#0E3C27);border:none;border-radius:26px;color:#fff">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
         <div>
           <div class="eyebrow" style="color:rgba(207,241,225,.8)">สถิติต่อเนื่อง · STREAK</div>
@@ -306,6 +328,7 @@ a:hover{color:var(--g900)}
       <div style="padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700" id="clock">0:00</div>
     </div>
     <div class="band" id="band"><span style="flex:1"><b id="coachTh">กำลังตรวจจับ…</b><small id="coachEn">Detecting…</small></span><i id="liveScore">–</i></div>
+    <div id="liveTip" style="padding:11px 14px;border-radius:16px;background:rgba(10,26,19,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:12.5px;line-height:1.5">นั่งให้โครงสีเขียวทับเส้นประสีขาว คือท่าที่ถูกต้อง</div>
     <div style="display:flex;gap:12px;align-items:center;padding:0 4px;color:rgba(207,241,225,.85);font-size:10.5px">
       <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#30CF85;border-radius:2px"></span>ถูกท่า</span>
       <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#E5484D;border-radius:2px"></span>ต้องแก้</span>
@@ -689,7 +712,7 @@ function paintPersonal(pose){
     state.badSince=0;
   }
   var main=r.bad[0];
-  var c=main?COACH[main]||[main,'']:['ท่านี้ดี รักษาไว้','Good posture — hold it'];
+  var c=main?[(COACH[main]||[main,''])[0],(COACH[main]||['',''])[1],ADVICE[main]||'']:['ท่านี้ดี รักษาไว้','Good posture — hold it',''];
   var score=Math.round(100*state.good/Math.max(1,state.good+state.bad));
   setBand(r.status,c,score);
   var m=r.metrics,cells=[['คอยื่น',m.forwardHead],['หลังค่อม',m.torsoLean],['ไหล่เอียง',m.shoulderTilt],['สะโพก',m.hipAngle]];
@@ -717,6 +740,12 @@ function setBand(st,c,score){
   $('band').style.background=BAND[st];
   $('coachTh').textContent=c[0];$('coachEn').textContent=c[1];
   $('liveScore').textContent=score;
+  var tip=$('liveTip');
+  if(tip){
+    if(c[2]){tip.textContent='วิธีแก้: '+c[2];tip.style.background='rgba(229,72,77,.92)';tip.style.borderColor='rgba(255,255,255,.3)'}
+    else if(st==='good'){tip.textContent='ท่านี้ถูกแล้ว — รักษาหลังตรง เท้าวางเต็มพื้น จอระดับสายตา';tip.style.background='rgba(31,169,113,.9)';tip.style.borderColor='rgba(255,255,255,.24)'}
+    else{tip.textContent='ขยับกล้องหรือตัวให้เห็นหัว ไหล่ สะโพก ให้ครบ';tip.style.background='rgba(10,26,19,.78)';tip.style.borderColor='rgba(255,255,255,.14)'}
+  }
 }
 var actx=null;
 function unlockAudio(){
