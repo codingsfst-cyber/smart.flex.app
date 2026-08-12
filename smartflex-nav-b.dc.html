@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#EDF2EF;font-family:'Noto Sans Thai','Noto Sans',system-ui,sans-serif}a{color:#26A369}a:hover{color:#176340}</style></helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box">
+<div style="width:390px;height:844px;border-radius:44px;background:#F3FBF7;overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(16,40,34,.28);display:flex;flex-direction:column">
+
+<div style="padding:56px 20px 4px;display:flex;align-items:center;gap:10px">
+<div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#30CF85,#1D7C50)"></div>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="font-size:15px;font-weight:800;color:#176340;line-height:1.15">สวัสดี, มิ้น</span>
+<span style="font-size:11px;color:#5C4C4C">วันอังคาร · Tue 12 Aug</span>
+</div>
+<div style="width:34px;height:34px;border-radius:17px;background:#CFF1E1"></div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:14px 20px 24px;display:flex;flex-direction:column;gap:14px">
+
+<div style="position:relative;padding-bottom:14px">
+<div style="position:absolute;left:14px;right:14px;bottom:0;height:34px;border-radius:22px;background:#DCEFE5"></div>
+<div style="position:absolute;left:7px;right:7px;bottom:6px;height:40px;border-radius:24px;background:#CFF1E1"></div>
+<div style="position:relative;border-radius:26px;padding:22px;background:linear-gradient(135deg,#176340,#0E3C27);box-shadow:0 12px 30px rgba(16,40,34,.28);display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(207,241,225,.8)">สถิติต่อเนื่อง · STREAK</span>
+<span style="font-size:15px;color:#fff;font-weight:600">นั่งดีติดกัน 12 วัน</span>
+</div>
+<span style="font-size:44px;font-weight:800;color:#30CF85;line-height:.9">12</span>
+</div>
+<div style="display:flex;gap:7px;align-items:flex-end;height:64px">
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:100%;height:{{ d.h }};border-radius:7px;background:{{ d.c }}"></div>
+<span style="font-size:10px;color:rgba(207,241,225,.7)">{{ d.dow }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;justify-content:center;padding-top:2px">
+<sc-for list="{{ dots }}" as="p" hint-placeholder-count="3">
+<div style="width:6px;height:6px;border-radius:3px;background:{{ p.c }}"></div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<button type="button" style="display:flex;align-items:center;gap:14px;padding:18px;border:none;border-radius:26px;background:#fff;box-shadow:0 4px 14px rgba(16,40,34,.08);cursor:pointer;font-family:inherit;text-align:left">
+<div style="width:52px;height:52px;border-radius:26px;background:#E7F8F0;display:flex;align-items:center;justify-content:center">
+<div style="width:0;height:0;border-left:15px solid #1FA971;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:17px;font-weight:800;color:#176340">เริ่มตรวจท่านั่ง</span>
+<span style="font-size:12.5px;color:#5C4C4C">Start session · กล้องทำงานบนเครื่อง</span>
+</div>
+</button>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="padding:16px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:22px;font-weight:800;color:#176340">78</span>
+<span style="font-size:11.5px;color:#5C4C4C">คะแนนเฉลี่ย · Avg score</span>
+</div>
+<div style="padding:16px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:22px;font-weight:800;color:#176340">4 ชม.</span>
+<span style="font-size:11.5px;color:#5C4C4C">นั่งสัปดาห์นี้ · Sat this week</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">เซสชันล่าสุด · RECENT</span>
+<sc-for list="{{ sessions }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:18px;background:#fff;border:1px solid #E4EDE8">
+<span style="width:40px;height:40px;border-radius:20px;background:{{ s.bg }};color:{{ s.fg }};font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ s.score }}</span>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:14.5px;font-weight:700;color:#241414">{{ s.when }}</span>
+<span style="font-size:12px;color:#5C4C4C">{{ s.note }}</span>
+</div>
+<span style="font-size:18px;color:#B9CCC2">›</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;padding:8px 8px 26px;background:#fff;border-top:1px solid #E4EDE8">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button type="button" style="flex:1;border:none;background:transparent;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;color:{{ t.fg }}">
+<span style="width:20px;height:20px;border:2px solid currentColor;border-radius:{{ t.r }}"></span>
+<span style="font-size:11px;font-weight:700">{{ t.name }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      week: [['จ',34],['อ',48],['พ',26],['พฤ',56],['ศ',44],['ส',18],['อา',52]].map(([dow,h],i) => ({
+        dow, h: h + 'px', c: i === 3 ? '#30CF85' : h < 30 ? 'rgba(207,241,225,.35)' : 'rgba(48,207,133,.6)',
+      })),
+      dots: [1,0,0].map(on => ({ c: on ? '#30CF85' : 'rgba(207,241,225,.35)' })),
+      sessions: [
+        { score: 82, when: 'เช้านี้ · 09:10', note: '1 ชม. 20 น. · คอยื่น 3 ครั้ง', bg: '#E7F8F0', fg: '#1FA971' },
+        { score: 61, when: 'เมื่อวาน · 15:40', note: '2 ชม. · หลังค่อม 11 ครั้ง', bg: '#FDF3E7', fg: '#B07A18' },
+        { score: 90, when: 'เมื่อวาน · 09:05', note: '55 น. · ดีเกือบตลอด', bg: '#E7F8F0', fg: '#1FA971' },
+      ],
+      tabs: [['หน้าหลัก','7px',1],['ผล','7px',0],['ท่านั่ง','50%',0],['ตั้งค่า','50%',0]].map(([name,r,on]) => ({
+        name, r, fg: on ? '#26A369' : '#9BAFA5',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

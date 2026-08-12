@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#E7EFEA;font-family:'Noto Sans Thai','Noto Sans',system-ui,sans-serif}a{color:#26A369;text-decoration:none}a:hover{color:#176340}button{font-family:inherit}@keyframes sfin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:36px 16px 56px;box-sizing:border-box">
+
+<div style="width:390px;max-width:100%;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#30CF85,#1D7C50)"></div>
+<span style="font-size:16px;font-weight:800;color:#176340">SmartFlex</span>
+<span style="font-size:11px;color:#5C4C4C">ผู้ช่วยดูแลท่านั่ง · posture assistant</span>
+</div>
+<div style="display:flex;gap:6px;padding:5px;border-radius:999px;background:#fff;border:1px solid #DCE7E1">
+<sc-for list="{{ navs }}" as="n" hint-placeholder-count="2">
+<button type="button" onClick="{{ n.pick }}" style="flex:1;height:36px;border:none;border-radius:999px;background:{{ n.bg }};color:{{ n.fg }};font-size:12.5px;font-weight:700;cursor:pointer">{{ n.name }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 26px 64px rgba(16,40,34,.26);background:#F3FBF7">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7">
+<div style="padding:56px 20px 4px;display:flex;align-items:center;gap:10px">
+<div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#30CF85,#1D7C50)"></div>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="font-size:15px;font-weight:800;color:#176340;line-height:1.15">สวัสดี, มิ้น</span>
+<span style="font-size:11px;color:#5C4C4C">วันอังคาร 12 ส.ค. · Tue 12 Aug</span>
+</div>
+<div style="width:34px;height:34px;border-radius:17px;background:#CFF1E1"></div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="position:relative;padding-bottom:14px">
+<div style="position:absolute;left:14px;right:14px;bottom:0;height:34px;border-radius:22px;background:#DCEFE5"></div>
+<div style="position:absolute;left:7px;right:7px;bottom:6px;height:40px;border-radius:24px;background:#CFF1E1"></div>
+<div style="position:relative;border-radius:26px;padding:22px;background:linear-gradient(135deg,#176340,#0E3C27);box-shadow:0 12px 30px rgba(16,40,34,.28);display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(207,241,225,.8)">สถิติต่อเนื่อง · STREAK</span>
+<span style="font-size:15px;color:#fff;font-weight:600">นั่งดีติดกัน 12 วัน</span>
+</div>
+<span style="font-size:44px;font-weight:800;color:#30CF85;line-height:.9">12</span>
+</div>
+<div style="display:flex;gap:7px;align-items:flex-end;height:64px">
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:100%;height:{{ d.h }};border-radius:7px;background:{{ d.c }}"></div>
+<span style="font-size:10px;color:rgba(207,241,225,.7)">{{ d.dow }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<button type="button" onClick="{{ goSetup }}" style="display:flex;align-items:center;gap:14px;padding:18px;border:none;border-radius:26px;background:#fff;box-shadow:0 4px 14px rgba(16,40,34,.08);cursor:pointer;text-align:left">
+<div style="width:52px;height:52px;border-radius:26px;background:#E7F8F0;display:flex;align-items:center;justify-content:center">
+<div style="width:0;height:0;border-left:15px solid #1FA971;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:17px;font-weight:800;color:#176340">เริ่มตรวจท่านั่ง</span>
+<span style="font-size:12.5px;color:#5C4C4C">Start session · ประมวลผลบนเครื่อง</span>
+</div>
+</button>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="padding:16px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:22px;font-weight:800;color:#176340">78</span>
+<span style="font-size:11.5px;color:#5C4C4C">คะแนนเฉลี่ย · Avg score</span>
+</div>
+<div style="padding:16px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:22px;font-weight:800;color:#176340">4 ชม.</span>
+<span style="font-size:11.5px;color:#5C4C4C">นั่งสัปดาห์นี้ · Sat this week</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">เซสชันล่าสุด · RECENT</span>
+<sc-for list="{{ sessions }}" as="s" hint-placeholder-count="3">
+<div onClick="{{ s.open }}" style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;cursor:pointer" style-hover="border-color:#30CF85">
+<span style="width:40px;height:40px;border-radius:20px;background:{{ s.bg }};color:{{ s.fg }};font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ s.score }}</span>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:14.5px;font-weight:700;color:#241414">{{ s.when }}</span>
+<span style="font-size:12px;color:#5C4C4C">{{ s.note }}</span>
+</div>
+<span style="font-size:18px;color:#B9CCC2">›</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7">
+<div style="padding:56px 20px 10px;display:flex;align-items:center;gap:12px">
+<button type="button" onClick="{{ goHome }}" style="width:36px;height:36px;border:1px solid #DCE7E1;border-radius:18px;background:#fff;cursor:pointer;font-size:16px;color:#176340">←</button>
+<span style="font-size:17px;font-weight:800;color:#176340">จัดกล้อง · Set up</span>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">โหมดการใช้งาน · MODE</span>
+<div style="display:flex;gap:7px">
+<sc-for list="{{ modeChips }}" as="m" hint-placeholder-count="2">
+<button type="button" onClick="{{ m.pick }}" style="flex:1;padding:11px 10px;border:1.5px solid {{ m.bd }};border-radius:14px;background:{{ m.bg }};color:{{ m.fg }};font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.35">{{ m.name }}</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ isPersonal }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:12px;font-weight:700;color:#241414">ชื่อ</span>
+<div style="padding:11px 12px;border:1.5px solid #DCE7E1;border-radius:12px;background:#fff;font-size:13.5px;color:#241414">มิ้น</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:12px;font-weight:700;color:#241414">รหัสผู้ใช้</span>
+<div style="padding:11px 12px;border:1.5px solid #DCE7E1;border-radius:12px;background:#fff;font-size:13.5px;color:#241414">SF-0142</div>
+</div>
+</div>
+</sc-if>
+<div style="border-radius:26px;overflow:hidden;background:#12261c;position:relative;height:300px;flex:none">
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.04) 0 12px,transparent 12px 24px)"></div>
+<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:180px;height:230px;border:2px dashed rgba(207,241,225,.5);border-radius:18px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;box-sizing:border-box">
+<span style="font-size:10px;letter-spacing:.08em;color:rgba(207,241,225,.65)">CAMERA PREVIEW</span>
+</div>
+<div style="position:absolute;left:14px;top:14px;display:flex;gap:6px;align-items:center;padding:6px 11px;border-radius:999px;background:rgba(10,26,19,.7);border:1px solid rgba(255,255,255,.18)">
+<div style="width:7px;height:7px;border-radius:4px;background:#30CF85"></div>
+<span style="color:#fff;font-size:11px;font-weight:700">ตรวจมุมอัตโนมัติ: {{ angleName }}</span>
+</div>
+<div style="position:absolute;left:14px;right:14px;bottom:14px;padding:11px 13px;border-radius:14px;background:rgba(10,26,19,.72);backdrop-filter:blur(14px);color:#fff;font-size:12.5px;line-height:1.5">{{ angleHint }}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">แอปจะวัด · MEASURES</span>
+<div style="display:flex;flex-wrap:wrap;gap:7px">
+<sc-for list="{{ metrics }}" as="m" hint-placeholder-count="8">
+<span style="padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;background:{{ m.bg }};color:{{ m.fg }};border:1px solid {{ m.bd }}">{{ m.th }}</span>
+</sc-for>
+</div>
+<span style="font-size:11.5px;color:#5C4C4C">จาง = มุมนี้ยังมองไม่เห็น ขยับกล้องให้เห็นทั้งตัวเพื่อวัดครบ</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">อุปกรณ์ที่รองรับ · DEVICES</span>
+<div style="display:flex;flex-wrap:wrap;gap:7px">
+<sc-for list="{{ devices }}" as="d" hint-placeholder-count="5">
+<span style="padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;background:#fff;border:1px solid #DCE7E1;color:#5C4C4C">{{ d }}</span>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;gap:11px;padding:14px;border-radius:18px;background:#EAF4EF;border:1px solid #CFF1E1">
+<div style="width:22px;height:22px;border-radius:11px;border:2px solid #1FA971;flex:none"></div>
+<span style="font-size:12.5px;line-height:1.55;color:#3F5A4E">ภาพวิเคราะห์บนเครื่องนี้เท่านั้น ไม่มีการอัปโหลดวิดีโอ · Processed on-device, nothing is uploaded</span>
+</div>
+<button type="button" onClick="{{ goSettings }}" style="display:flex;align-items:center;gap:11px;padding:13px 14px;border:1px solid #CFF1E1;border-radius:16px;background:#EAF4EF;cursor:pointer;text-align:left">
+<div style="width:9px;height:9px;border-radius:5px;background:{{ sheetDot }};flex:none"></div>
+<span style="font-size:12.5px;font-weight:700;color:#241414">Google Sheets:</span>
+<span style="flex:1;font-size:12.5px;color:#5C4C4C">{{ sheetLabel }}</span>
+<span style="font-size:16px;color:#9BAFA5">›</span>
+</button>
+</div>
+<div style="padding:12px 20px 34px;background:#F3FBF7;border-top:1px solid #E4EDE8">
+<button type="button" onClick="{{ goLive }}" style="width:100%;height:52px;border:none;border-radius:16px;background:#176340;color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(35,83,71,.28)">เริ่มตรวจ · Start</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLive }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;position:relative;background:linear-gradient(180deg,#1a3a2a 0%,#12261c 100%)">
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 12px,transparent 12px 24px)"></div>
+<div style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:196px;height:262px;border:1.5px dashed rgba(207,241,225,.35);border-radius:18px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;box-sizing:border-box">
+<span style="font-size:10px;letter-spacing:.08em;color:rgba(207,241,225,.55)">CAMERA · {{ angleName }}</span>
+</div>
+<div style="position:absolute;left:50%;top:44%;transform:translateX(-50%);width:2px;height:118px;background:{{ tone }};box-shadow:0 0 12px {{ tone }}"></div>
+<div style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:7px;background:{{ tone }}"></div>
+<div style="position:absolute;left:50%;top:49%;transform:translateX(-50%) rotate(9deg);width:96px;height:2px;background:{{ tone }};opacity:.75"></div>
+<div style="position:absolute;left:50%;top:38%;transform:translateX(-50%) rotate({{ neckRot }});width:74px;height:2px;background:{{ tone }};box-shadow:0 0 10px {{ tone }}"></div>
+<div style="position:absolute;left:62%;top:35.5%;padding:3px 8px;border-radius:999px;background:{{ tone }};color:#08150f;font-size:11px;font-weight:800">{{ neckAngle }}</div>
+
+<div style="position:absolute;top:52px;left:16px;right:16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<button type="button" onClick="{{ endSession }}" style="width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff;font-size:15px;cursor:pointer">✕</button>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="color:#fff;font-size:14.5px;font-weight:800;line-height:1.15">กำลังตรวจ · Live</span>
+<span style="color:rgba(207,241,225,.75);font-size:10.5px">{{ angleName }} · ปรับอัตโนมัติ</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22)">
+<div style="width:7px;height:7px;border-radius:4px;background:#30CF85"></div>
+<span style="color:#fff;font-size:11px;font-weight:700">{{ clock }}</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:18px;background:{{ bandBg }};box-shadow:0 8px 22px rgba(16,40,34,.35)">
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="color:#fff;font-size:16px;font-weight:800">{{ coachTh }}</span>
+<span style="color:rgba(255,255,255,.85);font-size:12px">{{ coachEn }}</span>
+</div>
+<span style="color:#fff;font-size:30px;font-weight:800;line-height:1">{{ liveScore }}</span>
+</div>
+</div>
+
+<div style="position:absolute;left:16px;right:16px;bottom:104px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:7px;overflow:hidden">
+<sc-for list="{{ liveMetrics }}" as="m" hint-placeholder-count="4">
+<div style="flex:1;padding:9px 8px;border-radius:13px;background:rgba(10,26,19,.7);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:3px;align-items:center">
+<span style="font-size:13.5px;font-weight:800;color:{{ m.c }}">{{ m.val }}</span>
+<span style="font-size:9.5px;color:rgba(207,241,225,.7)">{{ m.th }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding:13px 15px;border-radius:18px;background:rgba(10,26,19,.72);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12)">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<span style="color:rgba(207,241,225,.8);font-size:10.5px;letter-spacing:.06em">เซสชันนี้ · THIS SESSION</span>
+<span style="color:#fff;font-size:11px;font-weight:700">ดี {{ goodPct }}</span>
+</div>
+<div style="display:flex;gap:2px;height:26px;align-items:flex-end">
+<sc-for list="{{ bars }}" as="b" hint-placeholder-count="24">
+<div style="flex:1;height:{{ b.h }};border-radius:2px;background:{{ b.c }}"></div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showBanner }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ dismiss }}" style="position:absolute;top:52px;left:16px;right:16px;z-index:70;padding:13px 15px;border-radius:18px;background:#fff;box-shadow:0 14px 34px rgba(8,21,15,.45);display:flex;align-items:center;gap:12px;animation:sfin .22s ease;cursor:pointer">
+<div style="width:8px;height:38px;border-radius:4px;background:#C8A02E"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:1px">
+<span style="font-size:14.5px;font-weight:800;color:#241414">{{ coachTh }}</span>
+<span style="font-size:11.5px;color:#5C4C4C">{{ coachEn }}</span>
+</div>
+<span style="font-size:11px;color:#9BAFA5">แตะเพื่อปิด</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ showTakeover }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:80;background:rgba(8,21,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:26px;animation:sfin .2s ease">
+<div style="width:100%;border-radius:28px;background:#fff;padding:26px;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 60px rgba(8,21,15,.5)">
+<div style="width:48px;height:48px;border-radius:24px;background:#FDEAEA;display:flex;align-items:center;justify-content:center;color:#E5484D;font-size:22px;font-weight:800">!</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:23px;font-weight:800;color:#241414;line-height:1.25">{{ coachTh }}</span>
+<span style="font-size:13.5px;color:#5C4C4C;line-height:1.55">ท่านี้ค้างมา 3 นาทีแล้ว คอยื่นไปข้างหน้า {{ neckAngle }} · Held for 3 min</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:#F3FBF7;border:1px solid #CFF1E1">
+<div style="width:36px;height:36px;border-radius:10px;background:repeating-linear-gradient(135deg,#DCEFE5 0 6px,#EAF4EF 6px 12px)"></div>
+<span style="font-size:12px;color:#3F5A4E;line-height:1.45">เสียงเตือนดังหนึ่งครั้ง · chime played</span>
+</div>
+<div style="display:flex;gap:9px">
+<button type="button" onClick="{{ dismiss }}" style="flex:1;height:48px;border:none;border-radius:16px;background:#176340;color:#fff;font-size:14.5px;font-weight:800;cursor:pointer">แก้แล้ว</button>
+<button type="button" onClick="{{ snooze }}" style="height:48px;padding:0 16px;border:1.5px solid #DCE7E1;border-radius:16px;background:#fff;color:#5C4C4C;font-size:13.5px;font-weight:700;cursor:pointer">พัก 10 น.</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ baseline }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:95;background:rgba(8,21,15,.72);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center">
+<div style="width:64px;height:64px;border-radius:32px;border:4px solid rgba(48,207,133,.35);border-top-color:#30CF85"></div>
+<span style="font-size:22px;font-weight:800;color:#fff;line-height:1.3">นั่งท่ามาตรฐานค้างไว้ 5 วินาที</span>
+<span style="font-size:13px;color:rgba(207,241,225,.85);line-height:1.55">กำลังตั้งค่าพื้นฐานของคุณ (baseline) เพื่อวัดเทียบทั้งเซสชัน</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ reframing }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:90;background:rgba(8,21,15,.55);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+<div style="width:210px;height:280px;border:3px solid #30CF85;border-radius:22px;box-shadow:0 0 40px rgba(48,207,133,.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;box-sizing:border-box">
+<span style="font-size:11px;font-weight:700;color:#CFF1E1">จัดตัวให้อยู่ในกรอบ</span>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+<span style="font-size:52px;font-weight:800;color:#fff;line-height:1">{{ countdown }}</span>
+<span style="font-size:13px;color:rgba(207,241,225,.85)">เปลี่ยนเป็น{{ angleName }} · re-framing</span>
+</div>
+</div>
+</sc-if>
+
+<div style="position:absolute;left:16px;right:16px;bottom:30px;z-index:40;display:flex;gap:8px;padding:7px;border-radius:999px;background:rgba(10,26,19,.78);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12)">
+<sc-for list="{{ darkTabs }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.go }}" style="flex:1;height:42px;border:none;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};font-size:12.5px;font-weight:700;cursor:pointer">{{ t.name }}</button>
+</sc-for>
+<button type="button" onClick="{{ reframe }}" style="width:52px;height:42px;border:none;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700;cursor:pointer">มุม</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isClass }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;position:relative;background:linear-gradient(180deg,#1a3a2a 0%,#12261c 100%);display:flex;flex-direction:column">
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.03) 0 12px,transparent 12px 24px)"></div>
+<div style="position:relative;padding:52px 16px 10px;display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:10px">
+<button type="button" onClick="{{ endSession }}" style="width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff;font-size:15px;cursor:pointer">✕</button>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="color:#fff;font-size:14.5px;font-weight:800;line-height:1.15">ตรวจหมู่ · ห้อง ม.5/2</span>
+<span style="color:rgba(207,241,225,.75);font-size:10.5px">9 คนในเฟรม · MoveNet multipose</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22)">
+<div style="width:7px;height:7px;border-radius:4px;background:#30CF85"></div>
+<span style="color:#fff;font-size:11px;font-weight:700">{{ clock }}</span>
+</div>
+</div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ classStats }}" as="c" hint-placeholder-count="3">
+<div style="flex:1;padding:11px;border-radius:15px;background:rgba(10,26,19,.7);border:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:3px;align-items:center">
+<span style="font-size:16px;font-weight:800;color:{{ c.c }}">{{ c.v }}</span>
+<span style="font-size:10px;color:rgba(207,241,225,.75)">{{ c.th }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position:relative;flex:1;overflow:auto;padding:4px 16px 110px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start">
+<sc-for list="{{ people }}" as="p" hint-placeholder-count="8">
+<div style="border-radius:16px;overflow:hidden;background:rgba(10,26,19,.6);border:1.5px solid {{ p.c }}">
+<div style="height:78px;position:relative;background:repeating-linear-gradient(120deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px)">
+<div style="position:absolute;left:50%;top:26%;transform:translateX(-50%);width:2px;height:38px;background:{{ p.c }}"></div>
+<div style="position:absolute;left:50%;top:26%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:5px;background:{{ p.c }}"></div>
+<span style="position:absolute;right:7px;top:7px;font-size:11px;font-weight:800;color:{{ p.c }}">{{ p.score }}</span>
+</div>
+<div style="padding:9px 10px 11px;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:12.5px;font-weight:700;color:#fff">{{ p.name }}</span>
+<span style="font-size:10.5px;color:rgba(207,241,225,.7)">{{ p.label }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:30px;z-index:40;display:flex;gap:8px;padding:7px;border-radius:999px;background:rgba(10,26,19,.78);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12)">
+<sc-for list="{{ darkTabs }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.go }}" style="flex:1;height:42px;border:none;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};font-size:12.5px;font-weight:700;cursor:pointer">{{ t.name }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7">
+<div style="padding:56px 20px 12px;border-bottom:1px solid #E4EDE8">
+<span style="font-size:22px;font-weight:800;color:#176340">ตั้งค่า · Settings</span>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 20px 110px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">การเชื่อมต่อ GOOGLE SHEETS</span>
+<div style="padding:16px;border-radius:20px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:13px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:9px;height:9px;border-radius:5px;background:{{ sheetDot }}"></div>
+<span style="flex:1;font-size:13px;color:#241414;font-weight:700">{{ sheetLabel }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:11.5px;color:#5C4C4C">ปลายทางบันทึก (ตั้งค่าโดยผู้ดูแลระบบ)</span>
+<div style="padding:11px 12px;border:1.5px solid #DCE7E1;border-radius:12px;background:#F8FBF9;font-size:11px;color:#9BAFA5;word-break:break-all;line-height:1.5">https://script.google.com/macros/s/AKfycbwt7xg…/exec</div>
+</div>
+<div style="display:flex;gap:9px">
+<button type="button" onClick="{{ sync }}" style="flex:1;height:44px;border:none;border-radius:14px;background:#176340;color:#fff;font-size:13.5px;font-weight:800;cursor:pointer">{{ syncLabel }}</button>
+<button type="button" style="height:44px;padding:0 16px;border:1.5px solid #DCE7E1;border-radius:14px;background:#fff;color:#5C4C4C;font-size:13px;font-weight:700;cursor:pointer">ทดสอบ</button>
+</div>
+<span style="font-size:11.5px;color:#5C4C4C;line-height:1.55">ออฟไลน์อยู่ได้ — เซสชันจะเก็บเป็นคิวในเครื่องแล้วส่งเองเมื่อกลับมาออนไลน์</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">คอลัมน์ที่บันทึก · SHEET COLUMNS</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ columns }}" as="c" hint-placeholder-count="15">
+<span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #E4EDE8;font-size:11px;color:#5C4C4C">{{ c }}</span>
+</sc-for>
+</div>
+<span style="font-size:11.5px;color:#5C4C4C;line-height:1.55">หนึ่งเซสชัน = หนึ่งแถว · โหมดห้องเรียนบันทึกหนึ่งแถวต่อคนต่อเซสชัน</span>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7;position:relative">
+<div style="flex:1;overflow:auto;padding:56px 20px 24px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">จบเซสชัน · SESSION DONE</span>
+<span style="font-size:24px;font-weight:800;color:#176340">1 ชม. 12 นาที · {{ angleName }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:20px;padding:22px;border-radius:26px;background:#fff;border:1px solid #E4EDE8;box-shadow:0 4px 14px rgba(16,40,34,.06)">
+<div style="width:112px;height:112px;border-radius:56px;background:conic-gradient(#1FA971 0 74%,#E7EFEA 74% 100%);display:flex;align-items:center;justify-content:center;flex:none">
+<div style="width:88px;height:88px;border-radius:44px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center">
+<span style="font-size:34px;font-weight:800;color:#176340;line-height:1">74</span>
+<span style="font-size:10.5px;color:#5C4C4C">คะแนน</span>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;color:#5C4C4C;line-height:1.5">ดีขึ้น 6 คะแนนจากเมื่อวาน นั่งดี 74% ของเวลา</span>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<span style="padding:5px 10px;border-radius:999px;background:#E7F8F0;color:#1FA971;font-size:11px;font-weight:700">ดี 53 น.</span>
+<span style="padding:5px 10px;border-radius:999px;background:#FDEAEA;color:#E5484D;font-size:11px;font-weight:700">แย่ 19 น.</span>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">แก้ 2 อย่างนี้ · FIX THESE TWO</span>
+<sc-for list="{{ fixes }}" as="f" hint-placeholder-count="2">
+<div style="display:flex;gap:14px;padding:16px;border-radius:22px;background:#fff;border:1px solid #E4EDE8">
+<span style="width:34px;height:34px;border-radius:17px;background:#FDEAEA;color:#E5484D;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">{{ f.n }}</span>
+<div style="flex:1;display:flex;flex-direction:column;gap:5px">
+<span style="font-size:15.5px;font-weight:800;color:#241414">{{ f.th }}</span>
+<span style="font-size:12.5px;color:#5C4C4C;line-height:1.5">{{ f.detail }}</span>
+<div style="height:6px;border-radius:3px;background:#EDF2EF;overflow:hidden;margin-top:3px">
+<div style="height:100%;width:{{ f.pct }};background:#E5484D"></div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:11px;padding:14px;border-radius:18px;background:#E7F8F0;border:1px solid #CFF1E1;animation:sfin .2s ease">
+<div style="width:9px;height:9px;border-radius:5px;background:#1FA971;flex:none"></div>
+<span style="flex:1;font-size:12.5px;color:#1F6B4C;line-height:1.5">บันทึกลง Google Sheets แล้ว · แถว SF-0142-0812-1 (15 คอลัมน์)</span>
+</div>
+</sc-if>
+<button type="button" onClick="{{ openDetail }}" style="height:50px;border:1.5px solid #DCE7E1;border-radius:16px;background:#fff;color:#176340;font-size:14.5px;font-weight:800;cursor:pointer">ดูรายละเอียดเซสชัน · Full report</button>
+</div>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:rgba(8,21,15,.5);display:flex;align-items:flex-end">
+<div style="width:100%;background:#fff;border-radius:28px 28px 0 0;padding:22px 20px 34px;display:flex;flex-direction:column;gap:16px;animation:sfin .24s ease;box-shadow:0 -14px 40px rgba(8,21,15,.3)">
+<div style="width:42px;height:4px;border-radius:2px;background:#DCE7E1;align-self:center"></div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:19px;font-weight:800;color:#176340">ยืดสัก 2 ท่าก่อนนั่งต่อ</span>
+<span style="font-size:12.5px;color:#5C4C4C">Two stretches for what slipped today</span>
+</div>
+<sc-for list="{{ exercises }}" as="e" hint-placeholder-count="2">
+<div style="display:flex;gap:14px;align-items:center">
+<div style="width:76px;height:76px;border-radius:18px;flex:none;background:repeating-linear-gradient(135deg,#E7EFEA 0 8px,#F3FBF7 8px 16px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;box-sizing:border-box">
+<span style="font-size:8.5px;letter-spacing:.06em;color:#9BAFA5">รูปท่า</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:15px;font-weight:800;color:#241414">{{ e.th }}</span>
+<span style="font-size:12.5px;color:#5C4C4C;line-height:1.5">{{ e.how }}</span>
+</div>
+</div>
+</sc-for>
+<div style="display:flex;gap:9px">
+<button type="button" onClick="{{ closeSheet }}" style="flex:1;height:48px;border:none;border-radius:16px;background:#176340;color:#fff;font-size:14.5px;font-weight:800;cursor:pointer">ทำเลย</button>
+<button type="button" onClick="{{ closeSheet }}" style="height:48px;padding:0 18px;border:1.5px solid #DCE7E1;border-radius:16px;background:#fff;color:#5C4C4C;font-size:13.5px;font-weight:700;cursor:pointer">ไว้ก่อน</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7">
+<div style="padding:56px 20px 12px;border-bottom:1px solid #E4EDE8">
+<span style="font-size:22px;font-weight:800;color:#176340">ผล · Results</span>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ sessions }}" as="s" hint-placeholder-count="3">
+<div onClick="{{ s.open }}" style="display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;cursor:pointer" style-hover="border-color:#30CF85">
+<span style="width:42px;height:42px;border-radius:21px;background:{{ s.bg }};color:{{ s.fg }};font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ s.score }}</span>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:14.5px;font-weight:700;color:#241414">{{ s.when }}</span>
+<span style="font-size:12px;color:#5C4C4C">{{ s.note }}</span>
+</div>
+<span style="font-size:18px;color:#B9CCC2">›</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:#F3FBF7">
+<div style="padding:56px 20px 10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E4EDE8">
+<button type="button" onClick="{{ backFromDetail }}" style="width:36px;height:36px;border:1px solid #DCE7E1;border-radius:18px;background:#fff;cursor:pointer;font-size:16px;color:#176340">←</button>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="font-size:16px;font-weight:800;color:#176340">{{ detail.when }}</span>
+<span style="font-size:11.5px;color:#5C4C4C">{{ detail.note }}</span>
+</div>
+<span style="width:40px;height:40px;border-radius:20px;background:{{ detail.bg }};color:{{ detail.fg }};font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ detail.score }}</span>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 20px 20px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">มุมแต่ละข้อ · JOINT ANGLES</span>
+<sc-for list="{{ joints }}" as="j" hint-placeholder-count="3">
+<div style="padding:14px;border-radius:18px;background:#fff;border:1px solid #E4EDE8;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<span style="font-size:13.5px;font-weight:700;color:#241414">{{ j.th }}</span>
+<span style="font-size:12px;font-weight:700;color:{{ j.fg }}">{{ j.avg }}</span>
+</div>
+<div style="display:flex;gap:2px;height:34px;align-items:flex-end">
+<sc-for list="{{ j.series }}" as="p" hint-placeholder-count="20">
+<div style="flex:1;height:{{ p.h }};border-radius:2px;background:{{ p.c }}"></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">ช่วงที่ท่าแย่ · WORST MOMENTS</span>
+<div style="display:flex;gap:10px;overflow:auto;padding-bottom:2px">
+<sc-for list="{{ stills }}" as="s" hint-placeholder-count="3">
+<div style="flex:none;width:112px;display:flex;flex-direction:column;gap:6px">
+<div style="height:132px;border-radius:14px;background:repeating-linear-gradient(135deg,#E7EFEA 0 8px,#F3FBF7 8px 16px);border:1px solid #E4EDE8;display:flex;align-items:flex-end;justify-content:center;padding-bottom:7px;box-sizing:border-box">
+<span style="font-size:8.5px;letter-spacing:.06em;color:#9BAFA5">ภาพนิ่ง</span>
+</div>
+<span style="font-size:11.5px;font-weight:700;color:#241414">{{ s.time }}</span>
+<span style="font-size:11px;color:#5C4C4C">{{ s.what }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#26A369">โน้ตของคุณ · YOUR NOTE</span>
+<div style="padding:14px;border-radius:16px;background:#fff;border:1.5px solid #E4EDE8;font-size:13px;color:#5C4C4C;line-height:1.55">ช่วงบ่ายปวดต้นคอด้านขวา นั่งประชุมยาว 2 ชม.</div>
+</div>
+<button type="button" onClick="{{ share }}" style="height:52px;border:none;border-radius:16px;background:#176340;color:#fff;font-size:14.5px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(35,83,71,.28)">ส่ง PDF ให้นักกายภาพ</button>
+<sc-if value="{{ shared }}" hint-placeholder-val="{{ false }}">
+<div style="padding:13px 15px;border-radius:16px;background:#E7F8F0;border:1px solid #CFF1E1;font-size:12.5px;color:#1F6B4C;line-height:1.5;animation:sfin .2s ease">สร้าง PDF แล้ว — คะแนนรายวัน กราฟมุม ช่วงท่าแย่ ภาพนิ่ง โน้ต และท่าบริหาร รวม 3 หน้า</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showLightTabs }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;padding:8px 8px 26px;background:#fff;border-top:1px solid #E4EDE8">
+<sc-for list="{{ lightTabs }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.go }}" style="flex:1;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;color:{{ t.fg }}">
+<span style="width:20px;height:20px;border:2px solid currentColor;border-radius:{{ t.r }}"></span>
+<span style="font-size:11px;font-weight:700">{{ t.name }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+</div>
+
+<p style="width:390px;max-width:100%;margin:0;font-size:11.5px;line-height:1.7;color:#5C4C4C">เริ่ม → จัดกล้อง → ตรวจสด (เตือนเองทุก ~6 วิ) → สรุป → รายงานเซสชัน · แถบด้านบนสลับรูปแบบเนวิเกชัน</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:1000},&quot;navModel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;สลับในดีไซน์&quot;,&quot;Card stack&quot;,&quot;Session-first&quot;],&quot;default&quot;:&quot;สลับในดีไซน์&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navigation&quot;},&quot;cameraAngle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;อัตโนมัติ&quot;,&quot;มุมข้าง&quot;,&quot;มุมตรง&quot;,&quot;เต็มตัว&quot;],&quot;default&quot;:&quot;อัตโนมัติ&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Detection&quot;},&quot;nudgeStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;เต็มจอเมื่อแย่&quot;,&quot;แถบบนเท่านั้น&quot;,&quot;เงียบ&quot;],&quot;default&quot;:&quot;เต็มจอเมื่อแย่&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Detection&quot;}}">
+const SEQ = ['good','good','warn','bad','bad','warn','good','good','warn','good'];
+const ANGLES = {
+  side: { name: 'มุมข้าง', hint: 'วางมือถือด้านข้างลำตัว ห่าง 60–100 ซม. ให้เห็นตั้งแต่หัวถึงสะโพก', metrics: ['neck','slouch','hip','knee','feet'] },
+  front: { name: 'มุมตรง', hint: 'วางกล้องตรงหน้า ระดับสายตา ให้เห็นไหล่ทั้งสองข้าง', metrics: ['shoulder','head','twist'] },
+  full: { name: 'เต็มตัว', hint: 'ถอยกล้องออกให้เห็นทั้งตัวรวมเท้า วัดได้ครบทุกข้อ', metrics: ['neck','slouch','shoulder','head','twist','hip','knee','feet'] },
+};
+const METRICS = [
+  ['neck','คอยื่น','18°'], ['slouch','หลังค่อม','12°'], ['shoulder','ไหล่เอียง','4°'], ['head','ศีรษะเอียง','6°'],
+  ['twist','หลังบิด','3°'], ['hip','มุมสะโพก','96°'], ['knee','เข่า','88°'], ['feet','เท้าวางพื้น','ครบ'],
+];
+const SESSIONS = [
+  { id: 0, score: 82, when: 'เช้านี้ · 09:10', note: '1 ชม. 20 น. · คอยื่น 3 ครั้ง', bg: '#E7F8F0', fg: '#1FA971' },
+  { id: 1, score: 61, when: 'เมื่อวาน · 15:40', note: '2 ชม. · หลังค่อม 11 ครั้ง', bg: '#FDF3E7', fg: '#B07A18' },
+  { id: 2, score: 90, when: 'เมื่อวาน · 09:05', note: '55 น. · ดีเกือบตลอด', bg: '#E7F8F0', fg: '#1FA971' },
+];
+
+class Component extends DCLogic {
+  state = { nav: 'stack', screen: 'home', mode: 'personal', tick: 0, dismissed: -1, snoozeUntil: -1, reframing: false, countdown: 3, sheet: false, detail: 0, shared: false, sheetOk: true, pending: 2, syncing: false, saved: false, baseline: false };
+
+  componentDidMount() {
+    this.t = setInterval(() => {
+      if (this.state.screen === 'live' && !this.state.reframing) this.setState(s => ({ tick: s.tick + 1 }));
+    }, 2000);
+  }
+  componentWillUnmount() { clearInterval(this.t); clearInterval(this.cd); }
+
+  setNav(nav) {
+    this.setState({ nav, screen: nav === 'session' ? 'live' : 'home', tick: 0, dismissed: -1, sheet: false });
+  }
+  reframe() {
+    clearInterval(this.cd);
+    this.setState({ reframing: true, countdown: 3 });
+    this.cd = setInterval(() => this.setState(s => {
+      if (s.countdown <= 1) { clearInterval(this.cd); return { reframing: false, countdown: 3 }; }
+      return { countdown: s.countdown - 1 };
+    }), 900);
+  }
+  end() {
+    this.setState({ screen: 'summary', sheet: false, saved: false });
+    setTimeout(() => this.state.screen === 'summary' && this.setState({ saved: true }), 900);
+    setTimeout(() => this.state.screen === 'summary' && this.setState({ sheet: true }), 1500);
+  }
+  startLive() {
+    if (this.state.mode === 'classroom') { this.setState({ screen: 'class', tick: 0 }); return; }
+    this.setState({ screen: 'live', tick: 0, dismissed: -1, baseline: true });
+    setTimeout(() => this.setState({ baseline: false }), 2600);
+  }
+  syncQueue() {
+    this.setState({ syncing: true });
+    setTimeout(() => this.setState({ syncing: false, pending: 0, sheetOk: true }), 1200);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const nav = this.props.navModel === 'Session-first' ? 'session' : this.props.navModel === 'Card stack' ? 'stack' : s.nav;
+    const angleKey = ({ 'มุมข้าง': 'side', 'มุมตรง': 'front', 'เต็มตัว': 'full' })[this.props.cameraAngle] || (s.tick > 8 ? 'full' : 'side');
+    const A = ANGLES[angleKey];
+    const nudgeStyle = this.props.nudgeStyle ?? 'เต็มจอเมื่อแย่';
+
+    const status = s.screen === 'live' ? SEQ[s.tick % SEQ.length] : 'good';
+    const tone = status === 'good' ? '#30CF85' : status === 'warn' ? '#E8C24B' : '#E5484D';
+    const bandBg = status === 'good' ? 'rgba(31,169,113,.94)' : status === 'warn' ? 'rgba(200,160,46,.95)' : 'rgba(229,72,77,.94)';
+    const coach = status === 'good'
+      ? ['ท่านี้ดี รักษาไว้', 'Good posture — hold it']
+      : status === 'warn' ? ['ไหล่เริ่มห่อ', 'Shoulders rolling forward'] : ['ยกหน้าจอขึ้น', 'Raise your screen · คอยื่น 42°'];
+    const live = status === 'good' ? 88 : status === 'warn' ? 71 : 54;
+    const muted = s.dismissed === s.tick || s.tick < s.snoozeUntil || nudgeStyle === 'เงียบ';
+    const detail = SESSIONS[s.detail] || SESSIONS[0];
+    const seq = [3,2,2,1,2,3,3,2,1,1,2,3,3,3,2,1,0,1,2,3,3,2,1,0];
+    const barColor = v => v >= 3 ? '#30CF85' : v === 2 ? '#1FA971' : v === 1 ? '#C8A02E' : '#E5484D';
+    const mm = 6 + Math.floor(s.tick / 30), ss = (s.tick * 2) % 60;
+
+    const jointSeries = (base, spread) => Array.from({ length: 20 }, (_, i) => {
+      const v = base + Math.round(Math.sin(i * 0.9) * spread + (i > 13 ? spread : 0));
+      return { h: Math.max(4, Math.min(34, v)) + 'px', c: v > base + spread * 0.8 ? '#E5484D' : v > base ? '#C8A02E' : '#1FA971' };
+    });
+
+    return {
+      navs: [['การ์ดสถิติ', 'stack'], ['กล้องเต็มจอ', 'session']].map(([name, id]) => ({
+        name, pick: () => this.setNav(id),
+        bg: nav === id ? '#176340' : 'transparent', fg: nav === id ? '#fff' : '#5C4C4C',
+      })),
+      isHome: nav === 'stack' && s.screen === 'home',
+      isSetup: s.screen === 'setup',
+      isLive: s.screen === 'live',
+      isClass: s.screen === 'class',
+      isSettings: s.screen === 'settings',
+      isPersonal: s.mode === 'personal',
+      baseline: s.baseline,
+      modeChips: [['โหมดส่วนบุคคล (ตรวจเดี่ยว)', 'personal'], ['โหมดห้องเรียน (ตรวจหมู่)', 'classroom']].map(([name, id]) => ({
+        name, pick: () => this.setState({ mode: id }),
+        bg: s.mode === id ? '#26A369' : '#fff', fg: s.mode === id ? '#fff' : '#5C4C4C', bd: s.mode === id ? '#26A369' : '#DCE7E1',
+      })),
+      people: [
+        ['น.ส. มิ้น', 88, 'good'], ['ต้นข้าว', 62, 'warn'], ['ภูมิ', 41, 'bad'], ['เจ', 91, 'good'],
+        ['ปาย', 77, 'good'], ['กันต์', 55, 'warn'], ['ฟ้า', 84, 'good'], ['โอ๊ต', 38, 'bad'],
+      ].map(([name, score, st]) => ({
+        name, score,
+        c: st === 'good' ? '#30CF85' : st === 'warn' ? '#E8C24B' : '#E5484D',
+        label: st === 'good' ? 'ท่าดี' : st === 'warn' ? 'เริ่มห่อไหล่' : 'คอยื่นมาก',
+      })),
+      classStats: [['ท่าดี', '5 คน', '#30CF85'], ['เตือน', '2 คน', '#E8C24B'], ['ต้องแก้', '2 คน', '#E5484D']].map(([th, v, c]) => ({ th, v, c })),
+      sheetOk: s.sheetOk, pending: s.pending, syncing: s.syncing, saved: s.saved,
+      sheetLabel: s.sheetOk ? (s.pending ? 'เชื่อมต่อแล้ว · ค้างส่ง ' + s.pending + ' รายการ' : 'เชื่อมต่อแล้ว · ส่งครบ') : 'ยังไม่เชื่อมต่อ',
+      sheetDot: s.sheetOk ? (s.pending ? '#E8C24B' : '#1FA971') : '#E5484D',
+      syncLabel: s.syncing ? 'กำลังส่ง…' : 'ส่งคิวค้าง',
+      sync: () => this.syncQueue(),
+      goSettings: () => this.setState({ screen: 'settings' }),
+      columns: ['sessionId', 'savedAt', 'appMode', 'userId', 'name', 'activityMode', 'totalSeconds', 'goodSeconds', 'badSeconds', 'unknownSeconds', 'score', 'alertCount', 'mainIssue', 'startedAt', 'endedAt'],
+      isSummary: s.screen === 'summary',
+      isHistory: s.screen === 'history',
+      isDetail: s.screen === 'detail',
+      showLightTabs: s.screen === 'home' || s.screen === 'history' || s.screen === 'settings',
+      angleName: A.name, angleHint: A.hint,
+      metrics: METRICS.map(([k, th]) => {
+        const on = A.metrics.includes(k);
+        return { th, bg: on ? '#E7F8F0' : '#fff', fg: on ? '#1F6B4C' : '#B4C4BB', bd: on ? '#CFF1E1' : '#E4EDE8' };
+      }),
+      devices: ['มือถือตั้งพิง', 'มือถือถือในมือ', 'แท็บเล็ตตั้งโต๊ะ', 'โน้ตบุ๊ค', 'กล้องเว็บแยก'],
+      liveMetrics: METRICS.filter(([k]) => A.metrics.includes(k)).slice(0, 4).map(([k, th, val]) => ({
+        th, val, c: k === 'neck' && status !== 'good' ? '#E5484D' : '#CFF1E1',
+      })),
+      tone, bandBg, liveScore: live, coachTh: coach[0], coachEn: coach[1],
+      neckAngle: status === 'good' ? '12°' : status === 'warn' ? '28°' : '42°',
+      neckRot: status === 'good' ? '-4deg' : status === 'warn' ? '-10deg' : '-16deg',
+      clock: mm + ':' + String(ss).padStart(2, '0'),
+      goodPct: '71%',
+      bars: seq.map(v => ({ h: (8 + v * 6) + 'px', c: barColor(v) })),
+      showBanner: s.screen === 'live' && status === 'warn' && !muted && nudgeStyle !== 'เงียบ',
+      showTakeover: s.screen === 'live' && status === 'bad' && !muted && nudgeStyle === 'เต็มจอเมื่อแย่',
+      reframing: s.reframing, countdown: s.countdown,
+      dismiss: () => this.setState({ dismissed: s.tick }),
+      snooze: () => this.setState({ dismissed: s.tick, snoozeUntil: s.tick + 300 }),
+      reframe: () => this.reframe(),
+      endSession: () => this.end(),
+      goSetup: () => this.setState({ screen: 'setup' }),
+      goHome: () => this.setState({ screen: nav === 'session' ? 'live' : 'home' }),
+      goLive: () => this.startLive(),
+      openDetail: () => this.setState({ screen: 'detail', detail: 0, shared: false }),
+      backFromDetail: () => this.setState({ screen: 'history' }),
+      share: () => this.setState({ shared: true }),
+      shared: s.shared,
+      sheetOpen: s.sheet,
+      closeSheet: () => this.setState({ sheet: false }),
+      week: [['จ',34],['อ',48],['พ',26],['พฤ',56],['ศ',44],['ส',18],['อา',52]].map(([dow, h], i) => ({
+        dow, h: h + 'px', c: i === 3 ? '#30CF85' : h < 30 ? 'rgba(207,241,225,.35)' : 'rgba(48,207,133,.6)',
+      })),
+      sessions: SESSIONS.map(x => ({ ...x, open: () => this.setState({ screen: 'detail', detail: x.id, shared: false }) })),
+      detail,
+      fixes: [
+        { n: 1, th: 'คอยื่นไปข้างหน้า', detail: 'เกิน 30° อยู่ 19 นาที ส่วนใหญ่ช่วง 14:20–14:50 · ยกจอขึ้นอีกราว 8 ซม.', pct: '64%' },
+        { n: 2, th: 'ไหล่ขวาสูงกว่าซ้าย', detail: 'ต่างกันเฉลี่ย 6° ตลอดเซสชัน · ลองปรับที่วางแขนข้างขวาให้ต่ำลง', pct: '38%' },
+      ],
+      exercises: [
+        { th: 'เก็บคาง (chin tuck)', how: 'ดันคางเข้าหาคอ ค้าง 5 วินาที ทำ 10 ครั้ง' },
+        { th: 'เปิดอกที่ขอบประตู', how: 'วางแขนกับวงกบ ก้าวขาหน้า ค้าง 30 วินาที 2 รอบ' },
+      ],
+      joints: [
+        { th: 'คอ (forward head)', avg: 'เฉลี่ย 31°', fg: '#E5484D', series: jointSeries(18, 9) },
+        { th: 'หลัง (slouch)', avg: 'เฉลี่ย 14°', fg: '#C8A02E', series: jointSeries(12, 6) },
+        { th: 'ไหล่ (tilt)', avg: 'เฉลี่ย 6°', fg: '#1FA971', series: jointSeries(8, 4) },
+      ],
+      stills: [
+        { time: '14:22', what: 'คอยื่น 44°' },
+        { time: '14:41', what: 'หลังค่อม 21°' },
+        { time: '15:07', what: 'ไหล่เอียง 9°' },
+      ],
+      darkTabs: [['ตรวจ', s.mode === 'classroom' ? 'class' : 'live'], ['ผล', 'history'], ['สรุป', 'summary']].map(([name, id]) => ({
+        name, go: () => this.setState({ screen: id }),
+        bg: s.screen === id ? '#fff' : 'transparent', fg: s.screen === id ? '#176340' : 'rgba(255,255,255,.72)',
+      })),
+      lightTabs: [['หน้าหลัก', 'home', '7px'], ['ผล', 'history', '7px'], ['ตรวจ', 'setup', '50%'], ['ตั้งค่า', 'settings', '50%']].map(([name, id, r]) => ({
+        name, r, go: () => this.setState({ screen: id }),
+        fg: s.screen === id ? '#26A369' : '#9BAFA5',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

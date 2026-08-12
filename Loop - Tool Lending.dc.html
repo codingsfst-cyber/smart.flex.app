@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:oklch(0.93 0.014 85);font-family:"DM Sans",system-ui,sans-serif}a{color:oklch(0.52 0.11 150);text-decoration:none}a:hover{color:oklch(0.44 0.11 150)}*{-webkit-tap-highlight-color:transparent}::-webkit-scrollbar{width:0}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:44px 24px 64px;box-sizing:border-box">
+<div style="display:flex;align-items:baseline;gap:12px;width:402px;max-width:100%">
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1;color:oklch(0.24 0.02 60)">Loop</span>
+<span style="font-family:'DM Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(0.55 0.02 70)">borrow from your block</span>
+</div>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+
+<sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;background:oklch(0.97 0.012 85)">
+<div style="padding:56px 20px 12px;display:flex;flex-direction:column;gap:14px;background:oklch(0.97 0.012 85);border-bottom:1px solid oklch(0.89 0.012 80)">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.58 0.02 70)">{{ neighborhood }}</span>
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1;color:oklch(0.24 0.02 60)">Nearby shelves</span>
+</div>
+<div style="width:40px;height:40px;border-radius:20px;background:oklch(0.88 0.03 60);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:oklch(0.36 0.05 55)">MK</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:12px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.88 0.012 80)">
+<div style="width:11px;height:11px;border:1.5px solid oklch(0.6 0.02 70);border-radius:50%"></div>
+<span style="font-size:14.5px;color:oklch(0.62 0.02 70)">Ladder, tile saw, canning pot…</span>
+</div>
+<div style="display:flex;gap:7px;overflow:hidden;padding-bottom:2px">
+<sc-for list="{{ cats }}" as="cat" hint-placeholder-count="4">
+<button type="button" onClick="{{ cat.pick }}" style="flex:none;height:30px;padding:0 13px;border:1px solid {{ cat.bd }};border-radius:15px;background:{{ cat.bg }};color:{{ cat.fg }};font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">{{ cat.name }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:14px 20px 110px;display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+<div onClick="{{ it.open }}" style="display:flex;flex-direction:column;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80);border-radius:16px;overflow:hidden;cursor:pointer" style-hover="border-color:oklch(0.72 0.02 75)">
+<div style="height:132px;position:relative;background:repeating-linear-gradient(135deg,oklch(0.93 0.014 85) 0 9px,oklch(0.955 0.01 85) 9px 18px);display:flex;align-items:flex-end;justify-content:space-between;padding:12px">
+<span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.58 0.02 70)">{{ it.shot }}</span>
+<span style="font-family:'DM Mono',monospace;font-size:9.5px;padding:4px 8px;border-radius:6px;background:{{ it.stBg }};color:{{ it.stFg }}">{{ it.status }}</span>
+</div>
+<div style="padding:13px 14px 15px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+<span style="font-size:16.5px;font-weight:600;letter-spacing:-0.01em;color:oklch(0.24 0.02 60)">{{ it.name }}</span>
+<span style="font-family:'DM Mono',monospace;font-size:11px;color:oklch(0.58 0.02 70)">{{ it.dist }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:20px;height:20px;border-radius:10px;background:oklch(0.9 0.03 {{ it.hue }})"></div>
+<span style="font-size:13px;color:oklch(0.5 0.02 70)">{{ it.owner }}</span>
+<span style="font-size:13px;color:oklch(0.78 0.02 75)">·</span>
+<span style="font-size:13px;color:oklch(0.5 0.02 70)">{{ it.lent }}</span>
+</div>
+</div>
+</div>
+</sc-for>
+<p style="margin:6px 0 0;text-align:center;font-size:12.5px;color:oklch(0.62 0.02 70)">That's everything within {{ radius }}. <a href="#" onClick="{{ noop }}">Widen the radius</a></p>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isItem }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:oklch(0.97 0.012 85)">
+<div style="flex:1;overflow:auto">
+<div style="height:300px;position:relative;background:repeating-linear-gradient(135deg,oklch(0.92 0.014 85) 0 11px,oklch(0.95 0.01 85) 11px 22px);display:flex;align-items:flex-end;padding:16px">
+<button type="button" onClick="{{ back }}" style="position:absolute;top:58px;left:16px;width:38px;height:38px;border:none;border-radius:19px;background:oklch(0.99 0.006 85 / 0.88);backdrop-filter:blur(12px);cursor:pointer;font-size:17px;color:oklch(0.3 0.02 60);line-height:1">←</button>
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.56 0.02 70)">{{ sel.shot }}</span>
+</div>
+<div style="padding:20px 20px 24px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:7px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.58 0.02 70)">{{ sel.cat }} · {{ sel.dist }} away</span>
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:33px;line-height:1.05;color:oklch(0.24 0.02 60)">{{ sel.name }}</span>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;padding:12px;border-radius:13px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80);display:flex;flex-direction:column;gap:3px">
+<span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.6 0.02 70)">Max loan</span>
+<span style="font-size:15px;font-weight:600;color:oklch(0.24 0.02 60)">{{ maxDays }} days</span>
+</div>
+<div style="flex:1;padding:12px;border-radius:13px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80);display:flex;flex-direction:column;gap:3px">
+<span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.6 0.02 70)">Deposit</span>
+<span style="font-size:15px;font-weight:600;color:oklch(0.24 0.02 60)">{{ sel.deposit }}</span>
+</div>
+<div style="flex:1;padding:12px;border-radius:13px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80);display:flex;flex-direction:column;gap:3px">
+<span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.6 0.02 70)">Loops</span>
+<span style="font-size:15px;font-weight:600;color:oklch(0.24 0.02 60)">{{ sel.loops }}</span>
+</div>
+</div>
+<p style="margin:0;font-size:14.5px;line-height:1.55;color:oklch(0.38 0.02 65);text-wrap:pretty">{{ sel.note }}</p>
+<div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80)">
+<div style="width:42px;height:42px;border-radius:21px;background:oklch(0.9 0.03 {{ sel.hue }})"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:15px;font-weight:600;color:oklch(0.24 0.02 60)">{{ sel.owner }}</span>
+<span style="font-size:12.5px;color:oklch(0.55 0.02 70)">{{ sel.ownerNote }}</span>
+</div>
+<span style="font-family:'DM Mono',monospace;font-size:11px;padding:5px 9px;border-radius:7px;background:oklch(0.94 0.03 150);color:oklch(0.42 0.09 150)">{{ sel.rate }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.58 0.02 70)">Pick up when</span>
+<div style="display:flex;gap:7px">
+<sc-for list="{{ slots }}" as="s" hint-placeholder-count="5">
+<button type="button" onClick="{{ s.pick }}" style="flex:1;padding:10px 0;border:1px solid {{ s.bd }};border-radius:12px;background:{{ s.bg }};color:{{ s.fg }};font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
+<span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.7">{{ s.dow }}</span>
+<span style="font-size:16px;font-weight:600">{{ s.num }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+<div style="padding:12px 20px 42px;background:oklch(0.97 0.012 85);border-top:1px solid oklch(0.89 0.012 80);display:flex;align-items:center;gap:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:1px">
+<span style="font-size:14.5px;font-weight:600;color:oklch(0.24 0.02 60)">{{ ctaWhen }}</span>
+<span style="font-size:12px;color:oklch(0.56 0.02 70)">Back by {{ ctaBack }}</span>
+</div>
+<button type="button" onClick="{{ ask }}" style="height:48px;padding:0 24px;border:none;border-radius:24px;background:oklch(0.42 0.09 150);color:oklch(0.98 0.01 150);font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.36 0.09 150)">Ask to borrow</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSent }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:40px 28px 70px;background:oklch(0.97 0.012 85)">
+<div style="width:56px;height:56px;border-radius:28px;background:oklch(0.94 0.03 150);display:flex;align-items:center;justify-content:center;font-size:22px;color:oklch(0.42 0.09 150)">✓</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.05;color:oklch(0.24 0.02 60)">Asked {{ sel.owner }} for the {{ sel.short }}.</span>
+<p style="margin:0;font-size:14.5px;line-height:1.55;color:oklch(0.42 0.02 65);text-wrap:pretty">Most neighbours reply within an hour. When they say yes you'll get a four-digit handoff code — read it out at the door and the loan starts.</p>
+</div>
+<div style="padding:16px;border-radius:14px;background:oklch(0.99 0.006 85);border:1px dashed oklch(0.82 0.014 80);display:flex;flex-direction:column;gap:6px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.6 0.02 70)">Pick up</span>
+<span style="font-size:15.5px;font-weight:600;color:oklch(0.24 0.02 60)">{{ ctaWhen }} · {{ sel.dist }} away</span>
+<span style="font-size:13px;color:oklch(0.52 0.02 70)">Due back {{ ctaBack }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<button type="button" onClick="{{ goShelf }}" style="height:50px;border:none;border-radius:25px;background:oklch(0.42 0.09 150);color:oklch(0.98 0.01 150);font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:600;cursor:pointer">See my shelf</button>
+<button type="button" onClick="{{ goBrowse }}" style="height:50px;border:1px solid oklch(0.86 0.012 80);border-radius:25px;background:transparent;color:oklch(0.34 0.02 60);font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer">Keep browsing</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isShelf }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;background:oklch(0.97 0.012 85)">
+<div style="padding:56px 20px 14px;border-bottom:1px solid oklch(0.89 0.012 80)">
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1;color:oklch(0.24 0.02 60)">My shelf</span>
+</div>
+<div style="flex:1;overflow:auto;padding:18px 20px 110px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:11px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.58 0.02 70)">Out with me</span>
+<sc-for list="{{ borrowed }}" as="b" hint-placeholder-count="2">
+<div style="display:flex;gap:13px;padding:13px;border-radius:15px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80)">
+<div style="width:56px;height:56px;border-radius:11px;background:repeating-linear-gradient(135deg,oklch(0.93 0.014 85) 0 7px,oklch(0.955 0.01 85) 7px 14px)"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:5px">
+<span style="font-size:15.5px;font-weight:600;color:oklch(0.24 0.02 60)">{{ b.name }}</span>
+<span style="font-size:12.5px;color:oklch(0.52 0.02 70)">from {{ b.owner }}</span>
+<div style="height:5px;border-radius:3px;background:oklch(0.91 0.012 80);overflow:hidden;margin-top:2px">
+<div style="height:100%;width:{{ b.pct }};background:{{ b.barFg }}"></div>
+</div>
+</div>
+<span style="font-family:'DM Mono',monospace;font-size:11px;align-self:flex-start;padding:5px 9px;border-radius:7px;background:{{ b.dueBg }};color:{{ b.dueFg }}">{{ b.due }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(0.58 0.02 70)">Lending out</span>
+<sc-for list="{{ lending }}" as="l" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:13px;padding:13px;border-radius:15px;background:oklch(0.99 0.006 85);border:1px solid oklch(0.89 0.012 80)">
+<div style="width:36px;height:36px;border-radius:18px;background:oklch(0.9 0.03 {{ l.hue }})"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:15px;font-weight:600;color:oklch(0.24 0.02 60)">{{ l.name }}</span>
+<span style="font-size:12.5px;color:oklch(0.52 0.02 70)">{{ l.who }}</span>
+</div>
+<button type="button" onClick="{{ noop }}" style="height:34px;padding:0 14px;border:1px solid oklch(0.86 0.012 80);border-radius:17px;background:transparent;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:oklch(0.34 0.02 60);cursor:pointer">{{ l.action }}</button>
+</div>
+</sc-for>
+</div>
+<div style="padding:18px;border-radius:15px;background:oklch(0.94 0.024 85);display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;line-height:1.15;color:oklch(0.28 0.03 60)">You've kept 6 things out of a landfill this year.</span>
+<span style="font-size:13px;color:oklch(0.46 0.02 65)">Add another tool and the block gets a little lighter.</span>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:40;padding:9px 22px 30px;background:oklch(0.97 0.012 85 / 0.92);backdrop-filter:blur(18px);border-top:1px solid oklch(0.89 0.012 80);display:flex;gap:6px">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button type="button" onClick="{{ t.go }}" style="flex:1;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0;color:{{ t.fg }}">
+<span style="width:{{ t.w }};height:14px;border:1.5px solid currentColor;border-radius:{{ t.r }};background:{{ t.fill }}"></span>
+<span style="font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:{{ t.wt }};letter-spacing:0.02em">{{ t.name }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+</x-import>
+
+<p style="width:402px;max-width:100%;margin:0;font-family:'DM Mono',ui-monospace,monospace;font-size:10.5px;line-height:1.7;color:oklch(0.5 0.02 70)">Tap a card → pick a day → ask to borrow → shelf. Striped blocks are photo slots.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;neighborhood&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Fairfield Road · 8 shelves&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sortBy&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Closest first&quot;,&quot;Free right now&quot;,&quot;Most borrowed&quot;],&quot;default&quot;:&quot;Closest first&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;maxLoanDays&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;min&quot;:1,&quot;max&quot;:14,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;showDeposit&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const ITEMS = [
+  { id: 'ladder', name: '3-metre step ladder', short: 'ladder', cat: 'Ladders', shot: 'photo — ladder in garage', owner: 'Rina, no. 14', ownerNote: 'Lends 9 things · replies fast', rate: '98% on time', dist: '90 m', lent: 'lent 12 times', deposit: 'None', loops: 12, hue: 60, status: 'Free now', free: true, note: 'Aluminium, folds flat, fits in a hatchback. Feet are a bit scuffed but it stands dead straight. I keep it behind the side gate — just text when you are outside.' },
+  { id: 'saw', name: 'Wet tile saw', short: 'tile saw', cat: 'Power tools', shot: 'photo — tile saw on bench', owner: 'Théo, no. 3', ownerNote: 'Lends 21 things · workshop out back', rate: '100% on time', dist: '210 m', lent: 'lent 7 times', deposit: '£20', loops: 7, hue: 140, status: 'Free Thu', free: false, note: 'Cuts porcelain up to 40 mm. Comes with a spare blade and the water tray. Please rinse the tray before you bring it back, it seizes up otherwise.' },
+  { id: 'pot', name: '23-litre canning pot', short: 'canning pot', cat: 'Kitchen', shot: 'photo — pot with jars', owner: 'Bea, no. 21', ownerNote: 'Lends 6 things · jam season', rate: '95% on time', dist: '340 m', lent: 'lent 15 times', deposit: 'None', loops: 15, hue: 30, status: 'Free now', free: true, note: 'Enamel pot plus the jar rack and lifter. Big enough for 9 half-litre jars at a time. I usually have spare lids if you need them.' },
+  { id: 'carrier', name: 'Bike cargo trailer', short: 'trailer', cat: 'Bikes', shot: 'photo — trailer hitched up', owner: 'Ade, no. 9', ownerNote: 'Lends 4 things · hitch included', rate: '92% on time', dist: '450 m', lent: 'lent 5 times', deposit: '£15', loops: 5, hue: 250, status: 'Out until Sat', free: false, note: 'Takes about 40 kg — a fortnight of shopping or a flat-pack wardrobe. Universal hitch, fits most rear axles. Tyres like a bit of air first.' },
+  { id: 'sander', name: 'Orbital sander', short: 'sander', cat: 'Power tools', shot: 'photo — sander and discs', owner: 'Rina, no. 14', ownerNote: 'Lends 9 things · replies fast', rate: '98% on time', dist: '90 m', lent: 'lent 9 times', deposit: 'None', loops: 9, hue: 60, status: 'Free now', free: true, note: 'Random orbit, 125 mm. Bring your own discs if you are going below 120 grit — I only have the fine ones left.' },
+];
+const CATS = ['All', 'Power tools', 'Kitchen', 'Ladders', 'Bikes'];
+const DOW = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const TABS = [['browse', 'Browse', '15px', '4px'], ['shelf', 'My shelf', '14px', '3px'], ['requests', 'Requests', '13px', '7px'], ['you', 'You', '13px', '50%']];
+
+class Component extends DCLogic {
+  state = { screen: 'browse', cat: 'All', sel: 'ladder', slot: 1, tab: 'browse' };
+
+  go(screen, tab) { this.setState({ screen, tab: tab || this.state.tab }); }
+
+  renderVals() {
+    const s = this.state;
+    const maxDays = this.props.maxLoanDays ?? 4;
+    const showDeposit = this.props.showDeposit ?? true;
+    const sortBy = this.props.sortBy ?? 'Closest first';
+    const sel = ITEMS.find(i => i.id === s.sel) || ITEMS[0];
+    let list = ITEMS.filter(i => s.cat === 'All' || i.cat === s.cat);
+    if (sortBy === 'Free right now') list = [...list].sort((a, b) => (b.free ? 1 : 0) - (a.free ? 1 : 0));
+    if (sortBy === 'Most borrowed') list = [...list].sort((a, b) => b.loops - a.loops);
+
+    const pickDay = n => this.setState({ slot: n });
+    const day = 12 + s.slot;
+
+    return {
+      neighborhood: this.props.neighborhood ?? 'Fairfield Road · 8 shelves',
+      radius: '500 m',
+      maxDays,
+      isBrowse: s.screen === 'browse',
+      isItem: s.screen === 'item',
+      isSent: s.screen === 'sent',
+      isShelf: s.screen === 'shelf',
+      showTabs: s.screen === 'browse' || s.screen === 'shelf',
+      sel: { ...sel, deposit: showDeposit ? sel.deposit : '—' },
+      ctaWhen: DOW[s.slot] + ' ' + day + ' Aug, evening',
+      ctaBack: DOW[(s.slot + maxDays) % 5] + ' ' + (day + maxDays) + ' Aug',
+      noop: e => e && e.preventDefault(),
+      back: () => this.go('browse'),
+      ask: () => this.go('sent'),
+      goShelf: () => this.go('shelf', 'shelf'),
+      goBrowse: () => this.go('browse', 'browse'),
+      cats: CATS.map(name => ({
+        name, pick: () => this.setState({ cat: name }),
+        bg: s.cat === name ? 'oklch(0.24 0.02 60)' : 'transparent',
+        fg: s.cat === name ? 'oklch(0.97 0.01 85)' : 'oklch(0.42 0.02 65)',
+        bd: s.cat === name ? 'oklch(0.24 0.02 60)' : 'oklch(0.86 0.012 80)',
+      })),
+      items: list.map(i => ({
+        ...i,
+        open: () => this.setState({ screen: 'item', sel: i.id }),
+        stBg: i.free ? 'oklch(0.94 0.03 150)' : 'oklch(0.94 0.02 60)',
+        stFg: i.free ? 'oklch(0.42 0.09 150)' : 'oklch(0.45 0.05 55)',
+      })),
+      slots: DOW.map((dow, n) => ({
+        dow, num: 12 + n, pick: () => pickDay(n),
+        bg: s.slot === n ? 'oklch(0.42 0.09 150)' : 'oklch(0.99 0.006 85)',
+        fg: s.slot === n ? 'oklch(0.98 0.01 150)' : 'oklch(0.3 0.02 60)',
+        bd: s.slot === n ? 'oklch(0.42 0.09 150)' : 'oklch(0.88 0.012 80)',
+      })),
+      borrowed: [
+        { name: 'Pressure washer', owner: 'Théo, no. 3', due: '2 days', pct: '60%', barFg: 'oklch(0.42 0.09 150)', dueBg: 'oklch(0.94 0.03 150)', dueFg: 'oklch(0.42 0.09 150)' },
+        { name: 'Carpet stretcher', owner: 'Bea, no. 21', due: 'Due today', pct: '96%', barFg: 'oklch(0.58 0.11 40)', dueBg: 'oklch(0.94 0.03 40)', dueFg: 'oklch(0.46 0.1 40)' },
+      ],
+      lending: [
+        { name: 'Impact driver', who: 'With Ade until Fri', hue: 250, action: 'Nudge' },
+        { name: 'Folding table', who: '2 people asked', hue: 30, action: 'Review' },
+      ],
+      tabs: TABS.map(([id, name, w, r]) => ({
+        name, w, r,
+        go: () => this.setState({ tab: id, screen: id === 'shelf' ? 'shelf' : id === 'browse' ? 'browse' : s.screen }),
+        fg: s.tab === id ? 'oklch(0.24 0.02 60)' : 'oklch(0.68 0.02 72)',
+        fill: s.tab === id ? 'currentColor' : 'transparent',
+        wt: s.tab === id ? 600 : 400,
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
