@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SmartFlex — ผู้ช่วยดูแลท่านั่ง</title>
+<meta name="theme-color" content="#176340">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232FC881'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-size='26' font-weight='800' fill='white' text-anchor='middle'%3ESF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%232FC881'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-size='26' font-weight='800' fill='white' text-anchor='middle'%3ESF%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +65,7 @@ button{font-family:inherit;cursor:pointer}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
-.tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+.tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
 .ring{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;flex:none}
 .ring div{width:88px;height:88px;border-radius:44px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ring b{font-size:34px;color:var(--g900);line-height:1}
@@ -86,7 +89,7 @@ button{font-family:inherit;cursor:pointer}
 <section class="scr on" id="scr-home">
   <div class="pad">
     <div style="display:flex;align-items:center;gap:10px;padding-top:26px">
-      <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--g500),var(--g700))"></div>
+      <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--g500),var(--g700));display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:14px;font-weight:800;letter-spacing:.02em;font-family:'Noto Sans',Arial,sans-serif">SF</div>
       <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--g900)">SmartFlex</div>
       <div style="font-size:11px;color:var(--ink-soft)" id="todayLabel">—</div></div>
     </div>
@@ -124,14 +127,41 @@ button{font-family:inherit;cursor:pointer}
       <div class="field"><label for="inId">รหัสผู้ใช้</label><input id="inId" placeholder="SF-0001"></div>
     </div>
     <div class="eyebrow">มุมกล้อง</div>
-    <div class="row">
-      <button class="chip on" data-angle="auto">อัตโนมัติ</button>
-      <button class="chip" data-angle="side">มุมข้าง</button>
-      <button class="chip" data-angle="front">มุมตรง</button>
-      <button class="chip" data-angle="full">เต็มตัว</button>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="chip on" data-angle="auto" style="flex:0 0 auto">อัตโนมัติ</button>
+      <button class="chip" data-angle="side" style="flex:0 0 auto">มุมข้าง</button>
+      <button class="chip" data-angle="front" style="flex:0 0 auto">มุมตรง</button>
+      <button class="chip" data-angle="full" style="flex:0 0 auto">เต็มตัว</button>
     </div>
+    <div class="card" id="angleInfo" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
       <div class="note">ภาพวิเคราะห์บนเครื่องนี้เท่านั้น ไม่มีการอัปโหลดวิดีโอ ระบบส่งเฉพาะสรุปตัวเลขไปยัง Google Sheets</div>
+    </div>
+    <div class="eyebrow">กิจกรรม · อุปกรณ์</div>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="chip on" data-act="เรียน" style="flex:0 0 auto">เรียน</button>
+      <button class="chip" data-act="ทำงาน" style="flex:0 0 auto">ทำงาน</button>
+      <button class="chip" data-act="อ่านหนังสือ" style="flex:0 0 auto">อ่านหนังสือ</button>
+      <button class="chip" data-act="เล่นเกม" style="flex:0 0 auto">เล่นเกม</button>
+    </div>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="chip on" data-dev="มือถือ" style="flex:0 0 auto">มือถือ</button>
+      <button class="chip" data-dev="แท็บเล็ต" style="flex:0 0 auto">แท็บเล็ต</button>
+      <button class="chip" data-dev="โน้ตบุ๊ค" style="flex:0 0 auto">โน้ตบุ๊ค</button>
+      <button class="chip" data-dev="คอมตั้งโต๊ะ" style="flex:0 0 auto">คอมตั้งโต๊ะ</button>
+    </div>
+    <div class="eyebrow">ความไวการเตือน</div>
+    <div class="row">
+      <button class="chip" data-sens="low" style="flex:1">ต่ำ (ทนนาน)</button>
+      <button class="chip on" data-sens="mid" style="flex:1">กลาง</button>
+      <button class="chip" data-sens="high" style="flex:1">สูง (เตือนไว)</button>
+    </div>
+    <div class="card" style="background:#EAF4EF;border-color:var(--g100);display:flex;flex-direction:column;gap:10px">
+      <div class="note">ภาพวิเคราะห์บนเครื่องนี้เท่านั้น ไม่มีการอัปโหลดวิดีโอ ระบบส่งเฉพาะสรุปตัวเลขไปยัง Google Sheets</div>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.5">
+        <input type="checkbox" id="chkConsent" style="width:20px;height:20px;flex:none;accent-color:#176340">
+        <span>ข้าพเจ้ายินยอมให้แอปเข้าถึงกล้องเพื่อตรวจท่านั่ง</span>
+      </label>
     </div>
     <button class="pill" id="pillSetup"><span class="dot" id="dotSetup"></span><b>Google Sheets:</b><span id="sheetTxtSetup" style="flex:1">—</span>›</button>
     <button class="btn" id="btnGoLive">เริ่มตรวจ · Start</button>
@@ -160,6 +190,7 @@ button{font-family:inherit;cursor:pointer}
         <button class="btn" id="btnTest" style="flex:1">ทดสอบการเชื่อมต่อ</button>
         <button class="btn sec" id="btnSync" style="flex:1">ส่งคิวค้าง (<span id="pendCount">0</span>)</button>
       </div>
+      <div class="note" id="lastErr" style="color:var(--bad);display:none"></div>
       <div class="note">ออฟไลน์ได้ — เซสชันจะเก็บเป็นคิวในเครื่อง แล้วส่งเองเมื่อกลับมาออนไลน์</div>
     </div>
     <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
@@ -184,6 +215,11 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </section>
 
+<!-- DETAIL -->
+<section class="scr" id="scr-detail">
+  <div class="pad" id="detailBody"></div>
+</section>
+
 <!-- SUMMARY -->
 <section class="scr" id="scr-summary">
   <div class="pad">
@@ -196,6 +232,7 @@ button{font-family:inherit;cursor:pointer}
     <div class="eyebrow">แก้ 2 อย่างนี้ · FIX THESE TWO</div>
     <div id="fixList" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="card" id="saveRow" style="background:#E7F8F0;border-color:var(--g100)"><span class="note" id="saveTxt">กำลังบันทึก…</span></div>
+    <button class="btn" id="btnFullReport">ดูรายงานละเอียด · Full report</button>
     <button class="btn sec" data-goto="home">กลับหน้าหลัก</button>
   </div>
 </section>
@@ -229,10 +266,10 @@ button{font-family:inherit;cursor:pointer}
 </div>
 
 <div class="tabs" id="tabs">
-  <button data-goto="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6.5 9.6V20h11V9.6"/><path d="M10 20v-5h4v5"/></svg>หน้าหลัก</button>
-  <button data-goto="history"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20V12"/><path d="M12 20V6"/><path d="M17 20v-5"/></svg>ผล</button>
-  <button data-goto="setup"><svg viewBox="0 0 24 24"><path d="M3 8.5A2 2 0 0 1 5 6.5h2.2l1.3-2h7l1.3 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.5" r="3.4"/></svg>ตรวจ</button>
-  <button data-goto="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>ตั้งค่า</button>
+  <button data-goto="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>หน้าหลัก</button>
+  <button data-goto="history"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M7 19v-6"/><path d="M12 19V9"/><path d="M17 19v-3"/></svg>ผล</button>
+  <button data-goto="setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M9 9h6l2 6h-4v6h-4v-6H5z"/></svg>ตรวจ</button>
+  <button data-goto="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>ตั้งค่า</button>
 </div>
 </div>
 
@@ -256,7 +293,7 @@ var state={mode:'personal',angle:'auto',facing:'user',running:false,detector:nul
 
 /* ---------- navigation ---------- */
 function goto(name){
-  ['home','setup','history','settings','summary'].forEach(function(s){
+  ['home','setup','history','settings','summary','detail'].forEach(function(s){
     $('scr-'+s).classList.toggle('on',s===name);
   });
   Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
@@ -276,9 +313,18 @@ document.addEventListener('click',function(e){
     $('personalFields').style.display=state.mode==='personal'?'flex':'none';}
   var a=e.target.closest('[data-angle]');
   if(a){state.angle=a.getAttribute('data-angle');
-    Array.prototype.forEach.call(document.querySelectorAll('[data-angle]'),function(x){x.classList.toggle('on',x===a)});}
+    Array.prototype.forEach.call(document.querySelectorAll('[data-angle]'),function(x){x.classList.toggle('on',x===a)});
+    renderAngleInfo();}
   var mn=e.target.closest('[data-min]');
   if(mn){store.set('sf.minutes',Number(mn.getAttribute('data-min')));paintMinutes()}
+  ['act','dev','sens'].forEach(function(k){
+    var el=e.target.closest('[data-'+k+']');
+    if(!el)return;
+    state[k]=el.getAttribute('data-'+k);store.set('sf.'+k,state[k]);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-'+k+']'),function(x){x.classList.toggle('on',x===el)});
+  });
+  var op=e.target.closest('[data-open]');
+  if(op)openDetail(op.getAttribute('data-open'));
 });
 $('pillHome').onclick=function(){goto('settings')};
 $('pillSetup').onclick=function(){goto('settings')};
@@ -290,10 +336,18 @@ function jsonp(url,timeout){
   return new Promise(function(res,rej){
     var cb='sfcb'+Date.now()+Math.floor(Math.random()*1e4);
     var s=document.createElement('script');
-    var to=setTimeout(function(){cleanup();rej(new Error('หมดเวลาเชื่อมต่อ Google Sheets'))},timeout||12000);
+    var done=false;
+    var to=setTimeout(function(){finish(null,new Error('หมดเวลาเชื่อมต่อ Google Sheets'))},timeout||12000);
     function cleanup(){clearTimeout(to);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s)}
-    window[cb]=function(d){cleanup();res(d)};
-    s.onerror=function(){cleanup();rej(new Error('เชื่อมต่อ Google Sheets ไม่สำเร็จ'))};
+    function finish(data,err){
+      if(done)return;done=true;cleanup();
+      if(err)rej(err);else res(data||{ok:true});
+    }
+    window[cb]=function(d){finish(d)};
+    /* ฝั่ง Apps Script บางตัวตอบ JSON ที่ไม่เรียก callback — กรณีนี้
+       ข้อมูลเข้าชีทแล้ว จึงนับ onload เป็นสำเร็จด้วย (กันขึ้นคิวค้างทั้งที่สำเร็จ) */
+    s.onload=function(){setTimeout(function(){finish({ok:true,viaLoad:true})},300)};
+    s.onerror=function(){finish(null,new Error('เชื่อมต่อ Google Sheets ไม่สำเร็จ (ตรวจสิทธิ์ deployment)'))};
     s.src=url+(url.indexOf('?')<0?'?':'&')+'callback='+cb;
     document.head.appendChild(s);
   });
@@ -312,8 +366,9 @@ function flushQueue(){
   return p.reduce(function(chain,row){
     return chain.then(function(){return pushRow(row).then(function(){sent++})});
   },Promise.resolve()).then(function(){
-    store.set(LS.pend,[]);paintSheet();return sent;
-  }).catch(function(){
+    store.set(LS.pend,[]);store.set('sf.lastError','');paintSheet();return sent;
+  }).catch(function(e){
+    store.set('sf.lastError',String(e&&e.message||e));
     store.set(LS.pend,p.slice(sent));paintSheet();return sent;
   });
 }
@@ -326,15 +381,23 @@ function paintSheet(txt,ok){
     if(t)t.textContent=label; if(d)d.style.background=color;
   });
   $('pendCount').textContent=pend;
+  var err=store.get('sf.lastError',''),box=$('lastErr');
+  if(box){
+    if(pend&&err){box.style.display='block';box.textContent='สาเหตุที่ส่งไม่สำเร็จ: '+err}
+    else box.style.display='none';
+  }
 }
 $('btnTest').onclick=function(){
   paintSheet('กำลังทดสอบ…');
-  jsonp(sheetUrl()+'?action=ping').then(function(){paintSheet('เชื่อมต่อสำเร็จ',true)})
-    .catch(function(e){paintSheet(e.message,false)});
+  jsonp(sheetUrl()+'?action=ping').then(function(){store.set('sf.lastError','');paintSheet('เชื่อมต่อสำเร็จ',true)})
+    .catch(function(e){store.set('sf.lastError',String(e&&e.message||e));paintSheet(e.message,false)});
 };
 $('btnSync').onclick=function(){
   paintSheet('กำลังส่ง…');
-  flushQueue().then(function(n){paintSheet('ส่งแล้ว '+n+' รายการ',true)});
+  flushQueue().then(function(n){
+    var left=store.get(LS.pend,[]).length;
+    paintSheet(left?('ส่งได้ '+n+' · ค้างอีก '+left):('ส่งสำเร็จ '+n+' รายการ'),!left);
+  });
 };
 window.addEventListener('online',function(){flushQueue()});
 
@@ -429,6 +492,7 @@ async function startCamera(){
 }
 $('btnFlip').onclick=function(){state.facing=state.facing==='user'?'environment':'user';startCamera()};
 $('btnGoLive').onclick=async function(){
+  if(!$('chkConsent').checked){$('chkConsent').focus();alert('กรุณากดยินยอมให้ใช้กล้องก่อนเริ่มตรวจ');return}
   unlockAudio();
   paintVoiceBtn();
   if(speech.on)say('เริ่มตรวจท่านั่ง',true);
@@ -451,12 +515,18 @@ $('btnGoLive').onclick=async function(){
 function beginSession(){
   state.running=true;state.startedAt=new Date();
   state.total=state.good=state.bad=state.unknown=state.alerts=0;state.issues={};state.badSince=0;state.lastAlert=0;
+  state.samples=[];state.worst=[];state.lastMetrics=null;state.lastStatus=null;
   loop();
   tickTimer=setInterval(tick,1000);
 }
 function tick(){
   if(!state.running)return;
   state.total++;
+  if(state.total%5===0&&state.lastMetrics){
+    var lm=state.lastMetrics;
+    state.samples.push({t:state.total,forwardHead:lm.forwardHead,torsoLean:lm.torsoLean,shoulderTilt:lm.shoulderTilt,headTilt:lm.headTilt,hipAngle:lm.hipAngle});
+    if(state.samples.length>240)state.samples.shift();
+  }
   var s=Math.floor((Date.now()-state.startedAt)/1000);
   var limit=durationMin()*60;
   if(limit>0){
@@ -528,6 +598,13 @@ var BAND={good:'rgba(31,169,113,.94)',warn:'rgba(200,160,46,.95)',bad:'rgba(229,
 function paintPersonal(pose){
   if(!pose){state.unknown++;setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],'–');return}
   var r=analyse(pose.keypoints);
+  state.lastMetrics=r.metrics;
+  if(r.status==='bad'&&r.bad.length&&state.lastStatus!=='bad'){
+    var el=Math.floor((Date.now()-state.startedAt)/1000);
+    state.worst.push({at:Math.floor(el/60)+':'+String(el%60).padStart(2,'0'),what:r.bad.join(' · ')});
+    if(state.worst.length>40)state.worst.shift();
+  }
+  state.lastStatus=r.status;
   drawGuide(pose.keypoints);
   drawSkeleton(pose.keypoints,r.flags,true);
   if(r.status==='good')state.good++;else if(r.status==='unknown')state.unknown++;else state.bad++;
@@ -589,6 +666,38 @@ function chime(){
 }
 $('btnEnd').onclick=function(){endSession()};
 $('btnStop').onclick=function(){endSession()};
+/* ---------- รายละเอียดของแต่ละมุมกล้อง ---------- */
+var MEASURES=[
+  ['forwardHead','คอยื่น','มุม หู–ไหล่–สะโพก เกณฑ์ 165° ± 20°'],
+  ['torsoLean','หลังค่อม','องศาเอนของลำตัวจากแนวตั้ง ไม่เกิน 15°'],
+  ['hipAngle','มุมสะโพก','มุม ไหล่–สะโพก–เข่า เกณฑ์ 95° ± 30°'],
+  ['shoulderTilt','ไหล่เอียง','ความต่างระดับไหล่สองข้าง ไม่เกิน 8°'],
+  ['headTilt','ศีรษะเอียง','ความเอียงของแนวหูสองข้าง ไม่เกิน 10°']
+];
+var ANGLE_INFO={
+  auto:{name:'อัตโนมัติ',hint:'แอปดูจุดที่กล้องมองเห็นแล้ววัดเท่าที่วัดได้ สลับท่ากลางเซสชันก็ไม่ต้องตั้งใหม่',on:['forwardHead','torsoLean','hipAngle','shoulderTilt','headTilt']},
+  side:{name:'มุมข้าง',hint:'วางกล้องด้านข้างลำตัว ระดับอก ห่าง 60–100 ซม. ให้เห็นตั้งแต่หัวจนสะโพก — ดีที่สุดสำหรับคอยื่นและหลังค่อม',on:['forwardHead','torsoLean','hipAngle']},
+  front:{name:'มุมตรง',hint:'วางกล้องตรงหน้า ระดับสายตา ให้เห็นไหล่ทั้งสองข้าง — ดีสำหรับความสมมาตรซ้าย–ขวา',on:['shoulderTilt','headTilt']},
+  full:{name:'เต็มตัว',hint:'ถอยกล้องออกเฉียง ๆ ให้เห็นทั้งตัวรวมสะโพกและเข่า — วัดได้ครบทุกข้อ',on:['forwardHead','torsoLean','hipAngle','shoulderTilt','headTilt']}
+};
+function renderAngleInfo(){
+  var A=ANGLE_INFO[state.angle]||ANGLE_INFO.auto;
+  var chips=MEASURES.map(function(m){
+    var on=A.on.indexOf(m[0])>-1;
+    return '<span style="padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;background:'+(on?'#E7F8F0':'#fff')+
+      ';border:1px solid '+(on?'var(--g100)':'var(--line)')+';color:'+(on?'#1F6B4C':'#B4C4BB')+'">'+m[1]+'</span>';
+  }).join('');
+  var rows=MEASURES.filter(function(m){return A.on.indexOf(m[0])>-1}).map(function(m){
+    return '<div style="display:flex;gap:10px;padding:5px 0"><b style="font-size:12.5px;flex:none;min-width:86px">'+m[1]+'</b><span class="note">'+m[2]+'</span></div>';
+  }).join('');
+  $('angleInfo').innerHTML=
+    '<b style="font-size:14px;color:var(--g900)">'+A.name+'</b>'+
+    '<div class="note">'+A.hint+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:7px">'+chips+'</div>'+
+    '<div style="border-top:1px solid var(--line);padding-top:8px">'+rows+'</div>'+
+    '<div class="note">จาง = มุมที่กล้องมุมนี้มองไม่เห็น ขยับกล้องให้เห็นข้อต่อที่ต้องการเพื่อวัดได้</div>';
+}
+
 function durationMin(){var v=Number(store.get('sf.minutes',25));return isNaN(v)||v<0?25:Math.round(v)}
 function paintMinutes(){
   var m=durationMin();
@@ -625,11 +734,15 @@ function endSession(){
   row.badSeconds=state.total-row.goodSeconds;row.unknownSeconds=0;
   row.score=score;row.alertCount=state.alerts;row.mainIssue=issues[0]||'-';
   row.startedAt=state.startedAt.toISOString();row.endedAt=ended.toISOString();
-  var hist=store.get(LS.hist,[]);hist.unshift(row);store.set(LS.hist,hist.slice(0,60));
+  var hist=store.get(LS.hist,[]);
+  row._samples=(state.samples||[]).slice(-120);
+  row._worst=state.worst||[];
+  hist.unshift(row);store.set(LS.hist,hist.slice(0,60));
+  state.lastSessionId=row.sessionId;
   showSummary(row,issues);
   $('saveTxt').textContent='กำลังบันทึกลง Google Sheets…';
-  pushRow(row).then(function(){$('saveTxt').textContent='บันทึกลง Google Sheets แล้ว · แถว '+row.sessionId})
-    .catch(function(e){queue(row);$('saveTxt').textContent='ออฟไลน์/ส่งไม่สำเร็จ — เก็บคิวไว้แล้ว ('+e.message+')'});
+  pushRow(row).then(function(){store.set('sf.lastError','');$('saveTxt').textContent='บันทึกลง Google Sheets แล้ว · แถว '+row.sessionId})
+    .catch(function(e){store.set('sf.lastError',String(e&&e.message||e));queue(row);$('saveTxt').textContent='ออฟไลน์/ส่งไม่สำเร็จ — เก็บคิวไว้แล้ว ('+e.message+')'});
 }
 function showSummary(row,issues){
   goto('summary');$('tabs').classList.remove('hidden');
@@ -648,9 +761,104 @@ function showSummary(row,issues){
 function rowCard(r){
   var when=new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
   var mins=Math.max(1,Math.round(r.totalSeconds/60));
-  return '<div class="sesrow"><span class="pillscore">'+r.score+'</span>'+
+  return '<div class="sesrow" data-open="'+r.sessionId+'" style="cursor:pointer"><span class="pillscore">'+r.score+'</span>'+
     '<span class="txt"><span class="when">'+when+'</span>'+
-    '<span class="note">'+mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-')+'</span></span></div>';
+    '<span class="note">'+mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-')+'</span></span>'+
+    '<span style="color:#B9CCC2;font-size:18px">›</span></div>';
+}
+
+/* ---------- รายงานละเอียดของเซสชัน ---------- */
+function findSession(id){
+  return store.get(LS.hist,[]).filter(function(r){return r.sessionId===id})[0];
+}
+function spark(series,key,limit){
+  var vals=series.map(function(p){return p[key]}).filter(function(v){return typeof v==='number'});
+  if(!vals.length)return '<div class="note">ไม่มีข้อมูลมุมนี้</div>';
+  var max=Math.max.apply(null,vals),min=Math.min.apply(null,vals);
+  var span=Math.max(1,max-min);
+  return '<div style="display:flex;gap:2px;height:34px;align-items:flex-end">'+vals.map(function(v){
+    var h=6+Math.round(28*(v-min)/span);
+    var over=limit?Math.abs(v-limit.center)>limit.tol:false;
+    return '<div style="flex:1;height:'+h+'px;border-radius:2px;background:'+(over?'var(--bad)':'var(--good)')+'"></div>';
+  }).join('')+'</div>';
+}
+var DETAIL_ROWS=[
+  {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'มุมหู–ไหล่–สะโพก',ok:'145–185°',bad:'น้อยกว่า 145° คือยื่นคอ',limit:{center:165,tol:20},fix:'ยกจอให้สูงระดับสายตา เก็บคางเข้า'},
+  {key:'torsoLean',th:'หลังค่อม / เอนตัว',en:'Slouch',how:'มุมเอียงของแนวไหล่–สะโพกเทียบเส้นดิ่ง',ok:'น้อยกว่า 15°',bad:'เกิน 15°',limit:{center:0,tol:15},fix:'ดันสะโพกชิดพนักพิง ยืดอกขึ้น'},
+  {key:'shoulderTilt',th:'ไหล่สองข้างไม่เท่า',en:'Shoulder tilt',how:'มุมเอียงเส้นไหล่ซ้าย–ขวา',ok:'น้อยกว่า 8°',bad:'เกิน 8°',limit:{center:0,tol:8},fix:'ลดที่เท้าแขนข้างที่สูงกว่า'},
+  {key:'headTilt',th:'ศีรษะเอียง',en:'Head tilt',how:'มุมเอียงเส้นหูซ้าย–ขวา',ok:'น้อยกว่า 10°',bad:'เกิน 10°',limit:{center:0,tol:10},fix:'ตั้งหัวตรง หลีกเอียงคอคุยโทรศัพท์'},
+  {key:'hipAngle',th:'มุมสะโพก',en:'Hip angle',how:'มุมไหล่–สะโพก–เข่า',ok:'65–125°',bad:'นอกช่วง 65–125°',limit:{center:95,tol:30},fix:'ปรับความสูงเก้าอี้ให้สะโพกสูงกว่าเข่าเล็กน้อย'}
+];
+
+function detailStat(samples,row){
+  var vals=samples.map(function(p){return p[row.key]}).filter(function(v){return typeof v==='number'});
+  if(!vals.length)return null;
+  var sum=0,over=0,min=vals[0],max=vals[0];
+  vals.forEach(function(v){sum+=v;if(v<min)min=v;if(v>max)max=v;if(Math.abs(v-row.limit.center)>row.limit.tol)over++});
+  return {avg:Math.round(sum/vals.length),min:min,max:max,overPct:Math.round(100*over/vals.length),n:vals.length};
+}
+function detailCard(samples,row){
+  var st=detailStat(samples,row);
+  var head='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
+    '<b style="font-size:14px">'+row.th+'</b>'+
+    '<span class="note" style="font-size:11px">'+row.en+'</span></div>';
+  var spec='<div class="note" style="margin-top:6px">วัดจาก: '+row.how+' · ช่วงที่ดี: '+row.ok+'</div>';
+  if(!st)return '<div class="card">'+head+spec+'<div class="note" style="margin-top:8px;color:#9BAFA5">เซสชันนี้มองมุมนี้ไม่ชัด (ขึ้นกับมุมกล้อง)</div></div>';
+  var bars='<div style="display:flex;gap:2px;height:34px;align-items:flex-end;margin-top:10px">'+
+    samples.map(function(p){
+      var v=p[row.key];
+      if(typeof v!=='number')return '<div style="flex:1"></div>';
+      var span=Math.max(1,st.max-st.min);
+      var h=6+Math.round(28*(v-st.min)/span);
+      var bad=Math.abs(v-row.limit.center)>row.limit.tol;
+      return '<div style="flex:1;height:'+h+'px;border-radius:2px;background:'+(bad?'var(--bad)':'var(--good)')+'"></div>';
+    }).join('')+'</div>';
+  var nums='<div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">'+
+    '<span class="note">เฉลี่ย <b style="color:var(--ink)">'+st.avg+'°</b></span>'+
+    '<span class="note">ช่วง '+st.min+'–'+st.max+'°</span>'+
+    '<span class="note">เกินเกณฑ์ <b style="color:'+(st.overPct>25?'var(--bad)':'var(--good)')+'">'+st.overPct+'%</b> ของเวลา</span></div>';
+  var fix=st.overPct>15?'<div class="note" style="margin-top:8px;padding:9px 11px;border-radius:12px;background:#FDEAEA;color:#8E2C2F">คำแนะนำ: '+row.fix+'</div>':'';
+  return '<div class="card">'+head+spec+bars+nums+fix+'</div>';
+}
+
+function openDetail(id){
+  var r=findSession(id);
+  if(!r)return;
+  var samples=r._samples||[];
+  var worst=(r._worst||[]).slice(0,6);
+  var when=new Date(r.startedAt).toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'});
+  $('detailBody').innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;padding-top:26px">'+
+      '<button class="icobtn" data-goto="history" style="border-color:var(--line);background:#fff;color:var(--g900)">‹</button>'+
+      '<div style="flex:1"><b style="font-size:16px;color:var(--g900)">รายงานเซสชัน</b>'+
+      '<div class="note">'+when+'</div></div>'+
+      '<span class="pillscore">'+r.score+'</span></div>'+
+    '<div class="grid2">'+
+      '<div class="stat"><b>'+Math.max(1,Math.round(r.totalSeconds/60))+' นาที</b><span>เวลารวม</span></div>'+
+      '<div class="stat"><b>'+r.alertCount+' ครั้ง</b><span>เตือนท่าแย่</span></div>'+
+      '<div class="stat"><b>'+r.goodSeconds+' วิ</b><span>นั่งถูกท่า</span></div>'+
+      '<div class="stat"><b>'+r.badSeconds+' วิ</b><span>นั่งผิดท่า</span></div>'+
+    '</div>'+
+    '<div class="eyebrow">มุมที่ตรวจทั้งหมด · WHAT WAS MEASURED</div>'+
+    DETAIL_ROWS.map(function(row){return detailCard(samples,row)}).join('')+
+    '<div class="eyebrow">ช่วงที่ท่าแย่ · WORST MOMENTS</div>'+
+    '<div class="card">'+(worst.length?worst.map(function(w){
+      return '<div style="display:flex;gap:10px;padding:6px 0"><b style="font-size:12.5px;width:52px;flex:none">'+w.at+'</b><span class="note">'+w.what+'</span></div>';
+    }).join(''):'<div class="note">ไม่มีช่วงที่ท่าแย่ต่อเนื่อง</div>')+'</div>'+
+    '<div class="eyebrow">โน้ตของคุณ · YOUR NOTE</div>'+
+    '<div class="card" style="display:flex;flex-direction:column;gap:10px">'+
+      '<textarea id="noteBox" rows="3" style="font:inherit;font-size:13px;padding:10px;border:1.5px solid var(--line);border-radius:12px;resize:vertical" placeholder="เช่น ปวดต้นคอด้านขวาช่วงบ่าย">'+(r._note||'')+'</textarea>'+
+      '<button class="btn sec" id="btnSaveNote">บันทึกโน้ต</button></div>'+
+    '<button class="btn" id="btnPrint">พิมพ์ / บันทึก PDF ส่งนักกายภาพ</button>';
+  $('btnSaveNote').onclick=function(){
+    var hist=store.get(LS.hist,[]);
+    hist.forEach(function(x){if(x.sessionId===id)x._note=$('noteBox').value});
+    store.set(LS.hist,hist);
+    $('btnSaveNote').textContent='บันทึกแล้ว';
+    setTimeout(function(){$('btnSaveNote').textContent='บันทึกโน้ต'},1500);
+  };
+  $('btnPrint').onclick=function(){window.print()};
+  goto('detail');
 }
 function renderHome(){
   var h=store.get(LS.hist,[]);
@@ -669,6 +877,8 @@ var prof=store.get(LS.prof,{name:'',userId:''});
 $('inName').value=prof.name||'';$('inId').value=prof.userId||'';
 $('urlView').textContent=DEFAULT_URL.replace(/\/s\/([^/]{10})[^/]+\//,'/s/$1…/');
 $('colList').textContent=COLS.join(' · ');
+renderAngleInfo();
+$('btnFullReport').onclick=function(){if(state.lastSessionId)openDetail(state.lastSessionId);else goto('history')};
 paintMinutes();
 paintSheet();renderHome();
 if(navigator.onLine)flushQueue();
