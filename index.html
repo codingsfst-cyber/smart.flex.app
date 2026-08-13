@@ -245,6 +245,14 @@ a:hover{color:var(--g900)}
       <div class="note" id="lastErr" style="color:var(--bad);display:none"></div>
       <div class="note">ส่งไม่สำเร็จก็ไม่หาย — เก็บคิวไว้ในเครื่องแล้วลองส่งเองเรื่อย ๆ (15 วิ · 30 วิ · 1 นาที …) และส่งซ้ำเมื่อกลับมาออนไลน์หรือเปิดแอปอีกครั้ง ยิงซ้ำไม่ทำให้เกิดแถวซ้ำในชีท</div>
     </div>
+    <div class="eyebrow">เสียงเตือน</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row">
+        <button class="btn sec" id="btnVoiceSet" style="flex:1">เสียงพูด: เปิด</button>
+        <button class="btn" id="btnTestVoice" style="flex:1">ทดสอบเสียง</button>
+      </div>
+      <div class="note" id="voiceStatus">ระบบจะพูดเมื่อพบท่าผิดค้างต่อเนื่อง และมีเสียงสัญญาณสำรอง</div>
+    </div>
     <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div class="row" style="align-items:flex-end">
@@ -367,17 +375,14 @@ a:hover{color:var(--g900)}
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.11.0/dist/tf-core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@4.11.0/dist/tf-converter.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.11.0/dist/tf-backend-webgl.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 <script>
 (function(){
 'use strict';
 
 /* ============================================================
-   SmartFlex v3
-   แก้จาก v2: tilt() คำนวณผิด · คิวส่งชีทค้าง · ความไว/มุมกล้องไม่มีผล
+   SmartFlex v3.1 — debug & reliability build
+   แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
+   เสริม: โหลด AI สำรอง · ทดสอบเสียง · ตรวจ error กล้อง/โมเดล · ค่ารายงานโหมดห้อง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
    ============================================================ */
 
@@ -406,19 +411,26 @@ var store={
 };
 var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถือ',sens:'mid',facing:'user',
   running:false,calibrating:false,detector:null,startedAt:null,
-  total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0};
+  total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
+  lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function asArray(v){return Array.isArray(v)?v:[]}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(ch){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+})}
 
 /* ---------- navigation ---------- */
 function goto(name){
   ['home','setup','history','settings','summary','detail','guide'].forEach(function(s){
-    $('scr-'+s).classList.toggle('on',s===name);
+    var screen=$('scr-'+s);if(screen)screen.classList.toggle('on',s===name);
   });
-  Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
-    b.classList.toggle('on',b.getAttribute('data-goto')===name);
-  });
-  $('tabs').classList.remove('hidden');
+  if($('tabs')){
+    Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+      b.classList.toggle('on',b.getAttribute('data-goto')===name);
+    });
+    $('tabs').classList.remove('hidden');
+  }
   if(name==='home')renderHome();
   if(name==='guide')renderGuide();
   if(name==='history')renderHistory();
@@ -427,7 +439,7 @@ function goto(name){
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-goto]');
-  if(b)goto(b.getAttribute('data-goto'));
+  if(b){e.preventDefault();goto(b.getAttribute('data-goto'))}
   var m=e.target.closest('[data-mode]');
   if(m){state.mode=m.getAttribute('data-mode');store.set('sf.mode',state.mode);
     paintChoice('mode');
@@ -504,7 +516,7 @@ function sendItem(it){
   if(it.kind==='student')return jsonp(sheetUrl()+'?action=saveStudent&'+toQuery(STUDENT_COLS,it.data),NET_TIMEOUT);
   return jsonp(sheetUrl()+'?action=save&'+toQuery(COLS,it.data),NET_TIMEOUT);
 }
-function pending(){return store.get(LS.pend,[]).map(normItem)}
+function pending(){return asArray(store.get(LS.pend,[])).map(normItem)}
 function queueAll(items){
   var p=pending();
   items.forEach(function(it){
@@ -678,43 +690,127 @@ var ADVICE={
 };
 
 /* ---------- เสียงพูดเตือน (Thai TTS) ---------- */
-var speech={on:store.get('sf.voice',true),last:'',at:0,voice:null};
+var speech={on:store.get('sf.voice',true),last:'',at:0,voice:null,timer:null,lastError:''};
+function speechSupported(){return 'speechSynthesis' in window&&'SpeechSynthesisUtterance' in window}
 function pickVoice(){
-  if(!('speechSynthesis' in window))return null;
+  if(!speechSupported())return null;
   var vs=speechSynthesis.getVoices()||[];
-  speech.voice=vs.filter(function(v){return /th/i.test(v.lang)})[0]||vs[0]||null;
+  speech.voice=vs.filter(function(v){return /^th([-_]|$)/i.test(v.lang||'')})[0]||
+    vs.filter(function(v){return /thai|ไทย/i.test((v.name||'')+' '+(v.lang||''))})[0]||vs[0]||null;
   return speech.voice;
 }
-if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+if(speechSupported()){
+  pickVoice();
+  if(speechSynthesis.addEventListener)speechSynthesis.addEventListener('voiceschanged',pickVoice);
+  else speechSynthesis.onvoiceschanged=pickVoice;
+}
 function say(text,force){
-  if(!speech.on||!('speechSynthesis' in window)||!text)return;
+  if(!speech.on||!speechSupported()||!text)return false;
   var now=Date.now();
-  if(!force&&text===speech.last&&now-speech.at<12000)return;
-  if(!force&&now-speech.at<3500)return;
+  if(!force&&text===speech.last&&now-speech.at<12000)return false;
+  if(!force&&now-speech.at<3500)return false;
   speech.last=text;speech.at=now;
   try{
-    speechSynthesis.cancel();
     var u=new SpeechSynthesisUtterance(text);
-    u.lang='th-TH';u.rate=1;u.pitch=1;
+    u.lang='th-TH';u.rate=.95;u.pitch=1;u.volume=1;
     if(speech.voice)u.voice=speech.voice;
-    speechSynthesis.speak(u);
-  }catch(e){}
+    u.onstart=function(){speech.lastError='';paintVoiceStatus('กำลังพูดเสียงเตือน…')};
+    u.onend=function(){paintVoiceStatus()};
+    u.onerror=function(ev){
+      /* interrupted/canceled เกิดได้ตามปกติเมื่อมีข้อความใหม่ ไม่ถือว่าเสียงเสีย */
+      if(ev&&ev.error&&ev.error!=='interrupted'&&ev.error!=='canceled')speech.lastError=ev.error;
+      paintVoiceStatus();
+    };
+    if(speech.timer){clearTimeout(speech.timer);speech.timer=null}
+    var speakNow=function(){
+      try{
+        if(speechSynthesis.paused)speechSynthesis.resume();
+        speechSynthesis.speak(u);
+        /* บางรุ่นของ Chrome หยุดคิวเสียงเองเมื่อแท็บทำงานหนักจาก AI */
+        setTimeout(function(){try{if(speechSynthesis.paused)speechSynthesis.resume()}catch(e){}},350);
+      }catch(e){speech.lastError=e.message||String(e);paintVoiceStatus()}
+    };
+    if(speechSynthesis.speaking||speechSynthesis.pending){
+      speechSynthesis.cancel();
+      speech.timer=setTimeout(function(){speech.timer=null;speakNow()},90);
+    }else speakNow();
+    return true;
+  }catch(e){speech.lastError=e.message||String(e);paintVoiceStatus();return false}
 }
-function paintVoiceBtn(){$('btnVoice').textContent='เสียงพูด: '+(speech.on?'เปิด':'ปิด')}
-$('btnVoice').onclick=function(){
-  speech.on=!speech.on;store.set('sf.voice',speech.on);paintVoiceBtn();
-  if(speech.on)say('เปิดเสียงพูดเตือน',true);
-  else if('speechSynthesis' in window)speechSynthesis.cancel();
-};
+function paintVoiceStatus(msg){
+  var box=$('voiceStatus');if(!box)return;
+  if(!speechSupported())box.textContent='อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับเสียงพูด — ระบบยังใช้เสียงสัญญาณเตือนได้';
+  else if(speech.lastError)box.textContent='เสียงพูดมีปัญหา: '+speech.lastError+' · ลองกด “ทดสอบเสียง” อีกครั้ง';
+  else box.textContent=msg||(speech.on?'เสียงพูดเปิดอยู่ · พูดเมื่อท่าผิดค้างต่อเนื่อง':'เสียงพูดปิดอยู่ · ยังมีเสียงสัญญาณเตือน');
+}
+function paintVoiceBtn(){
+  var label='เสียงพูด: '+(speech.on?'เปิด':'ปิด');
+  if($('btnVoice'))$('btnVoice').textContent=label;
+  if($('btnVoiceSet'))$('btnVoiceSet').textContent=label;
+  paintVoiceStatus();
+}
+function setVoice(on,test){
+  speech.on=!!on;store.set('sf.voice',speech.on);speech.lastError='';paintVoiceBtn();
+  if(!speech.on&&speechSupported()){
+    if(speech.timer)clearTimeout(speech.timer);
+    speech.timer=null;speechSynthesis.cancel();
+  }
+  if(test&&speech.on){pickVoice();say('ทดสอบเสียง SmartFlex พร้อมเตือนท่านั่งแล้วค่ะ',true)}
+}
+$('btnVoice').onclick=function(){setVoice(!speech.on,speech.on===false)};
+$('btnVoiceSet').onclick=function(){setVoice(!speech.on,speech.on===false)};
+$('btnTestVoice').onclick=function(){setVoice(true,true)};
 
 /* ============================================================
    LIVE
    ============================================================ */
 var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,tickTimer=null;
+var AI_LIBS=[
+  ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js',
+   'https://unpkg.com/@tensorflow/tfjs@4.11.0/dist/tf.min.js'],
+  ['https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js',
+   'https://unpkg.com/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js']
+];
+var aiLoadPromise=null;
+function loadScriptUrl(url){
+  return new Promise(function(resolve,reject){
+    var old=document.querySelector('script[data-ai-src="'+url+'"]');
+    if(old&&old.getAttribute('data-loaded')==='1'){resolve();return}
+    var s=old||document.createElement('script'),done=false;
+    var timer=setTimeout(function(){finish(new Error('โหลดระบบ AI ช้าเกินไป'))},25000);
+    function finish(err){
+      if(done)return;done=true;clearTimeout(timer);
+      if(err){if(s.parentNode)s.parentNode.removeChild(s);reject(err);return}
+      s.setAttribute('data-loaded','1');resolve();
+    }
+    s.async=true;s.crossOrigin='anonymous';s.setAttribute('data-ai-src',url);
+    s.onload=function(){finish()};s.onerror=function(){finish(new Error('โหลด '+url+' ไม่สำเร็จ'))};
+    if(!old){s.src=url;document.head.appendChild(s)}
+  });
+}
+function loadAiGroup(urls){
+  var i=0;
+  function next(){
+    if(i>=urls.length)return Promise.reject(new Error('เชื่อมต่อไฟล์ระบบ AI ไม่สำเร็จ'));
+    return loadScriptUrl(urls[i++]).catch(next);
+  }
+  return next();
+}
+function ensureAiLibraries(){
+  if(window.tf&&window.poseDetection)return Promise.resolve();
+  if(aiLoadPromise)return aiLoadPromise;
+  aiLoadPromise=AI_LIBS.reduce(function(p,urls){return p.then(function(){return loadAiGroup(urls)})},Promise.resolve())
+    .then(function(){
+      if(!window.tf||!window.poseDetection)throw new Error('ไฟล์ระบบ AI โหลดไม่ครบ');
+    }).catch(function(e){aiLoadPromise=null;throw e});
+  return aiLoadPromise;
+}
 async function ensureDetector(){
   if(state.detector&&state.detectorMode===state.mode)return state.detector;
   showOverlay('กำลังโหลดระบบ AI','MoveNet · ครั้งแรกอาจใช้เวลาสักครู่',true);
-  await tf.setBackend('webgl');await tf.ready();
+  await ensureAiLibraries();
+  try{await tf.setBackend('webgl')}catch(e){await tf.setBackend('cpu')}
+  await tf.ready();
   if(state.detector&&state.detector.dispose)try{state.detector.dispose()}catch(e){}
   state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,{
     modelType:state.mode==='classroom'
@@ -736,15 +832,20 @@ function stopStream(){
   vid.srcObject=null;
 }
 function leaveLive(){
-  state.running=false;state.calibrating=false;
+  state.running=false;state.calibrating=false;state.loopToken++;
   if(rafId)cancelAnimationFrame(rafId);
   if(tickTimer)clearInterval(tickTimer);
+  if(state.calibrationTimer)clearTimeout(state.calibrationTimer);
+  state.calibrationTimer=null;state.startedAt=null;
   stopStream();hideOverlay();
   $('live').classList.remove('on');$('tabs').classList.remove('hidden');
   goto('setup');
 }
 $('btnOvlBack').onclick=leaveLive;
 async function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    throw new Error('เบราว์เซอร์ไม่อนุญาตกล้อง กรุณาเปิดผ่านลิงก์ HTTPS ด้วย Chrome, Edge หรือ Safari รุ่นล่าสุด');
+  }
   stopStream();
   var stream=await navigator.mediaDevices.getUserMedia({audio:false,
     video:{facingMode:state.facing,width:{ideal:1280},height:{ideal:720}}});
@@ -756,7 +857,12 @@ async function startCamera(){
 }
 $('btnFlip').onclick=function(){
   state.facing=state.facing==='user'?'environment':'user';
-  startCamera().catch(function(e){showOverlay('สลับกล้องไม่สำเร็จ',e.message||'',true)});
+  var wasRunning=state.running;state.running=false;state.loopToken++;
+  if(rafId)cancelAnimationFrame(rafId);
+  showOverlay('กำลังสลับกล้อง','รอสักครู่',true);
+  startCamera().then(function(){
+    hideOverlay();state.running=wasRunning;state.lastFrameAt=performance.now();if(wasRunning){state.loopToken++;loop(state.loopToken)}
+  }).catch(function(e){state.running=false;showOverlay('สลับกล้องไม่สำเร็จ',e.message||'',true)});
 };
 $('btnGoLive').onclick=async function(){
   if(!$('chkConsent').checked){$('chkConsent').focus();alert('กรุณากดยินยอมให้ใช้กล้องก่อนเริ่มตรวจ');return}
@@ -769,6 +875,10 @@ $('btnGoLive').onclick=async function(){
     state.names=classNames();state.ids=classIds();
     state.room=($('inRoom').value||'').trim()||'ห้องเรียน';
     state.perPerson={};
+    state.names.forEach(function(name,i){
+      state.perPerson[i]={name:name,seatNo:i+1,studentId:state.ids[i]||String(i+1),
+        good:0,warn:0,bad:0,unknown:0,issues:{}};
+    });
   }
   $('live').classList.add('on');$('tabs').classList.add('hidden');
   $('people').classList.toggle('hidden',state.mode!=='classroom');
@@ -784,7 +894,9 @@ $('btnGoLive').onclick=async function(){
     if(state.mode==='personal'){
       state.calibrating=true;
       showOverlay('จัดกล้องให้เห็นหัว ไหล่ และสะโพก','5 วินาทีนี้ยังไม่คิดคะแนน — ขยับกล้องให้เห็นตัวชัดก่อน');
-      setTimeout(function(){state.calibrating=false;hideOverlay()},5000);
+      state.calibrationTimer=setTimeout(function(){
+        state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();hideOverlay();
+      },5000);
     }else hideOverlay();
   }catch(err){
     showOverlay('เปิดกล้องหรือโมเดลไม่สำเร็จ',(err&&err.message||'')+' · ตรวจการอนุญาตกล้องแล้วลองอีกครั้ง',true);
@@ -795,19 +907,22 @@ function beginSession(){
   state.total=state.good=state.warn=state.bad=state.unknown=state.alerts=0;
   state.issues={};state.badSince=0;state.lastAlert=0;state.wasBad=false;
   state.samples=[];state.worst=[];state.lastMetrics=null;state.lastStatus=null;
-  loop();
+  state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
+  state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
+  state.loopToken++;loop(state.loopToken);
   tickTimer=setInterval(tick,1000);
 }
 function tick(){
   if(!state.running)return;
-  state.total++;
-  if(state.total%5===0&&state.lastMetrics){
+  var s=Math.max(0,Math.floor((Date.now()-state.startedAt)/1000));
+  state.total=s;
+  if(s>=state.nextSampleAt&&state.lastMetrics){
     var lm=state.lastMetrics;
-    state.samples.push({t:state.total,forwardHead:lm.forwardHead,torsoLean:lm.torsoLean,
+    state.samples.push({t:s,forwardHead:lm.forwardHead,torsoLean:lm.torsoLean,
       shoulderTilt:lm.shoulderTilt,headTilt:lm.headTilt,hipAngle:lm.hipAngle});
     if(state.samples.length>SAMPLE_MAX)state.samples.shift();
+    while(state.nextSampleAt<=s)state.nextSampleAt+=5;
   }
-  var s=Math.floor((Date.now()-state.startedAt)/1000);
   var limit=durationMin()*60;
   if(limit>0){
     var left=Math.max(0,limit-s);
@@ -818,14 +933,23 @@ function tick(){
     $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
   }
 }
-async function loop(){
-  if(!state.running)return;
+async function loop(token){
+  if(!state.running||token!==state.loopToken)return;
   try{
     var poses=await state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?6:1});
+    if(!state.running||token!==state.loopToken)return;
+    state.loopErrors=0;state.lastDetectionAt=Date.now();
     ctx.clearRect(0,0,cv.width,cv.height);
     if(state.mode==='classroom')paintClass(poses);else paintPersonal(poses[0]);
-  }catch(e){}
-  rafId=requestAnimationFrame(loop);
+  }catch(e){
+    state.loopErrors++;
+    if(state.loopErrors>=30){
+      state.running=false;
+      showOverlay('ระบบ AI หยุดประมวลผล',(e&&e.message||'เกิดข้อผิดพลาดระหว่างตรวจท่า')+' · กดย้อนกลับแล้วเริ่มใหม่',true);
+      return;
+    }
+  }
+  if(state.running&&token===state.loopToken)rafId=requestAnimationFrame(function(){loop(token)});
 }
 var EDGES=[[5,7,'arm'],[7,9,'arm'],[6,8,'arm'],[8,10,'arm'],[5,6,'shoulder'],[5,11,'torso'],
   [6,12,'torso'],[11,12,'torso'],[11,13,'hip'],[13,15,'hip'],[12,14,'hip'],[14,16,'hip'],
@@ -885,9 +1009,46 @@ function overLimit(key,v){
   var L=LIMITS[key];if(!L||typeof v!=='number')return false;
   return Math.abs(v-L.c)>L.t*sens().tol;
 }
+function frameDelta(){
+  var now=performance.now(),last=state.lastFrameAt||now;
+  state.lastFrameAt=now;
+  if(state.calibrating)return 0;
+  return Math.max(0,Math.min(.75,(now-last)/1000));
+}
+function addOverall(status,bads,seconds){
+  if(!seconds)return;
+  if(status==='good')state.good+=seconds;
+  else if(status==='warn')state.warn+=seconds;
+  else if(status==='bad')state.bad+=seconds;
+  else state.unknown+=seconds;
+  (bads||[]).forEach(function(b){state.issues[b]=(state.issues[b]||0)+seconds});
+}
+function handleWarning(status,bads,context){
+  if(state.calibrating)return;
+  var now=Date.now(),h=sens().hold;
+  if((status==='bad'||status==='warn')&&bads&&bads.length){
+    if(!state.badSince)state.badSince=now;
+    state.lastBadSeen=now;state.warningKey=bads[0];state.wasBad=true;
+    var held=now-state.badSince;
+    if(held>4000*h&&now-(state.lastAlert||0)>20000*h){
+      var coach=(COACH[state.warningKey]||[,,state.warningKey])[2]||state.warningKey;
+      state.lastAlert=now;state.alerts++;
+      say((context?context+' ':'')+coach);chime();
+    }
+    return;
+  }
+  /* จุด keypoint หายชั่วครู่ไม่ควรล้างเวลารอเตือนทันที */
+  if(status==='unknown'){
+    if(state.lastBadSeen&&now-state.lastBadSeen<1500)return;
+    state.badSince=0;state.warningKey='';state.wasBad=false;return;
+  }
+  if(state.wasBad&&state.badSince&&now-state.badSince>4000*h)say('ท่าถูกแล้ว รักษาไว้แบบนี้',true);
+  state.badSince=0;state.warningKey='';state.wasBad=false;
+}
 function paintPersonal(pose){
+  var dt=frameDelta();
   if(!pose){
-    if(!state.calibrating)state.unknown++;
+    state.lastMetrics=null;state.lastStatus='unknown';addOverall('unknown',[],dt);handleWarning('unknown',[]);
     setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],liveScore());
     return;
   }
@@ -897,33 +1058,15 @@ function paintPersonal(pose){
   drawSkeleton(pose.keypoints,r.flags);
 
   if(!state.calibrating){
-    if(r.status==='bad'&&r.bad.length&&state.lastStatus!=='bad'){
+    var wasWrong=state.lastStatus==='bad'||state.lastStatus==='warn';
+    if((r.status==='bad'||r.status==='warn')&&r.bad.length&&!wasWrong){
       var el=Math.floor((Date.now()-state.startedAt)/1000);
       state.worst.push({at:Math.floor(el/60)+':'+String(el%60).padStart(2,'0'),what:r.bad.join(' · ')});
       if(state.worst.length>40)state.worst.shift();
     }
     state.lastStatus=r.status;
-    if(r.status==='good')state.good++;
-    else if(r.status==='warn')state.warn++;
-    else if(r.status==='unknown')state.unknown++;
-    else state.bad++;
-    r.bad.forEach(function(b){state.issues[b]=(state.issues[b]||0)+1});
-
-    var h=sens().hold;
-    if(r.status==='bad'||r.status==='warn'){
-      if(!state.badSince)state.badSince=Date.now();
-      var held=Date.now()-state.badSince;
-      if(held>4000*h)say((COACH[r.bad[0]]||[,,r.bad[0]])[2]);
-      if(r.status==='bad'&&held>5000*h&&Date.now()-(state.lastAlert||0)>20000*h){
-        state.lastAlert=Date.now();state.alerts++;chime();
-      }
-      state.wasBad=true;
-    }else{
-      if(state.wasBad&&state.badSince&&Date.now()-state.badSince>4000*h){
-        say('ท่าถูกแล้ว รักษาไว้แบบนี้',true);state.wasBad=false;
-      }
-      state.badSince=0;
-    }
+    addOverall(r.status,r.bad,dt);
+    handleWarning(r.status,r.bad,'');
   }
   var main=r.bad[0];
   var c=main?[(COACH[main]||[main,''])[0],(COACH[main]||['',''])[1],ADVICE[main]||'']
@@ -949,29 +1092,47 @@ function centerX(p){
 function paintClass(poses){
   /* จับคู่ชื่อกับคนด้วยตำแหน่งแนวนอนจริง ไม่ใช่ลำดับที่โมเดลคืนมา
      ภาพกล้องหน้าถูกกลับด้าน คนที่เห็นอยู่ซ้ายสุดบนจอ = ค่า x มากสุด */
+  var dt=frameDelta();
   var sorted=poses.slice().sort(function(a,b){
     return state.facing==='user'?centerX(b)-centerX(a):centerX(a)-centerX(b);
   });
-  var counts={good:0,warn:0,bad:0},html='';
+  var expected=Math.max((state.names||[]).length,sorted.length),counts={good:0,warn:0,bad:0,unknown:0};
+  var issueFreq={},cards=[];
+  for(var z=0;z<expected;z++){
+    var zr=state.perPerson[z]||(state.perPerson[z]={name:(state.names&&state.names[z])||('คนที่ '+(z+1)),
+      seatNo:z+1,studentId:(state.ids&&state.ids[z])||String(z+1),good:0,warn:0,bad:0,unknown:0,issues:{}});
+    zr.unknown=(zr.unknown||0)+dt;
+  }
   sorted.forEach(function(p,i){
     var r=analyse(p.keypoints);
     drawSkeleton(p.keypoints,r.flags);
-    if(r.status!=='unknown')counts[r.status]++;
+    counts[r.status]=(counts[r.status]||0)+1;
     var who=(state.names&&state.names[i])||('คนที่ '+(i+1));
-    if(!state.perPerson)state.perPerson={};
     var rec=state.perPerson[i]||(state.perPerson[i]={name:who,seatNo:i+1,
-      studentId:(state.ids&&state.ids[i])||String(i+1),good:0,warn:0,bad:0,issues:{}});
-    rec.name=who;
-    if(r.status==='good')rec.good++;
-    else if(r.status==='warn'){rec.warn++;(r.bad||[]).forEach(function(b){rec.issues[b]=(rec.issues[b]||0)+1})}
-    else if(r.status==='bad'){rec.bad++;(r.bad||[]).forEach(function(b){rec.issues[b]=(rec.issues[b]||0)+1})}
-    html+='<div class="person" style="border-color:'+TONE[r.status]+'"><b>'+who+'</b><span>'+
-      (r.bad[0]||(r.status==='unknown'?'มองไม่ชัด':'ท่าดี'))+'</span></div>';
+      studentId:(state.ids&&state.ids[i])||String(i+1),good:0,warn:0,bad:0,unknown:0,issues:{}});
+    rec.name=who;rec.unknown=Math.max(0,(rec.unknown||0)-dt);
+    if(r.status==='good')rec.good+=dt;
+    else if(r.status==='warn')rec.warn+=dt;
+    else if(r.status==='bad')rec.bad+=dt;
+    else rec.unknown+=dt;
+    (r.bad||[]).forEach(function(b){
+      rec.issues[b]=(rec.issues[b]||0)+dt;issueFreq[b]=(issueFreq[b]||0)+1;
+    });
+    addOverall(r.status,r.bad,dt);
+    cards[i]='<div class="person" style="border-color:'+TONE[r.status]+'"><b>'+esc(who)+'</b><span>'+esc(
+      r.bad[0]||(r.status==='unknown'?'มองไม่ชัด':'ท่าดี'))+'</span></div>';
   });
-  $('people').innerHTML=html;
-  state.good+=counts.good;state.warn+=counts.warn;state.bad+=counts.bad;
-  if(!sorted.length)state.unknown++;
-  setBand(counts.bad?'bad':counts.warn?'warn':'good',
+  for(var i=sorted.length;i<expected;i++){
+    counts.unknown++;
+    addOverall('unknown',[],dt);
+    var missing=(state.names&&state.names[i])||('คนที่ '+(i+1));
+    cards[i]='<div class="person" style="border-color:'+TONE.unknown+'"><b>'+esc(missing)+'</b><span>มองไม่เห็นในเฟรม</span></div>';
+  }
+  $('people').innerHTML=cards.join('');
+  var mainIssues=Object.keys(issueFreq).sort(function(a,b){return issueFreq[b]-issueFreq[a]});
+  var overallStatus=counts.bad?'bad':counts.warn?'warn':sorted.length?'good':'unknown';
+  handleWarning(overallStatus,mainIssues,overallStatus==='unknown'?'':'พบผู้เรียนที่นั่งผิดท่า');
+  setBand(overallStatus,
     ['ในเฟรม '+sorted.length+' คน','ท่าดี '+counts.good+' · ต้องแก้ '+(counts.bad+counts.warn)],liveScore());
 }
 function setBand(st,c,score){
@@ -1015,25 +1176,29 @@ $('btnStop').onclick=function(){endSession()};
 function grade(sc){return sc>=90?'ดีมาก':sc>=80?'ดี':sc>=60?'ควรปรับ':'ควรปรับทันที'}
 function endSession(){
   if(!state.startedAt)return;
-  if('speechSynthesis' in window)speechSynthesis.cancel();
-  state.running=false;state.calibrating=false;
-  cancelAnimationFrame(rafId);clearInterval(tickTimer);
+  var started=state.startedAt;
+  if(speech.timer)clearTimeout(speech.timer);speech.timer=null;
+  if(speechSupported())speechSynthesis.cancel();
+  state.running=false;state.calibrating=false;state.loopToken++;
+  if(state.calibrationTimer)clearTimeout(state.calibrationTimer);state.calibrationTimer=null;
+  if(rafId)cancelAnimationFrame(rafId);if(tickTimer)clearInterval(tickTimer);
   stopStream();
   $('live').classList.remove('on');$('tabs').classList.remove('hidden');
 
   var ended=new Date(),prof=store.get(LS.prof,{name:'ผู้ใช้',userId:'SF-0001'});
+  state.total=Math.max(state.total,Math.floor((ended-started)/1000));
   var g=state.good,w=state.warn,b=state.bad,u=state.unknown;
   var seen=g+w+b,denom=Math.max(1,seen+u);
   /* warn = ผิดข้อเดียว นับครึ่งหนึ่ง ไม่ใช่ศูนย์ */
-  var score=Math.round(100*(g+w*0.5)/Math.max(1,seen));
+  var score=seen?Math.round(100*(g+w*0.5)/seen):0;
   var issues=Object.keys(state.issues).sort(function(a,b2){return state.issues[b2]-state.issues[a]});
 
   var row={};
-  row.sessionId=prof.userId+'-'+state.startedAt.getTime();
+  row.sessionId=prof.userId+'-'+started.getTime();
   row.savedAt=ended.toISOString();
   row.appMode=state.mode;row.userId=prof.userId;row.name=prof.name;
   row.room=state.room||'';row.activity=state.act||'';row.device=state.dev||'';
-  row.cameraAngle=state.angle;row.activityMode=state.angle;
+  row.cameraAngle=state.angle;row.activityMode=state.act;
   row.totalSeconds=state.total;
   row.goodSeconds=Math.round(state.total*g/denom);
   row.badSeconds=Math.round(state.total*(w+b)/denom);
@@ -1042,7 +1207,7 @@ function endSession(){
   row.score=score;row.grade=grade(score);
   row.alertCount=state.alerts;row.mainIssue=issues[0]||'-';
   row.advice=ADVICE[issues[0]]||'รักษาท่านี้ไว้';
-  row.startedAt=state.startedAt.toISOString();row.endedAt=ended.toISOString();
+  row.startedAt=started.toISOString();row.endedAt=ended.toISOString();
 
   /* เก็บลงประวัติในเครื่อง (มี _samples ไว้ทำกราฟ ไม่ส่งขึ้นชีท) */
   var local=JSON.parse(JSON.stringify(row));
@@ -1053,22 +1218,23 @@ function endSession(){
   if(state.mode==='classroom'&&state.perPerson){
     students=Object.keys(state.perPerson).map(function(k){
       var r=state.perPerson[k];
-      var sSeen=Math.max(1,r.good+r.warn+r.bad);
-      var sc=Math.round(100*(r.good+r.warn*0.5)/sSeen);
+      var sSeen=r.good+r.warn+r.bad,sDenom=Math.max(1,sSeen+(r.unknown||0));
+      var sc=sSeen?Math.round(100*(r.good+r.warn*0.5)/sSeen):0;
       var iss=Object.keys(r.issues).sort(function(a,b2){return r.issues[b2]-r.issues[a]})[0]||'-';
       return {sessionId:row.sessionId,savedAt:row.savedAt,room:row.room,
         seatNo:r.seatNo,studentId:r.studentId,name:r.name,
         score:sc,grade:grade(sc),
-        goodSeconds:Math.round(state.total*r.good/sSeen),
-        badSeconds:Math.round(state.total*(r.warn+r.bad)/sSeen),
+        goodSeconds:Math.round(state.total*r.good/sDenom),
+        badSeconds:Math.round(state.total*(r.warn+r.bad)/sDenom),
         alertCount:0,mainIssue:iss,advice:ADVICE[iss]||'-'};
     });
     local._students=students;
   }
-  var hist=store.get(LS.hist,[]);
+  var hist=asArray(store.get(LS.hist,[]));
   hist.unshift(local);
   store.set(LS.hist,hist.slice(0,HIST_MAX));
   state.lastSessionId=row.sessionId;
+  state.startedAt=null;
 
   showSummary(local,issues);
 
@@ -1109,9 +1275,9 @@ function showSummary(row,issues){
   ];
   $('analysisBox').innerHTML=analysis.map(function(a){
     return '<div class="card" style="display:flex;justify-content:space-between;gap:12px;padding:13px 15px">'+
-      '<b style="font-size:13px;flex:none">'+a[0]+'</b><span class="note" style="text-align:right">'+a[1]+'</span></div>';
+      '<b style="font-size:13px;flex:none">'+esc(a[0])+'</b><span class="note" style="text-align:right">'+esc(a[1])+'</span></div>';
   }).join('')+(row._students?('<div class="card"><b style="font-size:13px">ผลรายบุคคล</b>'+row._students.map(function(s){
-    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line)"><span style="font-size:13px">'+s.seatNo+'. '+s.name+'</span><span class="note">'+s.score+' · '+s.mainIssue+'</span></div>';
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line)"><span style="font-size:13px">'+esc(s.seatNo+'. '+s.name)+'</span><span class="note">'+esc(s.score+' · '+s.mainIssue)+'</span></div>';
   }).join('')+'</div>'):'');
 }
 function scoredLabel(angleKey){
@@ -1176,19 +1342,19 @@ $('btnClearHist').onclick=function(){
 function paintStoreInfo(){
   var bytes=0;
   try{for(var k in localStorage){if(k.indexOf('sf.')===0)bytes+=(localStorage[k]||'').length}}catch(e){}
-  var n=store.get(LS.hist,[]).length;
+  var n=asArray(store.get(LS.hist,[])).length;
   $('storeInfo').textContent='เก็บประวัติไว้ '+n+' เซสชัน (เก็บสูงสุด '+HIST_MAX+') · ใช้พื้นที่ราว '+
     (bytes>1024?Math.round(bytes/1024)+' KB':bytes+' ไบต์')+(store.full?' · พื้นที่เต็ม!':'');
 }
 function paintNameRows(){
   var n=Math.max(1,Math.min(6,Number($('inCount').value)||3));
-  var savedN=store.get('sf.classNames',[]),savedI=store.get('sf.classIds',[]);
+  var savedN=asArray(store.get('sf.classNames',[])),savedI=asArray(store.get('sf.classIds',[]));
   var html='';
   for(var i=0;i<n;i++){
     html+='<div class="row"><div class="field" style="flex:0 0 84px"><label>เลขที่</label>'+
-      '<input data-sid="'+i+'" value="'+(savedI[i]||(i+1))+'" inputmode="numeric"></div>'+
+      '<input data-sid="'+i+'" value="'+esc(savedI[i]||(i+1))+'" inputmode="numeric"></div>'+
       '<div class="field"><label>ชื่อคนที่ '+(i+1)+' (ซ้าย→ขวา)</label>'+
-      '<input data-nm="'+i+'" placeholder="ชื่อนักเรียน" value="'+(savedN[i]||'')+'"></div></div>';
+      '<input data-nm="'+i+'" placeholder="ชื่อนักเรียน" value="'+esc(savedN[i]||'')+'"></div></div>';
   }
   $('nameRows').innerHTML=html;
 }
@@ -1212,13 +1378,13 @@ document.addEventListener('input',function(e){
 function rowCard(r){
   var when=new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
   var mins=Math.max(1,Math.round(r.totalSeconds/60));
-  return '<div class="sesrow" data-open="'+r.sessionId+'" style="cursor:pointer"><span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+r.score+'</span>'+
-    '<span class="txt"><span class="when">'+when+'</span>'+
-    '<span class="note">'+mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-')+'</span></span>'+
+  return '<div class="sesrow" data-open="'+esc(r.sessionId)+'" style="cursor:pointer"><span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+esc(r.score)+'</span>'+
+    '<span class="txt"><span class="when">'+esc(when)+'</span>'+
+    '<span class="note">'+esc(mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-'))+'</span></span>'+
     '<span style="color:#B9CCC2;font-size:18px">›</span></div>';
 }
 function findSession(id){
-  return store.get(LS.hist,[]).filter(function(r){return r.sessionId===id})[0];
+  return asArray(store.get(LS.hist,[])).filter(function(r){return r.sessionId===id})[0];
 }
 var DETAIL_ROWS=[
   {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'มุมหู–ไหล่–สะโพก',ok:'145–185°',limit:{center:165,tol:20},fix:'ยกจอให้สูงระดับสายตา เก็บคางเข้า'},
@@ -1269,7 +1435,7 @@ function openDetail(id){
     '<div style="display:flex;align-items:center;gap:12px;padding-top:26px">'+
       '<button class="icobtn" data-goto="history" style="border-color:var(--line);background:#fff;color:var(--g900)">‹</button>'+
       '<div style="flex:1"><b style="font-size:16px;color:var(--g900)">รายงานเซสชัน</b>'+
-      '<div class="note">'+when+' · '+(r.activity||'-')+' · '+(r.device||'-')+'</div></div>'+
+      '<div class="note">'+esc(when+' · '+(r.activity||'-')+' · '+(r.device||'-'))+'</div></div>'+
       '<span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+r.score+'</span></div>'+
     '<div class="grid2">'+
       '<div class="stat"><b>'+Math.max(1,Math.round(r.totalSeconds/60))+' นาที</b><span>เวลารวม</span></div>'+
@@ -1280,7 +1446,7 @@ function openDetail(id){
       '<div class="stat"><b>'+r.coverage+'%</b><span>ความครบของข้อมูล</span></div>'+
     '</div>'+
     (r._students?('<div class="eyebrow">ผลรายบุคคล · STUDENTS</div><div class="card">'+r._students.map(function(s){
-      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)"><span style="font-size:13px">'+s.seatNo+'. '+s.name+' <span class="note">('+s.studentId+')</span></span><span class="note">'+s.score+' · '+s.grade+' · '+s.mainIssue+'</span></div>';
+      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)"><span style="font-size:13px">'+esc(s.seatNo+'. '+s.name)+' <span class="note">('+esc(s.studentId)+')</span></span><span class="note">'+esc(s.score+' · '+s.grade+' · '+s.mainIssue)+'</span></div>';
     }).join('')+'</div>'):'')+
     '<div class="eyebrow">มุมที่ตรวจทั้งหมด · WHAT WAS MEASURED</div>'+
     DETAIL_ROWS.map(function(row){return detailCard(samples,row)}).join('')+
@@ -1290,11 +1456,11 @@ function openDetail(id){
     }).join(''):'<div class="note">ไม่มีช่วงที่ท่าแย่ต่อเนื่อง</div>')+'</div>'+
     '<div class="eyebrow">โน้ตของคุณ · YOUR NOTE</div>'+
     '<div class="card" style="display:flex;flex-direction:column;gap:10px">'+
-      '<textarea id="noteBox" rows="3" style="font:inherit;font-size:13px;padding:10px;border:1.5px solid var(--line);border-radius:12px;resize:vertical" placeholder="เช่น ปวดต้นคอด้านขวาช่วงบ่าย">'+(r._note||'')+'</textarea>'+
+      '<textarea id="noteBox" rows="3" style="font:inherit;font-size:13px;padding:10px;border:1.5px solid var(--line);border-radius:12px;resize:vertical" placeholder="เช่น ปวดต้นคอด้านขวาช่วงบ่าย">'+esc(r._note||'')+'</textarea>'+
       '<button class="btn sec" id="btnSaveNote">บันทึกโน้ต</button></div>'+
     '<button class="btn" id="btnPrint">พิมพ์ / บันทึก PDF ส่งนักกายภาพ</button>';
   $('btnSaveNote').onclick=function(){
-    var hist=store.get(LS.hist,[]);
+    var hist=asArray(store.get(LS.hist,[]));
     hist.forEach(function(x){if(x.sessionId===id)x._note=$('noteBox').value});
     store.set(LS.hist,hist);
     $('btnSaveNote').textContent='บันทึกแล้ว';
@@ -1341,7 +1507,7 @@ function renderWeek(hist){
   }).join('')+'</div>';
 }
 function renderHome(){
-  var h=store.get(LS.hist,[]);
+  var h=asArray(store.get(LS.hist,[]));
   var lim=streakMin();
   $('todayLabel').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
   var streak=0,cursor=new Date();
@@ -1349,7 +1515,7 @@ function renderHome(){
     var key=cursor.toDateString();
     var day=h.filter(function(r){return new Date(r.startedAt).toDateString()===key});
     if(day.length&&day.reduce(function(a,r){return a+r.score},0)/day.length>=lim)streak++;
-    else if(i>0)break;
+    else if(day.length||i>0)break;
     cursor.setDate(cursor.getDate()-1);
   }
   $('streakNum').textContent=streak;
@@ -1367,7 +1533,7 @@ function renderHome(){
   $('recentList').innerHTML=h.slice(0,3).map(rowCard).join('')||'<div class="note">ยังไม่มีเซสชัน กดเริ่มตรวจได้เลย</div>';
 }
 function toCSV(){
-  var h=store.get(LS.hist,[]);
+  var h=asArray(store.get(LS.hist,[]));
   var cols=['sessionId','startedAt','appMode','room','name','activity','device','cameraAngle',
     'totalSeconds','goodSeconds','badSeconds','unknownSeconds','coverage','score','grade','alertCount','mainIssue','advice'];
   var lines=[cols.join(',')];
@@ -1386,7 +1552,7 @@ function toCSV(){
   setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
 }
 function renderHistory(){
-  var h=store.get(LS.hist,[]);
+  var h=asArray(store.get(LS.hist,[]));
   var q=($('inSearch')&&$('inSearch').value||'').toLowerCase();
   var mode=state.histMode||'all';
   var list=h.filter(function(r){
