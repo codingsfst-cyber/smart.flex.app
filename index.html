@@ -468,7 +468,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.1 — unobstructed live view with voice alerts
+   SmartFlex v4.2 — smart angle labels that avoid the face and live controls
    แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
    เสริม: iPad/desktop layout · Canvas โปร่งใส · ซิงก์ภาพเมื่อหมุนจอ · โหลด AI สำรอง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -1276,34 +1276,107 @@ function roundedRect(x,y,w,h,r){
   ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
-function drawAngleTag(point,label,value,key,dy){
-  if(!point||typeof value!=='number')return;
-  var rect=cv.getBoundingClientRect(),fit=getComputedStyle(cv).objectFit;
-  var sx=rect.width/cv.width,sy=rect.height/cv.height;
-  var displayScale=fit==='cover'?Math.max(sx,sy):Math.min(sx,sy);
-  var fs=Math.max(14,Math.min(38,13/Math.max(.2,displayScale)));
-  var padX=fs*.55,h=fs*1.75,text=label+' '+value+'°';
+/* คำนวณพื้นที่ภาพที่มองเห็นจริงหลัง object-fit และเว้นส่วนควบคุมด้านบน/ล่าง
+   เพื่อไม่ให้ป้ายมุมหลุดขอบหรือซ่อนอยู่หลังแถบคำแนะนำ */
+function angleViewInfo(){
+  var rect=cv.getBoundingClientRect(),fit=getComputedStyle(cv).objectFit||'fill';
+  var sx=rect.width/Math.max(1,cv.width),sy=rect.height/Math.max(1,cv.height);
+  var scale=fit==='cover'?Math.max(sx,sy):(fit==='contain'?Math.min(sx,sy):sx);
+  scale=Math.max(.05,scale);
+  var ox=(rect.width-cv.width*scale)/2,oy=(rect.height-cv.height*scale)/2;
+  var bounds={left:0,top:0,right:cv.width,bottom:cv.height};
+  if(fit==='cover'){
+    bounds.left=Math.max(0,-ox/scale);bounds.right=Math.min(cv.width,(rect.width-ox)/scale);
+    bounds.top=Math.max(0,-oy/scale);bounds.bottom=Math.min(cv.height,(rect.height-oy)/scale);
+  }
+  var topUi=document.querySelector('#live .livetop'),bottomUi=$('metrics');
+  var safeTop=bounds.top,safeBottom=bounds.bottom,margin=8/scale;
+  if(topUi){var tr=topUi.getBoundingClientRect();safeTop=Math.max(safeTop,(tr.bottom-rect.top-oy)/scale+margin)}
+  if(bottomUi){var br=bottomUi.getBoundingClientRect();safeBottom=Math.min(safeBottom,(br.top-rect.top-oy)/scale-margin)}
+  /* จอแนวนอนที่เตี้ยมากอาจไม่มีช่องว่างระหว่าง UI ให้กลับมาใช้พื้นที่ภาพทั้งหมด */
+  if(safeBottom-safeTop>48/scale){bounds.top=safeTop;bounds.bottom=safeBottom}
+  return {rect:rect,fit:fit,scale:scale,bounds:bounds};
+}
+function angleDisplayPoint(point){
+  return point?{x:state.facing==='user'?cv.width-point.x:point.x,y:point.y}:null;
+}
+function angleOverlap(a,b){
+  var w=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x));
+  var h=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return w*h;
+}
+function clampAngleRect(rect,bounds){
+  var maxX=Math.max(bounds.left,bounds.right-rect.w),maxY=Math.max(bounds.top,bounds.bottom-rect.h);
+  return {x:Math.max(bounds.left,Math.min(maxX,rect.x)),y:Math.max(bounds.top,Math.min(maxY,rect.y)),w:rect.w,h:rect.h};
+}
+function placeAngleRect(anchor,w,h,opts,info){
+  opts=opts||{};var gap=Math.max(5/info.scale,h*.3),region=opts.region;
+  var base=region||{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y};
+  var dirs=opts.directions||['right','left','above','below'],candidates=[];
+  dirs.forEach(function(dir){
+    if(dir==='right')candidates.push({x:base.right+gap,y:anchor.y-h/2});
+    else if(dir==='left')candidates.push({x:base.left-w-gap,y:anchor.y-h/2});
+    else if(dir==='above')candidates.push({x:anchor.x-w/2,y:base.top-h-gap});
+    else candidates.push({x:anchor.x-w/2,y:base.bottom+gap});
+  });
+  var best=null,bestScore=Infinity,avoid=opts.avoid||[],used=opts.used||[];
+  candidates.forEach(function(c,i){
+    var raw={x:c.x,y:c.y,w:w,h:h},box=clampAngleRect(raw,info.bounds);
+    var moved=Math.hypot(box.x-raw.x,box.y-raw.y),score=i*20+moved*40;
+    avoid.forEach(function(r){var overlap=angleOverlap(box,r);if(overlap)score+=100000+overlap*100});
+    used.forEach(function(r){var overlap=angleOverlap(box,r);if(overlap)score+=50000+overlap*80});
+    if(score<bestScore){bestScore=score;best=box}
+  });
+  return best||clampAngleRect({x:anchor.x+gap,y:anchor.y-h/2,w:w,h:h},info.bounds);
+}
+function angleFaceRegion(kp,info){
+  var ids=[K.nose,K.leftEye,K.rightEye,K.leftEar,K.rightEar],pts=[];
+  ids.forEach(function(i){var p=angleDisplayPoint(pick(kp,i));if(p)pts.push(p)});
+  if(!pts.length)return null;
+  var xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
+  var minX=Math.min.apply(null,xs),maxX=Math.max.apply(null,xs);
+  var sl=angleDisplayPoint(pick(kp,K.leftShoulder)),sr=angleDisplayPoint(pick(kp,K.rightShoulder));
+  var shoulderSpan=sl&&sr?Math.abs(sl.x-sr.x):0;
+  var span=Math.max(maxX-minX,shoulderSpan*.38,44/info.scale);
+  var nose=angleDisplayPoint(pick(kp,K.nose));
+  var centerX=nose?nose.x:(minX+maxX)/2;
+  var left=centerX-span*.72,top=Math.min.apply(null,ys)-span*.78;
+  var width=span*1.44,height=(Math.max.apply(null,ys)-Math.min.apply(null,ys))+span*1.48;
+  return {x:left,y:top,w:width,h:height,left:left,right:left+width,top:top,bottom:top+height};
+}
+function drawAngleTag(point,label,value,key,opts){
+  if(!point||typeof value!=='number')return null;
+  opts=opts||{};var info=opts.info||angleViewInfo();
+  /* กำหนดขนาดจากพิกเซลที่เห็นบนจอ ทำให้ป้ายไม่โตเกินบนมือถือความละเอียดสูง */
+  var targetCss=info.rect.width<520?11:12.5;
+  var fs=Math.max(8,Math.min(34,targetCss/info.scale));
+  var padX=fs*.58,h=fs*1.65,text=label+' '+value+'°';
   ctx.save();ctx.font='700 '+fs+'px "Noto Sans Thai",sans-serif';
-  var w=ctx.measureText(text).width+padX*2;
-  var minX=state.facing==='user'?w+8:8,maxX=state.facing==='user'?cv.width-8:cv.width-w-8;
-  var x=Math.max(minX,Math.min(maxX,point.x)),y=Math.max(h,Math.min(cv.height-h,point.y+(dy||0)));
-  ctx.translate(x,y);if(state.facing==='user')ctx.scale(-1,1);
+  var w=ctx.measureText(text).width+padX*2;ctx.restore();
+  var anchor=angleDisplayPoint(point);if(opts.dy)anchor.y+=opts.dy;
+  var box=placeAngleRect(anchor,w,h,opts,info),sourceX=state.facing==='user'?cv.width-box.x-box.w:box.x;
   var level=metricLevel(key,value,sens().tol);
+  ctx.save();ctx.font='700 '+fs+'px "Noto Sans Thai",sans-serif';
+  if(state.facing==='user'){ctx.translate(sourceX+box.w,box.y+box.h/2);ctx.scale(-1,1)}
+  else ctx.translate(sourceX,box.y+box.h/2);
   ctx.fillStyle=level===2?'rgba(229,72,77,.96)':level===1?'rgba(185,137,22,.96)':'rgba(18,117,75,.94)';
-  ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=fs*.55;
-  roundedRect(padX*.35,-h/2,w,h,h/2);ctx.fill();ctx.shadowBlur=0;
+  ctx.shadowColor='rgba(0,0,0,.28)';ctx.shadowBlur=fs*.45;
+  roundedRect(0,-h/2,w,h,h/2);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(text,padX,-1);ctx.restore();
+  if(opts.used)opts.used.push(box);return box;
 }
 function drawAngleLabels(kp,r){
-  var checked=r.checked||[],m=r.metrics||{},side=sidePoints(kp);
+  var checked=r.checked||[],m=r.metrics||{},side=sidePoints(kp),info=angleViewInfo(),used=[];
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
-  var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar);
+  var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar),face=angleFaceRegion(kp,info);
+  var avoid=face?[face]:[];
   function has(k){return checked.indexOf(k)>-1}
-  if(has('forwardHead'))drawAngleTag(side.shoulder,'คอ',m.forwardHead,'forwardHead',-28);
-  if(has('torsoLean'))drawAngleTag(midPoint(side.shoulder,side.hip),'หลัง',m.torsoLean,'torsoLean',0);
-  if(has('hipAngle'))drawAngleTag(side.hip,'สะโพก',m.hipAngle,'hipAngle',28);
-  if(has('shoulderTilt'))drawAngleTag(midPoint(sl,sr),'ไหล่',m.shoulderTilt,'shoulderTilt',26);
-  if(has('headTilt'))drawAngleTag(midPoint(el,er),'ศีรษะ',m.headTilt,'headTilt',-25);
+  function options(directions,region,dy){return {info:info,used:used,avoid:avoid,directions:directions,region:region,dy:dy||0}}
+  /* ศีรษะวางก่อนและบังคับให้อยู่นอกกรอบใบหน้า จึงไม่บังตา จมูก หรือปาก */
+  if(has('headTilt'))drawAngleTag(midPoint(el,er),'ศีรษะ',m.headTilt,'headTilt',options(['right','left','above','below'],face));
+  if(has('shoulderTilt'))drawAngleTag(midPoint(sl,sr),'ไหล่',m.shoulderTilt,'shoulderTilt',options(['right','left','below','above'],null,12/info.scale));
+  if(has('forwardHead'))drawAngleTag(side.shoulder,'คอ',m.forwardHead,'forwardHead',options(['right','left','below','above'],null,-8/info.scale));
+  if(has('torsoLean'))drawAngleTag(midPoint(side.shoulder,side.hip),'หลัง',m.torsoLean,'torsoLean',options(['left','right','above','below']));
+  if(has('hipAngle'))drawAngleTag(side.hip,'สะโพก',m.hipAngle,'hipAngle',options(['right','left','above','below'],null,8/info.scale));
 }
 function drawGuide(kp){
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
