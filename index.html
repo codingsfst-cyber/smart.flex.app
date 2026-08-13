@@ -66,6 +66,10 @@ a:hover{color:var(--g900)}
 .overlay.on{display:flex}
 .overlay h2{margin:0;font-size:22px}
 .overlay p{margin:0;font-size:13px;color:rgba(207,241,225,.85);line-height:1.55}
+.posture-alert{position:absolute;z-index:6;left:50%;top:48%;transform:translate(-50%,-50%);max-width:min(88%,520px);padding:11px 18px;border-radius:999px;color:#fff;font-size:14px;font-weight:800;text-align:center;box-shadow:0 10px 34px rgba(0,0,0,.32);pointer-events:none;opacity:0;visibility:hidden;transition:opacity .16s ease,visibility .16s ease;background:rgba(229,72,77,.95)}
+.posture-alert.on{opacity:1;visibility:visible;animation:alertPulse 1.15s ease-in-out infinite}
+.posture-alert.warn{background:rgba(185,137,22,.96)}
+@keyframes alertPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.035)}}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
@@ -133,6 +137,7 @@ a:hover{color:var(--g900)}
   .metrics{left:12px;right:12px;bottom:68px;gap:5px}
   .met{padding:6px 3px;border-radius:10px}
   .people{left:12px;right:12px;top:130px;bottom:70px;grid-template-columns:repeat(3,1fr)}
+  .posture-alert{top:52%;padding:8px 14px;font-size:12px}
   .tabs{max-width:620px;bottom:6px;border:1px solid var(--line);border-radius:18px;padding:4px 8px}
   .tabs button{flex-direction:row;justify-content:center;gap:6px;padding:5px 0;font-size:11px}
   .tabs svg{width:18px;height:18px}
@@ -360,6 +365,22 @@ a:hover{color:var(--g900)}
       </div>
     </div>
     <div id="guideList" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="eyebrow">วิธีคำนวณคะแนน · SCORING</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div><b style="font-size:15px;color:var(--g900)">ระบบคิดคะแนนตามเวลาที่ตรวจเห็นท่าชัดเจน</b>
+      <div class="note" style="margin-top:4px">แต่ละช่วงเวลาแบ่งเป็น 3 ระดับ: ท่าดีได้ 100% · ควรปรับ (ผิด 1 จุด) ได้ 50% · ผิดรุนแรงหรือผิดตั้งแต่ 2 จุดขึ้นไปได้ 0%</div></div>
+      <div style="padding:13px 14px;border-radius:15px;background:#EAF4EF;border:1px solid var(--g100);text-align:center">
+        <b style="display:block;color:var(--g900);font-size:13px">คะแนน = (เวลาท่าดี + เวลาควรปรับ × 0.5) ÷ เวลาที่ตรวจเห็นชัด × 100</b>
+      </div>
+      <div class="grid2">
+        <div class="stat"><b style="font-size:18px">90–100</b><span>ดีมาก</span></div>
+        <div class="stat"><b style="font-size:18px">80–89</b><span>ดี</span></div>
+        <div class="stat"><b style="font-size:18px;color:var(--warn)">60–79</b><span>ควรปรับ</span></div>
+        <div class="stat"><b style="font-size:18px;color:var(--bad)">0–59</b><span>ควรปรับทันที</span></div>
+      </div>
+      <div class="note"><b>ตัวอย่าง:</b> ตรวจเห็นชัด 10 นาที เป็นท่าดี 8 นาที ควรปรับ 1 นาที และผิดรุนแรง 1 นาที → (8 + 1×0.5) ÷ 10 × 100 = <b>85 คะแนน</b></div>
+      <div class="note" style="padding:10px 12px;border-radius:12px;background:#F7FAF8">ช่วงที่มองไม่เห็นตัวหรือจุดร่างกายไม่ครบจะไม่ถูกนำมาตัดคะแนน แต่จะแสดงแยกเป็น “ความครบของข้อมูล” หากค่านี้ต่ำควรจัดกล้องใหม่แล้วตรวจซ้ำ</div>
+    </div>
     <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
       <div class="note">ที่มาของเกณฑ์และภาพตัวอย่าง · SOURCE<br>
       • โรงพยาบาลกรุงเทพจันทบุรี — ท่าทางการนั่งที่ถูกต้อง<br>
@@ -419,6 +440,7 @@ a:hover{color:var(--g900)}
   </div>
   <div class="metrics" id="metrics"></div>
   <div class="people hidden" id="people"></div>
+  <div class="posture-alert" id="postureAlert" role="status" aria-live="assertive"></div>
   <div class="livebtm" style="display:flex;gap:9px">
     <button class="btn" id="btnStop" style="flex:1;background:#fff;color:var(--g900)">หยุดตรวจ · Stop</button>
     <button class="btn" id="btnFlip" style="width:120px;background:rgba(255,255,255,.16);backdrop-filter:blur(12px)">สลับกล้อง</button>
@@ -439,7 +461,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v3.3 — responsive, camera display & posture accuracy build
+   SmartFlex v3.4 — visible alerts, angle labels & scoring guide build
    แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
    เสริม: iPad/desktop layout · Canvas โปร่งใส · ซิงก์ภาพเมื่อหมุนจอ · โหลด AI สำรอง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -677,8 +699,8 @@ var K={nose:0,leftEye:1,rightEye:2,leftEar:3,rightEar:4,leftShoulder:5,rightShou
 function pick(kp,i){var p=kp[i];return p&&p.score>0.35?p:null}
 
 /* ความไว: ขยาย/บีบช่วงที่ยอมรับ และเวลาที่ทนก่อนเตือน */
-var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนได้มากขึ้น 35% และรอนานขึ้นก่อนเตือน'},
-  mid:{tol:1,hold:1,label:'ใช้เกณฑ์มาตรฐาน เตือนเมื่อผิดท่าค้าง 4–5 วินาที'},
+var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนได้มากขึ้น 35% และพูดเตือนเมื่อผิดท่าค้างประมาณ 5 วินาที'},
+  mid:{tol:1,hold:1,label:'ใช้เกณฑ์มาตรฐาน แสดงป้ายทันทีและพูดเตือนเมื่อผิดท่าค้างประมาณ 3 วินาที'},
   high:{tol:.75,hold:.6,label:'บีบเกณฑ์ลง 25% และเตือนไวขึ้นเกือบเท่าตัว'}};
 function sens(){return SENS[state.sens]||SENS.mid}
 
@@ -1047,6 +1069,7 @@ function beginSession(){
   state.detectedView='unknown';state.activeMetrics=[];
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
+  state.visualWarning='';state.visualWarningStatus='';
   state.loopToken++;loop(state.loopToken);
   tickTimer=setInterval(tick,1000);
 }
@@ -1114,6 +1137,42 @@ function drawSkeleton(kp,flags,status){
     ctx.beginPath();ctx.arc(p.x,p.y,lw*1.4,0,6.3);ctx.fill();
   });
 }
+function roundedRect(x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+function drawAngleTag(point,label,value,key,dy){
+  if(!point||typeof value!=='number')return;
+  var rect=cv.getBoundingClientRect(),fit=getComputedStyle(cv).objectFit;
+  var sx=rect.width/cv.width,sy=rect.height/cv.height;
+  var displayScale=fit==='cover'?Math.max(sx,sy):Math.min(sx,sy);
+  var fs=Math.max(14,Math.min(38,13/Math.max(.2,displayScale)));
+  var padX=fs*.55,h=fs*1.75,text=label+' '+value+'°';
+  ctx.save();ctx.font='700 '+fs+'px "Noto Sans Thai",sans-serif';
+  var w=ctx.measureText(text).width+padX*2;
+  var minX=state.facing==='user'?w+8:8,maxX=state.facing==='user'?cv.width-8:cv.width-w-8;
+  var x=Math.max(minX,Math.min(maxX,point.x)),y=Math.max(h,Math.min(cv.height-h,point.y+(dy||0)));
+  ctx.translate(x,y);if(state.facing==='user')ctx.scale(-1,1);
+  var level=metricLevel(key,value,sens().tol);
+  ctx.fillStyle=level===2?'rgba(229,72,77,.96)':level===1?'rgba(185,137,22,.96)':'rgba(18,117,75,.94)';
+  ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=fs*.55;
+  roundedRect(padX*.35,-h/2,w,h,h/2);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(text,padX,-1);ctx.restore();
+}
+function drawAngleLabels(kp,r){
+  var checked=r.checked||[],m=r.metrics||{},side=sidePoints(kp);
+  var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
+  var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar);
+  function has(k){return checked.indexOf(k)>-1}
+  if(has('forwardHead'))drawAngleTag(side.shoulder,'คอ',m.forwardHead,'forwardHead',-28);
+  if(has('torsoLean'))drawAngleTag(midPoint(side.shoulder,side.hip),'หลัง',m.torsoLean,'torsoLean',0);
+  if(has('hipAngle'))drawAngleTag(side.hip,'สะโพก',m.hipAngle,'hipAngle',28);
+  if(has('shoulderTilt'))drawAngleTag(midPoint(sl,sr),'ไหล่',m.shoulderTilt,'shoulderTilt',26);
+  if(has('headTilt'))drawAngleTag(midPoint(el,er),'ศีรษะ',m.headTilt,'headTilt',-25);
+}
 function drawGuide(kp){
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
   var hl=pick(kp,K.leftHip),hr=pick(kp,K.rightHip);
@@ -1167,10 +1226,10 @@ function handleWarning(status,bads,context){
     if(!state.badSince)state.badSince=now;
     state.lastBadSeen=now;state.warningKey=bads[0];state.wasBad=true;
     var held=now-state.badSince;
-    if(held>4000*h&&now-(state.lastAlert||0)>20000*h){
+    if(held>3000*h&&now-(state.lastAlert||0)>20000*h){
       var coach=(COACH[state.warningKey]||[,,state.warningKey])[2]||state.warningKey;
       state.lastAlert=now;state.alerts++;
-      say((context?context+' ':'')+coach);chime();
+      say((context?context+' ':'')+coach,true);chime();
     }
     return;
   }
@@ -1179,7 +1238,9 @@ function handleWarning(status,bads,context){
     if(state.lastBadSeen&&now-state.lastBadSeen<1500)return;
     state.badSince=0;state.warningKey='';state.wasBad=false;return;
   }
-  if(state.wasBad&&state.badSince&&now-state.badSince>4000*h)say('ท่าถูกแล้ว รักษาไว้แบบนี้',true);
+  /* ยอมให้โมเดลสั่นกลับมาเป็นสีเขียวสั้น ๆ โดยไม่เริ่มจับเวลาผิดท่าใหม่ */
+  if(status==='good'&&state.lastBadSeen&&now-state.lastBadSeen<900)return;
+  if(state.wasBad&&state.badSince&&now-state.badSince>3000*h)say('ท่าถูกแล้ว รักษาไว้แบบนี้',true);
   state.badSince=0;state.warningKey='';state.wasBad=false;
 }
 function paintPersonal(pose){
@@ -1194,6 +1255,7 @@ function paintPersonal(pose){
   state.detectedView=r.view;state.activeMetrics=r.used;
   drawGuide(pose.keypoints);
   drawSkeleton(pose.keypoints,r.flags,r.status);
+  drawAngleLabels(pose.keypoints,r);
 
   if(!state.calibrating){
     var wasWrong=state.lastStatus==='bad'||state.lastStatus==='warn';
@@ -1282,16 +1344,30 @@ function paintClass(poses){
   var mainIssues=Object.keys(issueFreq).sort(function(a,b){return issueFreq[b]-issueFreq[a]});
   var overallStatus=counts.bad?'bad':counts.warn?'warn':counts.good?'good':'unknown';
   handleWarning(overallStatus,mainIssues,overallStatus==='unknown'?'':'พบผู้เรียนที่นั่งผิดท่า');
+  var need=counts.bad+counts.warn;
   setBand(overallStatus,
-    ['ในเฟรม '+sorted.length+' คน','ท่าดี '+counts.good+' · ต้องแก้ '+(counts.bad+counts.warn)],liveScore());
+    [need?('พบ '+need+' คนต้องปรับท่า'):('ในเฟรม '+sorted.length+' คน'),'ท่าดี '+counts.good+' · ต้องแก้ '+need],liveScore());
 }
 function setBand(st,c,score){
   $('band').style.background=BAND[st];
   $('coachTh').textContent=c[0];$('coachEn').textContent=c[1];
   $('liveScore').textContent=score;
+  var alertBox=$('postureAlert'),wrong=st==='bad'||st==='warn';
+  if(alertBox){
+    if(wrong){
+      state.visualWarning=c[0];state.visualWarningStatus=st;
+      alertBox.textContent='⚠ '+(st==='bad'?'ต้องปรับท่าทันที: ':'ควรปรับท่า: ')+c[0];
+      alertBox.classList.add('on');alertBox.classList.toggle('warn',st==='warn');
+    }else if(state.lastBadSeen&&Date.now()-state.lastBadSeen<900&&state.visualWarning){
+      alertBox.textContent='⚠ '+(state.visualWarningStatus==='bad'?'ต้องปรับท่าทันที: ':'ควรปรับท่า: ')+state.visualWarning;
+      alertBox.classList.add('on');alertBox.classList.toggle('warn',state.visualWarningStatus==='warn');
+    }else{
+      alertBox.classList.remove('on','warn');alertBox.textContent='';state.visualWarning='';
+    }
+  }
   var tip=$('liveTip');
   if(!tip)return;
-  if(c[2]&&(st==='bad'||st==='warn')){tip.textContent='วิธีแก้: '+c[2];tip.style.background='rgba(229,72,77,.92)';tip.style.borderColor='rgba(255,255,255,.3)'}
+  if(c[2]&&wrong){tip.textContent=(st==='bad'?'ต้องปรับท่า: ':'ควรปรับท่า: ')+c[2];tip.style.background=st==='bad'?'rgba(229,72,77,.92)':'rgba(185,137,22,.94)';tip.style.borderColor='rgba(255,255,255,.3)'}
   else if(c[2]){tip.textContent=c[2];tip.style.background='rgba(10,26,19,.86)';tip.style.borderColor='rgba(255,255,255,.18)'}
   else if(st==='good'){tip.textContent='ท่านี้ถูกแล้ว — รักษาหลังตรง เท้าวางเต็มพื้น จอระดับสายตา';tip.style.background='rgba(31,169,113,.9)';tip.style.borderColor='rgba(255,255,255,.24)'}
   else{tip.textContent='ขยับกล้องหรือตัวให้เห็นหัว ไหล่ สะโพก ให้ครบ';tip.style.background='rgba(10,26,19,.78)';tip.style.borderColor='rgba(255,255,255,.14)'}
