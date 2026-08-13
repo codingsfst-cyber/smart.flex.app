@@ -357,7 +357,13 @@ a:hover{color:var(--g900)}
 <section class="scr" id="scr-guide">
   <div class="pad">
     <h1 class="h1" style="padding-top:26px">ท่านั่งที่เหมาะสม</h1>
-    <div class="note">หลัก 5 ข้อที่ระบบใช้เป็นเกณฑ์ในการให้คะแนน</div>
+    <div class="note">หลัก 5 ข้อที่ระบบใช้ประกอบการประเมินท่านั่ง</div>
+    <div class="card" style="background:#EAF4EF;border-color:var(--g100);display:flex;flex-direction:column;gap:8px">
+      <b style="font-size:15px;color:var(--g900)">เทคโนโลยีและหลักการประเมิน</b>
+      <div class="note">SmartFlex เป็น <b>ระบบประเมินท่าทางด้วย AI แบบช่วยคำนวณ</b> โดยใช้ MediaPipe Pose Landmarker ตรวจจับจุดร่างกายและพิกัด 3 มิติในโหมดรายบุคคล และใช้ MoveNet MultiPose ในโหมดห้องเรียน แล้วคำนวณองศาและระยะเวลาของท่าทางโดยประยุกต์แนวคิดจาก RULA, ROSA และ ISO 11226</div>
+      <div class="note" style="padding:9px 11px;border-radius:12px;background:#fff"><b>ระบบสำรอง:</b> หากอุปกรณ์ไม่รองรับหรือโหลด MediaPipe ไม่สำเร็จ โหมดรายบุคคลจะกลับไปใช้ MoveNet โดยอัตโนมัติ เพื่อให้ยังเริ่มตรวจได้และไม่กระทบส่วนอื่นของแอป</div>
+      <div class="note" style="color:#785B16">ผลที่แสดงเป็นการคัดกรองและติดตามพฤติกรรม ไม่ใช่คะแนน RULA/ROSA ฉบับเต็ม และไม่ใช้แทนการวินิจฉัยของแพทย์ นักกายภาพบำบัด หรือผู้เชี่ยวชาญด้านการยศาสตร์</div>
+    </div>
     <div class="card" style="padding:0;overflow:hidden">
       <div id="guideImg" style="background:repeating-linear-gradient(135deg,#E7EFEA 0 10px,#F3FBF7 10px 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:210px">
         <span class="note" style="font-size:12px">ภาพอินโฟกราฟิกท่านั่งที่ถูกต้อง</span>
@@ -365,10 +371,10 @@ a:hover{color:var(--g900)}
       </div>
     </div>
     <div id="guideList" style="display:flex;flex-direction:column;gap:12px"></div>
-    <div class="eyebrow">วิธีคำนวณคะแนน · SCORING</div>
+    <div class="eyebrow">วิธีคำนวณดัชนีท่านั่ง · SMARTFLEX SCORE</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div><b style="font-size:15px;color:var(--g900)">ระบบคิดคะแนนตามเวลาที่ตรวจเห็นท่าชัดเจน</b>
-      <div class="note" style="margin-top:4px">แต่ละช่วงเวลาแบ่งเป็น 3 ระดับ: ท่าดีได้ 100% · ควรปรับ (ผิด 1 จุด) ได้ 50% · ผิดรุนแรงหรือผิดตั้งแต่ 2 จุดขึ้นไปได้ 0%</div></div>
+      <div class="note" style="margin-top:4px">แต่ละช่วงเวลาแบ่งเป็น 3 ระดับ: ท่าดีได้ 100% · ควรปรับ (ผิดระดับปานกลาง 1 จุด) ได้ 50% · ผิดรุนแรงหรือผิดตั้งแต่ 2 จุดขึ้นไปได้ 0%</div></div>
       <div style="padding:13px 14px;border-radius:15px;background:#EAF4EF;border:1px solid var(--g100);text-align:center">
         <b style="display:block;color:var(--g900);font-size:13px">คะแนน = (เวลาท่าดี + เวลาควรปรับ × 0.5) ÷ เวลาที่ตรวจเห็นชัด × 100</b>
       </div>
@@ -380,14 +386,23 @@ a:hover{color:var(--g900)}
       </div>
       <div class="note"><b>ตัวอย่าง:</b> ตรวจเห็นชัด 10 นาที เป็นท่าดี 8 นาที ควรปรับ 1 นาที และผิดรุนแรง 1 นาที → (8 + 1×0.5) ÷ 10 × 100 = <b>85 คะแนน</b></div>
       <div class="note" style="padding:10px 12px;border-radius:12px;background:#F7FAF8">ช่วงที่มองไม่เห็นตัวหรือจุดร่างกายไม่ครบจะไม่ถูกนำมาตัดคะแนน แต่จะแสดงแยกเป็น “ความครบของข้อมูล” หากค่านี้ต่ำควรจัดกล้องใหม่แล้วตรวจซ้ำ</div>
+      <div class="note" style="padding:10px 12px;border-radius:12px;background:#FFF8E7;border:1px solid #F1D995"><b>เหตุผลที่ให้ 100 / 50 / 0:</b> เพื่อแยกท่าที่ถูก ท่าที่คลาดเคลื่อนเพียงจุดเดียว และท่าที่เสี่ยงหลายจุดออกจากกัน โดยไม่ลงโทษความคลาดเคลื่อนเล็กน้อยจากกล้องเท่ากับท่าผิดรุนแรง คะแนนและช่วง 90 / 80 / 60 นี้เป็น <b>ดัชนีติดตามพฤติกรรมภายใน SmartFlex</b> ไม่ใช่คะแนนวินิจฉัยโรคหรือคะแนน RULA/ROSA โดยตรง ควรให้ผู้เชี่ยวชาญด้านการยศาสตร์หรือนักกายภาพบำบัดตรวจสอบความตรงก่อนใช้ในงานวิจัยเชิงคลินิก</div>
     </div>
     <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
-      <div class="note">ที่มาของเกณฑ์และภาพตัวอย่าง · SOURCE<br>
+      <div class="note">แหล่งอ้างอิงแนวคิดการประเมิน · REFERENCES<br>
+      • Google MediaPipe Pose Landmarker — AI ตรวจจับจุดร่างกาย 33 จุดและพิกัดโลก 3 มิติสำหรับโหมดรายบุคคล<br>
+      <a href="https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker" target="_blank" rel="noopener">Google AI Edge · Pose Landmarker</a><br>
+      • TensorFlow MoveNet — AI ตรวจจับจุดร่างกาย 17 จุดและรองรับการตรวจหลายคนสำหรับโหมดห้องเรียน<br>
+      <a href="https://www.tensorflow.org/hub/tutorials/movenet" target="_blank" rel="noopener">TensorFlow Hub · MoveNet</a><br>
       • โรงพยาบาลกรุงเทพจันทบุรี — ท่าทางการนั่งที่ถูกต้อง<br>
       <a href="https://www.bangkokhospital.com/th/chanthaburi/content/article-247-bch" target="_blank" rel="noopener">bangkokhospital.com/th/chanthaburi · article-247-bch</a><br>
-      • ภาพอินโฟกราฟิก: BDMS Wellness Clinic / PPTV HD36<br>
-      • เกณฑ์มุมข้อต่อที่ใช้ในแอป: คอ 150–180°, หลัง ≤12°, ไหล่ ≤6°, ศีรษะ ≤8°, สะโพก 80–115°<br>
-      • ความไวการเตือนจะขยาย/บีบช่วงเกณฑ์นี้ ต่ำ ×1.35 · กลาง ×1 · สูง ×0.75</div>
+      • McAtamney &amp; Corlett (1993) — RULA: การประเมินความเสี่ยงท่าทางของรยางค์ส่วนบน คอ และลำตัว<br>
+      <a href="https://doi.org/10.1016/0003-6870(93)90080-S" target="_blank" rel="noopener">doi:10.1016/0003-6870(93)90080-S</a><br>
+      • Sonne, Villalta &amp; Andrews (2012) — ROSA: การประเมินความเสี่ยงจากการทำงานกับคอมพิวเตอร์และระดับที่ควรปรับสถานีงาน<br>
+      <a href="https://doi.org/10.1016/j.apergo.2011.03.008" target="_blank" rel="noopener">doi:10.1016/j.apergo.2011.03.008</a><br>
+      • ISO 11226:2000 — การประเมินท่าทางการทำงานแบบคงที่โดยพิจารณามุมร่างกายและระยะเวลา<br>
+      <a href="https://www.iso.org/standard/25573.html" target="_blank" rel="noopener">ISO 11226:2000</a><br>
+      • ช่วงองศาที่ต้นแบบ SmartFlex ใช้: คอ 150–180°, หลัง ≤12°, ไหล่ ≤6°, ศีรษะ ≤8°, สะโพก 80–115° เป็นเกณฑ์ปฏิบัติการสำหรับ AI Pose Estimation (โหมดเดี่ยว 3 มิติ / โหมดห้องเรียน 2 มิติ) ไม่ใช่ค่าตัดวินิจฉัยโรค</div>
     </div>
   </div>
 </section>
@@ -461,7 +476,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v3.4 — visible alerts, angle labels & scoring guide build
+   SmartFlex v4.0 — MediaPipe 3D personal + MoveNet MultiPose classroom
    แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
    เสริม: iPad/desktop layout · Canvas โปร่งใส · ซิงก์ภาพเมื่อหมุนจอ · โหลด AI สำรอง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -491,7 +506,7 @@ var store={
   full:false
 };
 var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถือ',sens:'mid',facing:'user',
-  running:false,calibrating:false,detector:null,startedAt:null,
+  running:false,calibrating:false,detector:null,detectorEngine:'',detectorMode:'',startedAt:null,
   total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
   lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null};
 
@@ -687,6 +702,31 @@ function ang(a,b,c){
   var ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);
   var d=Math.abs(ab-cb)*180/Math.PI;return d>180?360-d:d;
 }
+function worldPoint(p){
+  var w=p&&p.world;
+  return w&&isFinite(w.x)&&isFinite(w.y)&&isFinite(w.z)?w:null;
+}
+function bodyAngle(a,b,c){
+  var aw=worldPoint(a),bw=worldPoint(b),cw=worldPoint(c);
+  if(!(aw&&bw&&cw))return ang(a,b,c);
+  var v1={x:aw.x-bw.x,y:aw.y-bw.y,z:aw.z-bw.z};
+  var v2={x:cw.x-bw.x,y:cw.y-bw.y,z:cw.z-bw.z};
+  var dot=v1.x*v2.x+v1.y*v2.y+v1.z*v2.z;
+  var mag=Math.hypot(v1.x,v1.y,v1.z)*Math.hypot(v2.x,v2.y,v2.z);
+  return mag?Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI:ang(a,b,c);
+}
+function torsoAngle(sh,hip){
+  var sw=worldPoint(sh),hw=worldPoint(hip);
+  if(!(sw&&hw))return Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI);
+  var horizontal=Math.hypot(sw.x-hw.x,sw.z-hw.z),vertical=Math.abs(sw.y-hw.y);
+  return Math.atan2(horizontal,vertical)*180/Math.PI;
+}
+function smoothMetric(key,value){
+  if(state.detectorEngine!=='mediapipe'||typeof value!=='number')return value;
+  state.metricEMA=state.metricEMA||{};
+  var old=state.metricEMA[key],next=typeof old==='number'?old*.68+value*.32:value;
+  state.metricEMA[key]=next;return next;
+}
 /* แก้บั๊กหลัก: atan2 คืน -180…180 ทำให้เส้นไหล่ที่ราบได้ค่า ~180 แทน ~0
    พับกลับให้อยู่ในช่วง 0–90 = "ความเอียงจากแนวนอน" ตามที่ตั้งใจวัด */
 function tilt(a,b){
@@ -705,8 +745,8 @@ var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนไ�
 function sens(){return SENS[state.sens]||SENS.mid}
 
 var ANGLE_INFO={
-  auto:{name:'อัตโนมัติ',hint:'ระบบแยกมุมตรงกับมุมข้างจากสัดส่วนไหล่และลำตัว แล้วใช้เฉพาะมุมที่เชื่อถือได้ หากหันตรง ระบบจะขอให้หันข้างก่อนยืนยันว่าท่านั่งดี',on:['forwardHead','torsoLean','hipAngle','shoulderTilt','headTilt']},
-  side:{name:'มุมข้าง',hint:'วางกล้องด้านข้างลำตัว ระดับอก ห่าง 60–100 ซม. ให้เห็นตั้งแต่หัวจนสะโพก — ดีที่สุดสำหรับคอยื่นและหลังค่อม',on:['forwardHead','torsoLean','hipAngle']},
+  auto:{name:'อัตโนมัติ',hint:'โหมดรายบุคคลใช้ MediaPipe 3 มิติประเมินมุมที่ตรวจได้ทั้งหมด ส่วนโหมดห้องเรียนใช้ MoveNet และเลือกเฉพาะมุม 2 มิติที่เชื่อถือได้โดยอัตโนมัติ',on:['forwardHead','torsoLean','hipAngle','shoulderTilt','headTilt']},
+  side:{name:'มุมข้าง',hint:'วางกล้องด้านข้างลำตัว ระดับอก ห่าง 60–100 ซม. ให้เห็นตั้งแต่ศีรษะจนถึงเข่า — ดีที่สุดสำหรับคอยื่น หลังค่อม และมุมสะโพก',on:['forwardHead','torsoLean','hipAngle']},
   front:{name:'มุมตรง',hint:'วางกล้องตรงหน้า ระดับสายตา ให้เห็นไหล่ทั้งสองข้าง — ดีสำหรับความสมมาตรซ้าย–ขวา',on:['shoulderTilt','headTilt']},
   full:{name:'เต็มตัว',hint:'ถอยกล้องออกเฉียง ๆ ให้เห็นทั้งตัวรวมสะโพกและเข่า — วัดได้ครบทุกข้อ',on:['forwardHead','torsoLean','hipAngle','shoulderTilt','headTilt']}
 };
@@ -738,6 +778,7 @@ function sidePoints(kp){
 }
 function scored(view){
   if(state.angle!=='auto')return (ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on;
+  if(state.detectorEngine==='mediapipe')return ANGLE_INFO.full.on;
   if(view==='front')return ANGLE_INFO.front.on;
   if(view==='side'||view==='oblique')return ANGLE_INFO.side.on;
   return [];
@@ -779,29 +820,29 @@ function analyse(kp){
   }
 
   if(ear&&sh&&hip){
-    m.forwardHead=Math.round(ang(ear,sh,hip));
+    m.forwardHead=Math.round(smoothMetric('forwardHead',bodyAngle(ear,sh,hip)));
     check('forwardHead');
   }
   if(sh&&hip&&knee){
-    m.hipAngle=Math.round(ang(sh,hip,knee));
+    m.hipAngle=Math.round(smoothMetric('hipAngle',bodyAngle(sh,hip,knee)));
     check('hipAngle');
   }
   if(sl&&sr){
-    m.shoulderTilt=tilt(sl,sr);
+    m.shoulderTilt=Math.round(smoothMetric('shoulderTilt',tilt(sl,sr)));
     check('shoulderTilt');
   }
   if(el&&er){
-    m.headTilt=tilt(el,er);
+    m.headTilt=Math.round(smoothMetric('headTilt',tilt(el,er)));
     check('headTilt');
   }
   if(sh&&hip){
-    m.torsoLean=Math.round(Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI));
+    m.torsoLean=Math.round(smoothMetric('torsoLean',torsoAngle(sh,hip)));
     check('torsoLean');
   }
-  var minChecks=state.angle==='full'?3:2;
+  var minChecks=(state.angle==='full'||(state.angle==='auto'&&state.detectorEngine==='mediapipe'))?3:2;
   var reason=checked.length<minChecks?'insufficient':'';
   /* มุมตรงวัดความลึกไม่ได้ จึงห้ามยืนยันว่า “ท่าดี” ในโหมดอัตโนมัติ */
-  if(state.angle==='auto'&&view==='front'&&!bad.length)reason='turnSide';
+  if(state.angle==='auto'&&state.detectorEngine!=='mediapipe'&&view==='front'&&!bad.length)reason='turnSide';
   var status=reason?'unknown':(bad.length?(severe.length||bad.length>1?'bad':'warn'):'good');
   return {metrics:m,bad:bad,severe:severe,flags:flags,checked:checked,used:on,
     view:view,side:side.side,reason:reason,status:status};
@@ -903,7 +944,17 @@ var AI_LIBS=[
   ['https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js',
    'https://unpkg.com/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js']
 ];
-var aiLoadPromise=null;
+var aiLoadPromise=null,mpLoadPromise=null;
+var MP_SOURCES=[
+  {module:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs',
+   wasm:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm'},
+  {module:'https://unpkg.com/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs',
+   wasm:'https://unpkg.com/@mediapipe/tasks-vision@1.0.1/wasm'}
+];
+var MP_MODELS=[
+  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
+  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task'
+];
 function loadScriptUrl(url){
   return new Promise(function(resolve,reject){
     var old=document.querySelector('script[data-ai-src="'+url+'"]');
@@ -937,21 +988,75 @@ function ensureAiLibraries(){
     }).catch(function(e){aiLoadPromise=null;throw e});
   return aiLoadPromise;
 }
-async function ensureDetector(){
-  if(state.detector&&state.detectorMode===state.mode)return state.detector;
-  showOverlay('กำลังโหลดระบบ AI','MoveNet · ครั้งแรกอาจใช้เวลาสักครู่',true);
+function closeDetector(){
+  if(!state.detector)return;
+  try{
+    if(state.detector.close)state.detector.close();
+    else if(state.detector.dispose)state.detector.dispose();
+  }catch(e){}
+  state.detector=null;state.detectorMode='';state.detectorEngine='';
+}
+async function loadMediaPipe(){
+  if(mpLoadPromise)return mpLoadPromise;
+  mpLoadPromise=(async function(){
+    var last;
+    for(var i=0;i<MP_SOURCES.length;i++){
+      try{
+        var mod=await import(MP_SOURCES[i].module);
+        if(!mod.FilesetResolver||!mod.PoseLandmarker)throw new Error('MediaPipe module ไม่ครบ');
+        return {mod:mod,wasm:MP_SOURCES[i].wasm};
+      }catch(e){last=e}
+    }
+    throw last||new Error('โหลด MediaPipe ไม่สำเร็จ');
+  })().catch(function(e){mpLoadPromise=null;throw e});
+  return mpLoadPromise;
+}
+async function ensureMediaPipeDetector(){
+  if(state.detector&&state.detectorMode==='personal'&&state.detectorEngine==='mediapipe')return state.detector;
+  showOverlay('กำลังโหลดระบบ AI 3 มิติ','MediaPipe Pose Landmarker · ครั้งแรกอาจใช้เวลาสักครู่',true);
+  var pkg=await loadMediaPipe(),vision=await pkg.mod.FilesetResolver.forVisionTasks(pkg.wasm),last;
+  closeDetector();
+  for(var m=0;m<MP_MODELS.length;m++){
+    for(var d=0;d<2;d++){
+      try{
+        state.detector=await pkg.mod.PoseLandmarker.createFromOptions(vision,{
+          baseOptions:{modelAssetPath:MP_MODELS[m],delegate:d===0?'GPU':'CPU'},
+          runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.5,
+          minPosePresenceConfidence:.5,minTrackingConfidence:.5,outputSegmentationMasks:false
+        });
+        state.detectorMode='personal';state.detectorEngine='mediapipe';
+        state.mpLastTimestamp=0;state.mpVideoTime=-1;state.mpLastPoses=[];
+        return state.detector;
+      }catch(e){last=e;closeDetector()}
+    }
+  }
+  throw last||new Error('เปิด MediaPipe ไม่สำเร็จ');
+}
+async function ensureMoveNetDetector(mode){
+  mode=mode||state.mode;
+  if(state.detector&&state.detectorMode===mode&&state.detectorEngine==='movenet')return state.detector;
+  showOverlay('กำลังโหลดระบบ AI',(mode==='classroom'?'MoveNet MultiPose':'MoveNet สำรอง')+' · ครั้งแรกอาจใช้เวลาสักครู่',true);
   await ensureAiLibraries();
   try{await tf.setBackend('webgl')}catch(e){await tf.setBackend('cpu')}
   await tf.ready();
-  if(state.detector&&state.detector.dispose)try{state.detector.dispose()}catch(e){}
+  closeDetector();
   state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,{
-    modelType:state.mode==='classroom'
+    modelType:mode==='classroom'
       ?poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING
       :poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
-    enableTracking:state.mode==='classroom'
+    enableTracking:mode==='classroom'
   });
-  state.detectorMode=state.mode;
+  state.detectorMode=mode;state.detectorEngine='movenet';
   return state.detector;
+}
+async function ensureDetector(){
+  if(state.mode==='classroom'){state.detectorFallback='';return ensureMoveNetDetector('classroom')}
+  try{
+    state.detectorFallback='';return await ensureMediaPipeDetector();
+  }catch(e){
+    state.detectorFallback='MediaPipe โหลดไม่ได้ จึงใช้ MoveNet สำรอง: '+(e&&e.message||e);
+    return ensureMoveNetDetector('personal');
+  }
 }
 function showOverlay(h,p,recoverable){
   $('ovlH').textContent=h;$('ovlP').textContent=p||'';
@@ -1049,10 +1154,12 @@ $('btnGoLive').onclick=async function(){
   try{
     await startCamera();
     await ensureDetector();
+    $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · MoveNet MultiPose':
+      (state.detectorEngine==='mediapipe'?'กำลังตรวจ · MediaPipe 3D':'กำลังตรวจ · MoveNet สำรอง');
     beginSession();
     if(state.mode==='personal'){
       state.calibrating=true;
-      showOverlay('จัดกล้องให้เห็นหัว ไหล่ และสะโพก','5 วินาทีนี้ยังไม่คิดคะแนน — ขยับกล้องให้เห็นตัวชัดก่อน');
+      showOverlay('จัดกล้องให้เห็นหู ไหล่ สะโพก และเข่า','5 วินาทีนี้ยังไม่คิดคะแนน — ขยับกล้องให้เห็นตั้งแต่ศีรษะถึงเข่าอย่างชัดเจน');
       state.calibrationTimer=setTimeout(function(){
         state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();hideOverlay();
       },5000);
@@ -1067,6 +1174,7 @@ function beginSession(){
   state.issues={};state.badSince=0;state.lastAlert=0;state.wasBad=false;
   state.samples=[];state.worst=[];state.lastMetrics=null;state.lastStatus=null;
   state.detectedView='unknown';state.activeMetrics=[];
+  state.metricEMA={};
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
   state.visualWarning='';state.visualWarningStatus='';
@@ -1094,11 +1202,44 @@ function tick(){
     $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
   }
 }
+/* แปลง 33 จุดของ MediaPipe เป็นโครง 17 จุดเดิม เพื่อให้หน้าจอ รายงาน และโหมดอื่นใช้โค้ดเดิมได้
+   แต่แนบ world coordinates ไว้ในแต่ละจุดเพื่อให้สูตรโหมดรายบุคคลคำนวณมุม 3 มิติ */
+var MP_TO_COCO=[0,2,5,7,8,11,12,13,14,15,16,23,24,25,26,27,28];
+function mediaPipeResultToPoses(result){
+  var all=result&&result.landmarks||[],world=result&&result.worldLandmarks||[];
+  return all.map(function(points,personIndex){
+    var wp=world[personIndex]||[];
+    var keypoints=MP_TO_COCO.map(function(mpIndex){
+      var p=points[mpIndex],w=wp[mpIndex];
+      if(!p)return {x:0,y:0,z:0,score:0};
+      var out={x:p.x*cv.width,y:p.y*cv.height,z:p.z||0,
+        score:typeof p.visibility==='number'?p.visibility:1};
+      if(w)out.world={x:w.x,y:w.y,z:w.z,visibility:typeof w.visibility==='number'?w.visibility:out.score};
+      return out;
+    });
+    var confident=keypoints.filter(function(p){return p.score>.35});
+    return {keypoints:keypoints,score:confident.length?confident.reduce(function(s,p){return s+p.score},0)/confident.length:0,
+      engine:'mediapipe'};
+  });
+}
+async function estimateCurrentPoses(){
+  if(state.detectorEngine!=='mediapipe'){
+    return state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?6:1});
+  }
+  /* ไม่ประมวลผลเฟรมกล้องเดิมซ้ำ ช่วยลดความร้อนและการใช้แบตเตอรี่บน iPad/มือถือ */
+  if(vid.currentTime===state.mpVideoTime)return state.mpLastPoses||[];
+  state.mpVideoTime=vid.currentTime;
+  var stamp=Math.max(performance.now(),(state.mpLastTimestamp||0)+.01);
+  state.mpLastTimestamp=stamp;
+  var result=state.detector.detectForVideo(vid,stamp);
+  state.mpLastPoses=mediaPipeResultToPoses(result);
+  return state.mpLastPoses;
+}
 async function loop(token){
   if(!state.running||token!==state.loopToken)return;
   try{
     syncCanvasSize();
-    var poses=await state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?6:1});
+    var poses=await estimateCurrentPoses();
     if(!state.running||token!==state.loopToken)return;
     state.loopErrors=0;state.lastDetectionAt=Date.now();
     ctx.clearRect(0,0,cv.width,cv.height);
@@ -1280,7 +1421,8 @@ function paintPersonal(pose){
   if(state.angle==='auto'){
     var viewName={front:'มุมตรง',side:'มุมข้าง',oblique:'มุมเฉียง',unknown:'ยังระบุมุมไม่ได้'}[r.view]||'—';
     var metricNames={forwardHead:'คอ',torsoLean:'หลัง',hipAngle:'สะโพก',shoulderTilt:'ไหล่',headTilt:'ศีรษะ'};
-    $('liveAngle').textContent='อัตโนมัติพบ '+viewName+' · ตรวจ '+(r.used.map(function(k){return metricNames[k]}).join(' / ')||'ยังไม่ครบ');
+    var engineName=state.detectorEngine==='mediapipe'?'MediaPipe 3D':'MoveNet 2D';
+    $('liveAngle').textContent=engineName+' · พบ '+viewName+' · วัด '+((r.checked||[]).map(function(k){return metricNames[k]}).join(' / ')||'ยังไม่ครบ');
   }
 
   var m=r.metrics,on=r.used||[];
@@ -1442,6 +1584,8 @@ function endSession(){
   local._worst=state.worst||[];
   local._detectedView=state.detectedView||'unknown';
   local._usedMetrics=(state.activeMetrics||[]).slice();
+  local._engine=state.detectorEngine==='mediapipe'?'MediaPipe Pose Landmarker 3D':'MoveNet Pose Estimation 2D';
+  local._engineFallback=state.detectorFallback||'';
 
   var students=[];
   if(state.mode==='classroom'&&state.perPerson){
@@ -1498,6 +1642,7 @@ function showSummary(row,issues){
     ['ระดับคะแนน',row.score+' คะแนน · '+row.grade],
     ['ความครบของข้อมูล',row.coverage+'% ของเวลาที่ AI ตรวจเห็นชัด'],
     ['เวลาท่าดี / ควรปรับ / มองไม่ชัด',row.goodSeconds+' วิ / '+row.badSeconds+' วิ / '+row.unknownSeconds+' วิ'],
+    ['เทคโนโลยีตรวจจับ',row._engine||(row.appMode==='classroom'?'MoveNet MultiPose 2D':'MoveNet Pose Estimation 2D')],
     ['มุมที่ใช้ตัดคะแนน',scoredLabel(row.cameraAngle,row._usedMetrics)],
     ['สิ่งที่ทำได้ดี',goodPart],
     ['เป้าหมายครั้งหน้า',(issues[0]?('ลด "'+issues[0]+'" ให้น้อยลง และทำคะแนนให้ถึง '+Math.min(100,row.score+8)):'รักษาคะแนน 80 ขึ้นไป')]
