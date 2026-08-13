@@ -66,10 +66,6 @@ a:hover{color:var(--g900)}
 .overlay.on{display:flex}
 .overlay h2{margin:0;font-size:22px}
 .overlay p{margin:0;font-size:13px;color:rgba(207,241,225,.85);line-height:1.55}
-.posture-alert{position:absolute;z-index:6;left:50%;top:48%;transform:translate(-50%,-50%);max-width:min(88%,520px);padding:11px 18px;border-radius:999px;color:#fff;font-size:14px;font-weight:800;text-align:center;box-shadow:0 10px 34px rgba(0,0,0,.32);pointer-events:none;opacity:0;visibility:hidden;transition:opacity .16s ease,visibility .16s ease;background:rgba(229,72,77,.95)}
-.posture-alert.on{opacity:1;visibility:visible;animation:alertPulse 1.15s ease-in-out infinite}
-.posture-alert.warn{background:rgba(185,137,22,.96)}
-@keyframes alertPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.035)}}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
@@ -137,7 +133,6 @@ a:hover{color:var(--g900)}
   .metrics{left:12px;right:12px;bottom:68px;gap:5px}
   .met{padding:6px 3px;border-radius:10px}
   .people{left:12px;right:12px;top:130px;bottom:70px;grid-template-columns:repeat(3,1fr)}
-  .posture-alert{top:52%;padding:8px 14px;font-size:12px}
   .tabs{max-width:620px;bottom:6px;border:1px solid var(--line);border-radius:18px;padding:4px 8px}
   .tabs button{flex-direction:row;justify-content:center;gap:6px;padding:5px 0;font-size:11px}
   .tabs svg{width:18px;height:18px}
@@ -361,7 +356,6 @@ a:hover{color:var(--g900)}
     <div class="card" style="background:#EAF4EF;border-color:var(--g100);display:flex;flex-direction:column;gap:8px">
       <b style="font-size:15px;color:var(--g900)">เทคโนโลยีและหลักการประเมิน</b>
       <div class="note">SmartFlex เป็น <b>ระบบประเมินท่าทางด้วย AI แบบช่วยคำนวณ</b> โดยใช้ MediaPipe Pose Landmarker ตรวจจับจุดร่างกายและพิกัด 3 มิติในโหมดรายบุคคล และใช้ MoveNet MultiPose ในโหมดห้องเรียน แล้วคำนวณองศาและระยะเวลาของท่าทางโดยประยุกต์แนวคิดจาก RULA, ROSA และ ISO 11226</div>
-      <div class="note" style="padding:9px 11px;border-radius:12px;background:#fff"><b>ระบบสำรอง:</b> หากอุปกรณ์ไม่รองรับหรือโหลด MediaPipe ไม่สำเร็จ โหมดรายบุคคลจะกลับไปใช้ MoveNet โดยอัตโนมัติ เพื่อให้ยังเริ่มตรวจได้และไม่กระทบส่วนอื่นของแอป</div>
       <div class="note" style="color:#785B16">ผลที่แสดงเป็นการคัดกรองและติดตามพฤติกรรม ไม่ใช่คะแนน RULA/ROSA ฉบับเต็ม และไม่ใช้แทนการวินิจฉัยของแพทย์ นักกายภาพบำบัด หรือผู้เชี่ยวชาญด้านการยศาสตร์</div>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
@@ -386,7 +380,6 @@ a:hover{color:var(--g900)}
       </div>
       <div class="note"><b>ตัวอย่าง:</b> ตรวจเห็นชัด 10 นาที เป็นท่าดี 8 นาที ควรปรับ 1 นาที และผิดรุนแรง 1 นาที → (8 + 1×0.5) ÷ 10 × 100 = <b>85 คะแนน</b></div>
       <div class="note" style="padding:10px 12px;border-radius:12px;background:#F7FAF8">ช่วงที่มองไม่เห็นตัวหรือจุดร่างกายไม่ครบจะไม่ถูกนำมาตัดคะแนน แต่จะแสดงแยกเป็น “ความครบของข้อมูล” หากค่านี้ต่ำควรจัดกล้องใหม่แล้วตรวจซ้ำ</div>
-      <div class="note" style="padding:10px 12px;border-radius:12px;background:#FFF8E7;border:1px solid #F1D995"><b>เหตุผลที่ให้ 100 / 50 / 0:</b> เพื่อแยกท่าที่ถูก ท่าที่คลาดเคลื่อนเพียงจุดเดียว และท่าที่เสี่ยงหลายจุดออกจากกัน โดยไม่ลงโทษความคลาดเคลื่อนเล็กน้อยจากกล้องเท่ากับท่าผิดรุนแรง คะแนนและช่วง 90 / 80 / 60 นี้เป็น <b>ดัชนีติดตามพฤติกรรมภายใน SmartFlex</b> ไม่ใช่คะแนนวินิจฉัยโรคหรือคะแนน RULA/ROSA โดยตรง ควรให้ผู้เชี่ยวชาญด้านการยศาสตร์หรือนักกายภาพบำบัดตรวจสอบความตรงก่อนใช้ในงานวิจัยเชิงคลินิก</div>
     </div>
     <div class="card" style="background:#EAF4EF;border-color:var(--g100)">
       <div class="note">แหล่งอ้างอิงแนวคิดการประเมิน · REFERENCES<br>
@@ -455,7 +448,6 @@ a:hover{color:var(--g900)}
   </div>
   <div class="metrics" id="metrics"></div>
   <div class="people hidden" id="people"></div>
-  <div class="posture-alert" id="postureAlert" role="status" aria-live="assertive"></div>
   <div class="livebtm" style="display:flex;gap:9px">
     <button class="btn" id="btnStop" style="flex:1;background:#fff;color:var(--g900)">หยุดตรวจ · Stop</button>
     <button class="btn" id="btnFlip" style="width:120px;background:rgba(255,255,255,.16);backdrop-filter:blur(12px)">สลับกล้อง</button>
@@ -476,7 +468,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.0 — MediaPipe 3D personal + MoveNet MultiPose classroom
+   SmartFlex v4.1 — unobstructed live view with voice alerts
    แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
    เสริม: iPad/desktop layout · Canvas โปร่งใส · ซิงก์ภาพเมื่อหมุนจอ · โหลด AI สำรอง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -1177,7 +1169,6 @@ function beginSession(){
   state.metricEMA={};
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
-  state.visualWarning='';state.visualWarningStatus='';
   state.loopToken++;loop(state.loopToken);
   tickTimer=setInterval(tick,1000);
 }
@@ -1494,19 +1485,7 @@ function setBand(st,c,score){
   $('band').style.background=BAND[st];
   $('coachTh').textContent=c[0];$('coachEn').textContent=c[1];
   $('liveScore').textContent=score;
-  var alertBox=$('postureAlert'),wrong=st==='bad'||st==='warn';
-  if(alertBox){
-    if(wrong){
-      state.visualWarning=c[0];state.visualWarningStatus=st;
-      alertBox.textContent='⚠ '+(st==='bad'?'ต้องปรับท่าทันที: ':'ควรปรับท่า: ')+c[0];
-      alertBox.classList.add('on');alertBox.classList.toggle('warn',st==='warn');
-    }else if(state.lastBadSeen&&Date.now()-state.lastBadSeen<900&&state.visualWarning){
-      alertBox.textContent='⚠ '+(state.visualWarningStatus==='bad'?'ต้องปรับท่าทันที: ':'ควรปรับท่า: ')+state.visualWarning;
-      alertBox.classList.add('on');alertBox.classList.toggle('warn',state.visualWarningStatus==='warn');
-    }else{
-      alertBox.classList.remove('on','warn');alertBox.textContent='';state.visualWarning='';
-    }
-  }
+  var wrong=st==='bad'||st==='warn';
   var tip=$('liveTip');
   if(!tip)return;
   if(c[2]&&wrong){tip.textContent=(st==='bad'?'ต้องปรับท่า: ':'ควรปรับท่า: ')+c[2];tip.style.background=st==='bad'?'rgba(229,72,77,.92)':'rgba(185,137,22,.94)';tip.style.borderColor='rgba(255,255,255,.3)'}
