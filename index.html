@@ -49,6 +49,8 @@ a:hover{color:var(--g900)}
 #vid{z-index:0;background:#0c1c14}
 #cv{z-index:1;background:transparent!important;pointer-events:none}
 #vid.mirror,#cv.mirror{transform:scaleX(-1)}
+/* โหมดกลุ่มต้องเห็นความกว้างของภาพครบ ห้าม crop คนริมซ้าย/ขวา */
+#live.classroom #vid,#live.classroom #cv{object-fit:contain;object-position:center}
 .livetop{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;flex-direction:column;gap:10px;z-index:5}
 .liverow{display:flex;align-items:center;gap:10px}
 .icobtn{width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.14);color:#fff;font-size:15px}
@@ -225,7 +227,7 @@ a:hover{color:var(--g900)}
         <div class="field"><label for="inCount">จำนวนคน (1–6)</label><input id="inCount" type="number" min="1" max="6" value="3" inputmode="numeric"></div>
       </div>
       <div id="nameRows" style="display:flex;flex-direction:column;gap:8px"></div>
-      <div class="note">เรียงชื่อตามที่นั่งจริง จากซ้ายไปขวาบนหน้าจอ · ระบบจับคู่ด้วยตำแหน่งแนวนอนของแต่ละคน ไม่ใช้การจดจำใบหน้า จึงต้องนั่งตำแหน่งเดิมตลอดเซสชัน</div>
+      <div class="note">ตั้งกล้องห่างประมาณ 1–2 เมตร แนะนำให้วางอุปกรณ์แนวนอนและให้เห็นศีรษะกับไหล่ของทุกคนครบ · เรียงชื่อตามที่นั่งจริงจากซ้ายไปขวาบนหน้าจอ ระบบจะติดตามตำแหน่งเดิมและพูดชื่อผู้ที่ต้องปรับท่า โดยไม่ใช้การจดจำใบหน้า</div>
     </div>
     <div class="eyebrow">มุมกล้อง</div>
     <div class="row" style="flex-wrap:wrap">
@@ -468,7 +470,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.2 — smart angle labels that avoid the face and live controls
+   SmartFlex v4.3 — stable classroom multi-person tracking with named voice alerts
    แก้: เมนูรอไฟล์ AI · TTS ไม่พูด/โหมดห้องไม่มีเสียง · เวลาอิง FPS
    เสริม: iPad/desktop layout · Canvas โปร่งใส · ซิงก์ภาพเมื่อหมุนจอ · โหลด AI สำรอง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -500,7 +502,8 @@ var store={
 var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถือ',sens:'mid',facing:'user',
   running:false,calibrating:false,detector:null,detectorEngine:'',detectorMode:'',startedAt:null,
   total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
-  lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null};
+  lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null,
+  classTracks:[],classTracksReady:false,lastClassSpeech:0};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function asArray(v){return Array.isArray(v)?v:[]}
@@ -728,7 +731,10 @@ function tilt(a,b){
 var K={nose:0,leftEye:1,rightEye:2,leftEar:3,rightEar:4,leftShoulder:5,rightShoulder:6,
   leftElbow:7,rightElbow:8,leftWrist:9,rightWrist:10,leftHip:11,rightHip:12,
   leftKnee:13,rightKnee:14,leftAnkle:15,rightAnkle:16};
-function pick(kp,i){var p=kp[i];return p&&p.score>0.35?p:null}
+/* คนที่อยู่ห่างในโหมดกลุ่มมีคะแนนจุดต่ำกว่าภาพระยะใกล้เล็กน้อย
+   ลดเฉพาะโหมดกลุ่มเท่านั้น โหมดรายบุคคลยังใช้เกณฑ์เดิม */
+function keypointScoreFloor(){return state.mode==='classroom'?.24:.35}
+function pick(kp,i){var p=kp[i];return p&&p.score>keypointScoreFloor()?p:null}
 
 /* ความไว: ขยาย/บีบช่วงที่ยอมรับ และเวลาที่ทนก่อนเตือน */
 var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนได้มากขึ้น 35% และพูดเตือนเมื่อผิดท่าค้างประมาณ 5 วินาที'},
@@ -1032,12 +1038,17 @@ async function ensureMoveNetDetector(mode){
   try{await tf.setBackend('webgl')}catch(e){await tf.setBackend('cpu')}
   await tf.ready();
   closeDetector();
-  state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,{
+  var moveNetConfig={
     modelType:mode==='classroom'
       ?poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING
       :poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
     enableTracking:mode==='classroom'
-  });
+  };
+  /* ใช้ตัวติดตามกรอบบุคคลเมื่อไลบรารีรุ่นนี้รองรับ ช่วยให้ชื่อไม่สลับเมื่อขยับเล็กน้อย */
+  if(mode==='classroom'&&poseDetection.TrackerType&&poseDetection.TrackerType.BoundingBox){
+    moveNetConfig.trackerType=poseDetection.TrackerType.BoundingBox;
+  }
+  state.detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,moveNetConfig);
   state.detectorMode=mode;state.detectorEngine='movenet';
   return state.detector;
 }
@@ -1093,7 +1104,7 @@ function leaveLive(){
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);
   state.calibrationTimer=null;state.startedAt=null;
   stopStream();hideOverlay();
-  $('live').classList.remove('on');$('tabs').classList.remove('hidden');
+  $('live').classList.remove('on','classroom');$('tabs').classList.remove('hidden');
   goto('setup');
 }
 $('btnOvlBack').onclick=leaveLive;
@@ -1102,8 +1113,14 @@ async function startCamera(){
     throw new Error('เบราว์เซอร์ไม่อนุญาตกล้อง กรุณาเปิดผ่านลิงก์ HTTPS ด้วย Chrome, Edge หรือ Safari รุ่นล่าสุด');
   }
   stopStream();
-  var stream=await navigator.mediaDevices.getUserMedia({audio:false,
-    video:{facingMode:state.facing,width:{ideal:1280},height:{ideal:720}}});
+  /* โหมดกลุ่มขอภาพ Full HD และสัดส่วนกว้างก่อน เพื่อให้คนที่อยู่ห่าง 1–2 เมตร
+     มีจำนวนพิกเซลมากพอ โดยใช้ ideal เพื่อให้อุปกรณ์รุ่นเก่ายังลดความละเอียดเองได้ */
+  var classroom=state.mode==='classroom';
+  var videoOptions={facingMode:state.facing,
+    width:{ideal:classroom?1920:1280},height:{ideal:classroom?1080:720},
+    frameRate:{ideal:classroom?24:30}};
+  if(classroom)videoOptions.aspectRatio={ideal:16/9};
+  var stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoOptions});
   vid.muted=true;vid.playsInline=true;vid.srcObject=stream;
   await vid.play();
   syncCanvasSize();setTimeout(syncCanvasSize,250);
@@ -1133,10 +1150,10 @@ $('btnGoLive').onclick=async function(){
     state.perPerson={};
     state.names.forEach(function(name,i){
       state.perPerson[i]={name:name,seatNo:i+1,studentId:state.ids[i]||String(i+1),
-        good:0,warn:0,bad:0,unknown:0,issues:{}};
+        good:0,warn:0,bad:0,unknown:0,issues:{},badSince:0,lastBadSeen:0,lastAlert:0,warningKey:'',alerts:0};
     });
   }
-  $('live').classList.add('on');$('tabs').classList.add('hidden');
+  $('live').classList.add('on');$('live').classList.toggle('classroom',state.mode==='classroom');$('tabs').classList.add('hidden');
   $('people').classList.toggle('hidden',state.mode!=='classroom');
   $('metrics').classList.toggle('hidden',state.mode==='classroom');
   $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · Classroom':'กำลังตรวจ · Live';
@@ -1148,14 +1165,20 @@ $('btnGoLive').onclick=async function(){
     await ensureDetector();
     $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · MoveNet MultiPose':
       (state.detectorEngine==='mediapipe'?'กำลังตรวจ · MediaPipe 3D':'กำลังตรวจ · MoveNet สำรอง');
+    state.calibrating=true;
     beginSession();
     if(state.mode==='personal'){
-      state.calibrating=true;
       showOverlay('จัดกล้องให้เห็นหู ไหล่ สะโพก และเข่า','5 วินาทีนี้ยังไม่คิดคะแนน — ขยับกล้องให้เห็นตั้งแต่ศีรษะถึงเข่าอย่างชัดเจน');
       state.calibrationTimer=setTimeout(function(){
         state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();hideOverlay();
       },5000);
-    }else hideOverlay();
+    }else{
+      hideOverlay();
+      setBand('unknown',['กำลังค้นหาสมาชิกในกลุ่ม','จัดกล้องให้เห็นครบ '+expectedClassCount()+' คน','ตั้งกล้องห่างประมาณ 1–2 เมตร วางอุปกรณ์แนวนอน และให้เห็นศีรษะกับไหล่ทุกคน'],liveScore());
+      state.calibrationTimer=setTimeout(function(){
+        state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();
+      },4000);
+    }
   }catch(err){
     showOverlay('เปิดกล้องหรือโมเดลไม่สำเร็จ',(err&&err.message||'')+' · ตรวจการอนุญาตกล้องแล้วลองอีกครั้ง',true);
   }
@@ -1167,6 +1190,7 @@ function beginSession(){
   state.samples=[];state.worst=[];state.lastMetrics=null;state.lastStatus=null;
   state.detectedView='unknown';state.activeMetrics=[];
   state.metricEMA={};
+  state.classTracks=[];state.classTracksReady=false;state.lastClassSpeech=0;
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
   state.loopToken++;loop(state.loopToken);
@@ -1215,7 +1239,8 @@ function mediaPipeResultToPoses(result){
 }
 async function estimateCurrentPoses(){
   if(state.detectorEngine!=='mediapipe'){
-    return state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?6:1});
+    /* ขอผลเท่าจำนวนที่กรอกจริง ลดคนแปลกปลอม/ภาพซ้ำและลดภาระเครื่อง */
+    return state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?expectedClassCount():1});
   }
   /* ไม่ประมวลผลเฟรมกล้องเดิมซ้ำ ช่วยลดความร้อนและการใช้แบตเตอรี่บน iPad/มือถือ */
   if(vid.currentTime===state.mpVideoTime)return state.mpLastPoses||[];
@@ -1251,11 +1276,11 @@ var EDGES=[[5,7,'arm'],[7,9,'arm'],[6,8,'arm'],[8,10,'arm'],[5,6,'shoulder'],[5,
 var GOOD='#30CF85',BADC='#E5484D',NEUTRAL='#9BAFA5';
 function drawSkeleton(kp,flags,status){
   var lw=Math.max(3,cv.width/220);
-  var neutral=status==='unknown';
+  var neutral=status==='unknown',minScore=keypointScoreFloor();
   ctx.lineWidth=lw;ctx.lineCap='round';
   EDGES.forEach(function(e){
     var a=kp[e[0]],b=kp[e[1]];
-    if(!(a&&b&&a.score>0.35&&b.score>0.35))return;
+    if(!(a&&b&&a.score>minScore&&b.score>minScore))return;
     var wrong=flags&&flags[e[2]];
     ctx.strokeStyle=wrong?BADC:(neutral?NEUTRAL:GOOD);
     ctx.shadowColor=wrong?'rgba(229,72,77,.6)':(neutral?'rgba(155,175,165,.42)':'rgba(48,207,133,.5)');ctx.shadowBlur=lw*2;
@@ -1263,7 +1288,7 @@ function drawSkeleton(kp,flags,status){
   });
   ctx.shadowBlur=0;
   kp.forEach(function(p,i){
-    if(p.score<=0.35)return;
+    if(p.score<=minScore)return;
     var part=(i===0||i===3||i===4)?'neck':((i===5||i===6)?'shoulder':((i===11||i===12)?'torso':(i>=13?'hip':'arm')));
     ctx.fillStyle=(flags&&flags[part])?BADC:(neutral?NEUTRAL:GOOD);
     ctx.beginPath();ctx.arc(p.x,p.y,lw*1.4,0,6.3);ctx.fill();
@@ -1499,60 +1524,152 @@ function paintPersonal(pose){
     return '<div class="'+cls+'" style="opacity:'+(used?1:.45)+'"><b>'+txt+'</b><span>'+x[1]+'</span></div>';
   }).join('');
 }
-function centerX(p){
-  var s=0,n=0;
-  p.keypoints.forEach(function(k){if(k.score>0.35){s+=k.x;n++}});
+function expectedClassCount(){
+  var fromNames=(state.names||[]).length,fromInput=$('inCount')?Number($('inCount').value):0;
+  return Math.max(1,Math.min(6,fromNames||fromInput||3));
+}
+function centerX(p,minScore){
+  var s=0,n=0,floor=typeof minScore==='number'?minScore:keypointScoreFloor();
+  (p.keypoints||[]).forEach(function(k){if(k&&k.score>floor){s+=k.x;n++}});
   return n?s/n:0;
 }
-function paintClass(poses){
-  /* จับคู่ชื่อกับคนด้วยตำแหน่งแนวนอนจริง ไม่ใช่ลำดับที่โมเดลคืนมา
-     ภาพกล้องหน้าถูกกลับด้าน คนที่เห็นอยู่ซ้ายสุดบนจอ = ค่า x มากสุด */
-  var dt=frameDelta();
-  var sorted=poses.slice().sort(function(a,b){
-    return state.facing==='user'?centerX(b)-centerX(a):centerX(a)-centerX(b);
-  });
-  var expected=Math.max((state.names||[]).length,sorted.length),counts={good:0,warn:0,bad:0,unknown:0};
-  var issueFreq={},cards=[],usedMetrics=[];
-  for(var z=0;z<expected;z++){
-    var zr=state.perPerson[z]||(state.perPerson[z]={name:(state.names&&state.names[z])||('คนที่ '+(z+1)),
-      seatNo:z+1,studentId:(state.ids&&state.ids[z])||String(z+1),good:0,warn:0,bad:0,unknown:0,issues:{}});
-    zr.unknown=(zr.unknown||0)+dt;
+function classPoseQuality(p){
+  var scores=(p.keypoints||[]).map(function(k){return Number(k&&k.score)||0}).filter(function(s){return s>.18});
+  if(scores.length<5)return 0;
+  scores.sort(function(a,b){return b-a});
+  return scores.slice(0,Math.min(9,scores.length)).reduce(function(a,b){return a+b},0)/Math.min(9,scores.length);
+}
+function classDisplayX(p){
+  var raw=centerX(p,.18),w=Math.max(1,cv.width||vid.videoWidth||1);
+  return (state.facing==='user'?w-raw:raw)/w;
+}
+function ensureClassTracks(expected){
+  if(!Array.isArray(state.classTracks)||state.classTracks.length!==expected){
+    state.classTracks=[];
+    for(var i=0;i<expected;i++)state.classTracks.push({nx:(i+.5)/expected,seenAt:0,poseId:null,lastPose:null});
+    state.classTracksReady=false;
   }
-  sorted.forEach(function(p,i){
-    var r=analyse(p.keypoints);
+  return state.classTracks;
+}
+/* จับคู่ผลตรวจเข้าช่องชื่อเดิมด้วยระยะใกล้ที่สุด โดยรักษาลำดับซ้าย→ขวา
+   หากคนกลางหายชั่วครู่ คนด้านขวาจึงไม่เลื่อนมาใช้ชื่อของคนกลาง */
+function assignClassPoses(poses,expected){
+  var tracks=ensureClassTracks(expected),now=Date.now();
+  var detected=(poses||[]).map(function(p){return {pose:p,q:classPoseQuality(p),nx:classDisplayX(p),poseId:p&&p.id!=null?String(p.id):null}})
+    .filter(function(d){return d.q>0})
+    .sort(function(a,b){return b.q-a.q}).slice(0,expected)
+    .sort(function(a,b){return a.nx-b.nx});
+  var best=null,bestCost=Infinity;
+  function search(di,nextSlot,cost,map){
+    if(di>=detected.length){if(cost<bestCost){bestCost=cost;best=map.slice()}return}
+    var remain=detected.length-di;
+    for(var slot=nextSlot;slot<=expected-remain;slot++){
+      var d=detected[di],t=tracks[slot],c=Math.abs(d.nx-t.nx);
+      if(t.poseId&&d.poseId)c+=t.poseId===d.poseId?-.45:.18;
+      map.push(slot);search(di+1,slot+1,cost+c,map);map.pop();
+    }
+  }
+  search(0,0,0,[]);
+  var assigned=new Array(expected).fill(null);
+  (best||[]).forEach(function(slot,i){
+    var d=detected[i],t=tracks[slot];assigned[slot]=d.pose;
+    t.nx=t.seenAt?t.nx*.76+d.nx*.24:d.nx;t.seenAt=now;t.lastPose=d.pose;if(d.poseId)t.poseId=d.poseId;
+  });
+  /* เก็บผลล่าสุดสั้น ๆ 0.65 วินาที กันโครง/ชื่อกระพริบเมื่อ MoveNet พลาดเพียง 1–2 เฟรม */
+  tracks.forEach(function(t,i){if(!assigned[i]&&t.lastPose&&now-t.seenAt<650)assigned[i]=t.lastPose});
+  if(detected.length===expected)state.classTracksReady=true;
+  return assigned;
+}
+function joinClassNames(names){
+  if(names.length<2)return names[0]||'';
+  if(names.length===2)return names[0]+' และ '+names[1];
+  return names.slice(0,-1).join(', ')+' และ '+names[names.length-1];
+}
+/* จับเวลาผิดท่าแยกต่อคน แล้วรวมเป็นประโยคเดียวเพื่อไม่ให้เสียงหลายคำตัดกัน */
+function handleClassWarnings(results){
+  if(state.calibrating)return;
+  var now=Date.now(),hold=3000*sens().hold,repeat=20000*sens().hold,due=[];
+  (results||[]).forEach(function(item){
+    var rec=item.rec,r=item.result;
+    if(r&&(r.status==='bad'||r.status==='warn')&&r.bad&&r.bad.length){
+      var issue=r.bad[0];
+      if(rec.warningKey!==issue){rec.warningKey=issue;rec.badSince=now}
+      if(!rec.badSince)rec.badSince=now;
+      rec.lastBadSeen=now;
+      if(now-rec.badSince>hold&&now-(rec.lastAlert||0)>repeat)due.push({rec:rec,issue:issue});
+      return;
+    }
+    if(!r||r.status==='unknown'){
+      if(rec.lastBadSeen&&now-rec.lastBadSeen<1500)return;
+    }else if(r.status==='good'&&rec.lastBadSeen&&now-rec.lastBadSeen<900)return;
+    rec.badSince=0;rec.lastBadSeen=0;rec.warningKey='';
+  });
+  if(!due.length||now-(state.lastClassSpeech||0)<5000)return;
+  var groups={},order=[];
+  due.forEach(function(d){
+    if(!groups[d.issue]){groups[d.issue]=[];order.push(d.issue)}
+    groups[d.issue].push(d.rec.name);
+  });
+  var message=order.map(function(issue){
+    var coach=(COACH[issue]||[,,issue])[2]||issue;
+    return joinClassNames(groups[issue])+' กรุณาปรับท่า '+coach;
+  }).join(' ต่อไป ');
+  due.forEach(function(d){d.rec.lastAlert=now;d.rec.alerts=(d.rec.alerts||0)+1});
+  state.lastClassSpeech=now;state.lastAlert=now;state.alerts+=due.length;
+  say(message,true);chime();
+}
+function paintClass(poses){
+  var dt=frameDelta(),expected=expectedClassCount(),assigned=assignClassPoses(poses,expected);
+  var counts={good:0,warn:0,bad:0,unknown:0},issueFreq={},cards=[],usedMetrics=[];
+  var results=[],wrongPeople=[],detected=0;
+  for(var i=0;i<expected;i++){
+    var who=(state.names&&state.names[i])||('คนที่ '+(i+1));
+    var rec=state.perPerson[i]||(state.perPerson[i]={name:who,seatNo:i+1,
+      studentId:(state.ids&&state.ids[i])||String(i+1),good:0,warn:0,bad:0,unknown:0,issues:{},
+      badSince:0,lastBadSeen:0,lastAlert:0,warningKey:'',alerts:0});
+    rec.name=who;var p=assigned[i];
+    if(!p){
+      counts.unknown++;rec.unknown=(rec.unknown||0)+dt;addOverall('unknown',[],dt);
+      results.push({rec:rec,result:null});
+      cards[i]='<div class="person" style="border-color:'+TONE.unknown+'"><b>'+esc(who)+'</b><span>มองไม่เห็นในเฟรม</span></div>';
+      continue;
+    }
+    detected++;
+    var r=analyse(p.keypoints);results.push({rec:rec,result:r});
     r.used.forEach(function(k){if(usedMetrics.indexOf(k)<0)usedMetrics.push(k)});
     drawSkeleton(p.keypoints,r.flags,r.status);
     counts[r.status]=(counts[r.status]||0)+1;
-    var who=(state.names&&state.names[i])||('คนที่ '+(i+1));
-    var rec=state.perPerson[i]||(state.perPerson[i]={name:who,seatNo:i+1,
-      studentId:(state.ids&&state.ids[i])||String(i+1),good:0,warn:0,bad:0,unknown:0,issues:{}});
-    rec.name=who;rec.unknown=Math.max(0,(rec.unknown||0)-dt);
     if(r.status==='good')rec.good+=dt;
     else if(r.status==='warn')rec.warn+=dt;
     else if(r.status==='bad')rec.bad+=dt;
-    else rec.unknown+=dt;
+    else rec.unknown=(rec.unknown||0)+dt;
     (r.bad||[]).forEach(function(b){
       rec.issues[b]=(rec.issues[b]||0)+dt;issueFreq[b]=(issueFreq[b]||0)+1;
     });
+    if((r.status==='bad'||r.status==='warn')&&r.bad.length)wrongPeople.push({name:who,issue:r.bad[0]});
     addOverall(r.status,r.bad,dt);
     cards[i]='<div class="person" style="border-color:'+TONE[r.status]+'"><b>'+esc(who)+'</b><span>'+esc(
       r.bad[0]||(r.status==='unknown'?'มองไม่ชัด':'ท่าดี'))+'</span></div>';
-  });
-  for(var i=sorted.length;i<expected;i++){
-    counts.unknown++;
-    addOverall('unknown',[],dt);
-    var missing=(state.names&&state.names[i])||('คนที่ '+(i+1));
-    cards[i]='<div class="person" style="border-color:'+TONE.unknown+'"><b>'+esc(missing)+'</b><span>มองไม่เห็นในเฟรม</span></div>';
   }
   $('people').innerHTML=cards.join('');
-  state.activeMetrics=usedMetrics;
-  state.detectedView=usedMetrics.length?'mixed':'unknown';
+  state.activeMetrics=usedMetrics;state.detectedView=usedMetrics.length?'mixed':'unknown';
+  $('liveMode').textContent='ตรวจหมู่ · พบ '+detected+'/'+expected+' คน';
+  $('liveAngle').textContent='MoveNet MultiPose · ระยะ 1–2 เมตร · ชื่อเรียงซ้าย→ขวา';
+  if(state.calibrating){
+    setBand('unknown',['กำลังยืนยันตำแหน่ง '+detected+'/'+expected+' คน','ยังไม่คิดคะแนน','จัดกล้องให้ทุกคนอยู่ในเฟรมและไม่บังกัน'],liveScore());return;
+  }
+  handleClassWarnings(results);
   var mainIssues=Object.keys(issueFreq).sort(function(a,b){return issueFreq[b]-issueFreq[a]});
-  var overallStatus=counts.bad?'bad':counts.warn?'warn':counts.good?'good':'unknown';
-  handleWarning(overallStatus,mainIssues,overallStatus==='unknown'?'':'พบผู้เรียนที่นั่งผิดท่า');
+  var overallStatus=counts.bad?'bad':counts.warn?'warn':(counts.good===expected?'good':'unknown');
   var need=counts.bad+counts.warn;
-  setBand(overallStatus,
-    [need?('พบ '+need+' คนต้องปรับท่า'):('ในเฟรม '+sorted.length+' คน'),'ท่าดี '+counts.good+' · ต้องแก้ '+need],liveScore());
+  if(need){
+    var names=wrongPeople.map(function(x){return x.name}),details=wrongPeople.map(function(x){return x.name+': '+x.issue}).join(' · ');
+    setBand(overallStatus,['ต้องปรับ: '+names.join(', '),'พบ '+detected+'/'+expected+' คน · ท่าดี '+counts.good,details],liveScore());
+  }else if(detected<expected){
+    setBand('unknown',['พบ '+detected+' จาก '+expected+' คน','ยังเห็นสมาชิกไม่ครบ','ตั้งกล้องห่างประมาณ 1–2 เมตร วางแนวนอน และอย่าให้คนด้านหน้าบังคนด้านหลัง'],liveScore());
+  }else{
+    setBand('good',['ทุกคนนั่งอยู่ในเกณฑ์','พบครบ '+expected+' คน',''],liveScore());
+  }
 }
 function setBand(st,c,score){
   $('band').style.background=BAND[st];
@@ -1604,7 +1721,7 @@ function endSession(){
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);state.calibrationTimer=null;
   if(rafId)cancelAnimationFrame(rafId);if(tickTimer)clearInterval(tickTimer);
   stopStream();
-  $('live').classList.remove('on');$('tabs').classList.remove('hidden');
+  $('live').classList.remove('on','classroom');$('tabs').classList.remove('hidden');
 
   var ended=new Date(),prof=store.get(LS.prof,{name:'ผู้ใช้',userId:'SF-0001'});
   state.total=Math.max(state.total,Math.floor((ended-started)/1000));
@@ -1651,7 +1768,7 @@ function endSession(){
         score:sc,grade:grade(sc),
         goodSeconds:Math.round(state.total*r.good/sDenom),
         badSeconds:Math.round(state.total*(r.warn+r.bad)/sDenom),
-        alertCount:0,mainIssue:iss,advice:ADVICE[iss]||'-'};
+        alertCount:r.alerts||0,mainIssue:iss,advice:ADVICE[iss]||'-'};
     });
     local._students=students;
   }
