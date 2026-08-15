@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SmartFlex — ผู้ช่วยดูแลท่านั่ง</title>
 <meta name="theme-color" content="#176340">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232FC881'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-size='26' font-weight='800' fill='white' text-anchor='middle'%3ESF%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%232FC881'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-size='26' font-weight='800' fill='white' text-anchor='middle'%3ESF%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="logo_sf.png">
+<link rel="shortcut icon" type="image/png" href="logo_sf.png">
+<link rel="apple-touch-icon" href="logo_sf.png">
+<meta property="og:image" content="logo_sf.png">
+<meta name="twitter:image" content="logo_sf.png">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -177,7 +180,7 @@ a:hover{color:var(--g900)}
 <section class="scr on" id="scr-home">
   <div class="pad">
     <div class="full-head" style="display:flex;align-items:center;gap:10px;padding-top:26px">
-      <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--g500),var(--g700));display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:14px;font-weight:800;letter-spacing:.02em;font-family:'Noto Sans',Arial,sans-serif">SF</div>
+      <img src="logo_sf.png" alt="โลโก้ SmartFlex" width="34" height="34" style="width:34px;height:34px;border-radius:11px;object-fit:cover;display:block;flex:none">
       <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--g900)">SmartFlex</div>
       <div style="font-size:11px;color:var(--ink-soft)" id="todayLabel">—</div></div>
     </div>
@@ -471,7 +474,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.4 — complete camera-angle checks and actionable reports
+   SmartFlex v4.5 — complete camera-angle checks, actionable reports and unified logo
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
