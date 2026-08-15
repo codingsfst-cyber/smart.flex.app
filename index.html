@@ -72,7 +72,7 @@ a:hover{color:var(--g900)}
 .overlay{position:absolute;inset:0;z-index:20;background:rgba(8,21,15,.74);backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;color:#fff}
 .overlay.on{display:flex}
 .overlay h2{margin:0;font-size:22px}
-.overlay p{margin:0;font-size:13px;color:rgba(207,241,225,.85);line-height:1.55}
+.overlay p{margin:0;max-width:430px;font-size:13px;color:rgba(207,241,225,.85);line-height:1.65;white-space:pre-line}
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 10px);z-index:10}
 .tabs button{flex:1;border:none;background:none;color:#9BAFA5;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0}
 .tabs button.on{color:var(--g600)}
@@ -475,7 +475,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.8 — unobstructed live view and concise stable voice alerts
+   SmartFlex v4.9 — complete on-body angle labels and explicit model loading details
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -760,6 +760,27 @@ function frameInstruction(){
   if(state.angle==='front')return 'ให้เห็นศีรษะ หู และไหล่ทั้งสองข้างครบ';
   return 'ให้เห็นตั้งแต่ศีรษะ สะโพก เข่า ส้นเท้า จนถึงปลายเท้า';
 }
+function plannedModelName(mode){
+  mode=mode||state.mode;
+  return mode==='classroom'?'MoveNet MultiPose 2D':'MediaPipe Pose Landmarker 3D';
+}
+function plannedMetricKeys(mode,model){
+  mode=mode||state.mode;
+  var keys=(state.angle==='auto'&&mode==='personal'?ANGLE_INFO.full.on:(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on).slice();
+  /* MoveNet มีข้อเท้าแต่ไม่มีจุดส้นและปลายเท้า จึงไม่อ้างว่าวัดความราบของฝ่าเท้าได้ */
+  if(mode==='classroom'||/MoveNet/i.test(model||''))keys=keys.filter(function(k){return k!=='footFlat'});
+  return keys;
+}
+function inspectionPlanText(model,stage,mode){
+  mode=mode||state.mode;
+  var A=ANGLE_INFO[state.angle]||ANGLE_INFO.auto;
+  var form=mode==='classroom'?('แบบกลุ่ม '+expectedClassCount()+' คน'):'รายบุคคล 1 คน';
+  var keys=plannedMetricKeys(mode,model),prefix=state.angle==='auto'&&mode==='classroom'?'ตรวจตามมุมที่เห็น: ':'รายการตรวจ: ';
+  var lines=['โมเดล: '+model,'รูปแบบ: '+form+' · '+A.name,prefix+keys.map(function(k){return METRIC_NAMES[k]}).join(' · ')];
+  if(mode==='classroom')lines.push('การวางเท้าแบบส้น–ปลายเท้าใช้ได้ในโหมดรายบุคคล');
+  if(stage)lines.push(stage);
+  return lines.join('\n');
+}
 function dist(a,b){return a&&b?Math.hypot(a.x-b.x,a.y-b.y):0}
 function midPoint(a,b){return a&&b?{x:(a.x+b.x)/2,y:(a.y+b.y)/2}:(a||b||null)}
 function detectCameraView(kp){
@@ -788,7 +809,9 @@ function sidePoints(kp){
   var l=pack('left'),r=pack('right');return l.score>=r.score?l:r;
 }
 function scored(view){
-  if(state.angle!=='auto')return (ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on;
+  if(state.angle!=='auto')return (ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on.filter(function(k){
+    return state.detectorEngine==='mediapipe'||k!=='footFlat';
+  });
   if(state.detectorEngine==='mediapipe')return ANGLE_INFO.full.on;
   if(view==='front')return ANGLE_INFO.front.on;
   /* MoveNet มีข้อเท้าแต่ไม่มีส้นและปลายเท้า จึงไม่อ้างว่าวัดฝ่าเท้าราบได้ */
@@ -1126,7 +1149,7 @@ async function loadMediaPipe(){
 }
 async function ensureMediaPipeDetector(){
   if(state.detector&&state.detectorMode==='personal'&&state.detectorEngine==='mediapipe')return state.detector;
-  showOverlay('กำลังโหลดระบบ AI 3 มิติ','MediaPipe Pose Landmarker · ครั้งแรกอาจใช้เวลาสักครู่',true);
+  showOverlay('กำลังโหลด MediaPipe Pose Landmarker',inspectionPlanText('MediaPipe Pose Landmarker 3D','กำลังโหลดโมเดลตรวจจับร่างกาย 33 จุด · ครั้งแรกอาจใช้เวลาสักครู่','personal'),true);
   var pkg=await loadMediaPipe(),vision=await pkg.mod.FilesetResolver.forVisionTasks(pkg.wasm),last;
   closeDetector();
   for(var m=0;m<MP_MODELS.length;m++){
@@ -1148,7 +1171,8 @@ async function ensureMediaPipeDetector(){
 async function ensureMoveNetDetector(mode){
   mode=mode||state.mode;
   if(state.detector&&state.detectorMode===mode&&state.detectorEngine==='movenet')return state.detector;
-  showOverlay('กำลังโหลดระบบ AI',(mode==='classroom'?'MoveNet MultiPose':'MoveNet สำรอง')+' · ครั้งแรกอาจใช้เวลาสักครู่',true);
+  var model=mode==='classroom'?'MoveNet MultiPose 2D':'MoveNet SinglePose 2D (ระบบสำรอง)';
+  showOverlay('กำลังโหลด '+(mode==='classroom'?'MoveNet MultiPose':'MoveNet ระบบสำรอง'),inspectionPlanText(model,'กำลังเตรียมโมเดลตรวจจับร่างกาย 17 จุด · ครั้งแรกอาจใช้เวลาสักครู่',mode),true);
   await ensureAiLibraries();
   try{await tf.setBackend('webgl')}catch(e){await tf.setBackend('cpu')}
   await tf.ready();
@@ -1276,6 +1300,7 @@ $('btnGoLive').onclick=async function(){
   $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+
     ' · ความไว'+({low:'ต่ำ',mid:'กลาง',high:'สูง'})[state.sens]+
     (durationMin()?' · '+durationMin()+' นาที':' · ไม่จำกัดเวลา');
+  showOverlay('กำลังเปิดกล้อง',inspectionPlanText(plannedModelName(),'กำลังขอสิทธิ์และเตรียมภาพจากกล้อง…'),true);
   try{
     await startCamera();
     await ensureDetector();
@@ -1516,11 +1541,8 @@ function drawAngleLabels(kp,r){
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
   var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar),face=angleFaceRegion(kp,info);
   var avoid=face?[face]:[];
-  /* แสดงป้ายบนตัวเฉพาะ 3 จุดที่ควรปรับก่อน ส่วนค่าครบทุกจุดอยู่ในแถวด้านล่าง */
-  var badKeys=checked.filter(function(k){return metricLevel(k,m[k],sens().tol)>0})
-    .sort(function(a,b){return (ISSUE_PRIORITY[(POSTURE_RULES[a]||{}).label]||99)-(ISSUE_PRIORITY[(POSTURE_RULES[b]||{}).label]||99)})
-    .slice(0,3);
-  function has(k){return badKeys.indexOf(k)>-1}
+  /* แสดงองศาบนร่างกายครบทุกหมวดที่กล้องวัดได้ตามมุมที่ผู้ใช้เลือก */
+  function has(k){return checked.indexOf(k)>-1}
   function options(directions,region,dy){return {info:info,used:used,avoid:avoid,directions:directions,region:region,dy:dy||0}}
   /* ศีรษะวางก่อนและบังคับให้อยู่นอกกรอบใบหน้า จึงไม่บังตา จมูก หรือปาก */
   if(has('headTilt'))drawAngleTag(midPoint(el,er),'ศีรษะ',m.headTilt,'headTilt',options(['right','left','above','below'],face));
@@ -1640,14 +1662,17 @@ function paintPersonal(pose){
   var c;
   if(state.calibrating)c=['กำลังจัดตำแหน่งกล้อง','ยังไม่คิดคะแนน',frameInstruction()];
   else if(r.reason==='turnSide')c=['กรุณาหันด้านข้าง','เพื่อวัดคอและหลัง','หันไหล่ด้านหนึ่งเข้าหากล้อง'];
-  else if(main)c=[issues.length===1?'ควรปรับ: '+main:'ต้องปรับ '+issues.length+' จุด',issueSummary(issues,3),
+  else if(main)c=[issues.length===1?'ควรปรับ: '+main:'พบ '+issues.length+' รายการที่ต้องปรับ',
+    issues.length===1?'ตรวจพบ 1 รายการ':'ควรปรับก่อน: '+main,
     main+': '+(VOICE_ADVICE[main]||'ปรับท่าให้อยู่ในช่วงที่เหมาะสม')];
   else if(r.reason==='insufficient')c=['ยังวัดไม่ครบ: '+(missingText||'บางจุด'),'ขยับกล้องเล็กน้อย','ให้เห็น '+(missingText||'ทุกจุดที่เลือก')+' ชัดเจน'];
   else c=['ท่านี้อยู่ในเกณฑ์','รักษาท่าไว้',''];
   setBand(state.calibrating?'unknown':r.status,c,liveScore());
 
-  $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+' · ตรวจ '+
-    (r.checked||[]).length+'/'+(r.used||[]).length+' จุด'+(missingText?' · ขาด '+missingText:'');
+  var checkedCount=(r.checked||[]).length,expectedCount=(r.used||[]).length;
+  $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+' · '+
+    (checkedCount===expectedCount&&expectedCount?('ตรวจครบ '+expectedCount+' รายการ'):
+      ('กล้องเห็น '+checkedCount+' รายการ'+(missingText?' · ยังขาด '+missingText:'')));
 
   var m=r.metrics,on=r.used||[],checked=r.checked||[];
   var cells=[['forwardHead','คอ'],['torsoLean','หลัง'],['shoulderTilt','ไหล่'],
