@@ -322,7 +322,9 @@ a:hover{color:var(--g900)}
         <button class="btn sec" id="btnVoiceSet" style="flex:1">เสียงพูด: เปิด</button>
         <button class="btn" id="btnTestVoice" style="flex:1">ทดสอบเสียง</button>
       </div>
-      <div class="note" id="voiceStatus">เลือกผู้พูดภาษาไทยที่มีในอุปกรณ์ · เมื่อเริ่มตรวจระบบจะเปิดเสียงให้อัตโนมัติ หากใช้ iPhone แล้วไม่ได้ยิน ให้ปิดโหมดเงียบและเพิ่มระดับเสียง</div>
+      <button class="btn sec" id="btnRefreshVoice">ค้นหาเสียงไทยเพิ่มในเครื่อง</button>
+      <div class="note" id="voiceStatus">กำลังค้นหาเสียงภาษาไทยที่อุปกรณ์รองรับ…</div>
+      <div class="note">หากต้องการเสียงเพิ่มบน iPhone: การตั้งค่า › การช่วยการเข้าถึง › อ่านและพูด/เนื้อหาที่อ่านออกเสียง › เสียง › ภาษาไทย แล้วกลับมากดค้นหาอีกครั้ง</div>
     </div>
     <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -475,7 +477,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.9 — complete on-body angle labels and explicit model loading details
+   SmartFlex v4.10 — concise start speech and expanded Thai device-voice discovery
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -959,6 +961,9 @@ function bestVoice(vs,gender){
   if(gender)pool=pool.filter(function(v){return voiceGender(v)===gender});
   return pool.slice().sort(function(a,b){return voiceScore(b)-voiceScore(a)})[0]||null;
 }
+function availableThaiVoices(){
+  return speechSupported()?(speechSynthesis.getVoices()||[]).filter(thaiVoice):[];
+}
 function voiceOption(v){
   var quality=/natural|neural|premium|enhanced/i.test((v.name||'')+' '+(v.voiceURI||''))?' · เสียงคุณภาพสูง':'';
   return '<option value="'+esc(voiceId(v))+'">'+genderText(voiceGender(v))+' · '+esc(v.name||'ไม่ระบุชื่อ')+quality+'</option>';
@@ -1041,8 +1046,10 @@ function paintVoiceStatus(msg){
   if(!speechSupported())box.textContent='อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับเสียงพูด — ระบบยังใช้เสียงสัญญาณเตือนได้';
   else if(speech.lastError)box.textContent='เสียงพูดมีปัญหา: '+speech.lastError+' · ลองกด “ทดสอบเสียง” อีกครั้ง';
   else{
+    var voiceCount=availableThaiVoices().length;
     var voiceName=speech.voice?(genderText(voiceGender(speech.voice))+' · '+speech.voice.name):'กำลังค้นหาเสียงภาษาไทยในอุปกรณ์';
-    box.textContent=msg||(speech.on?('เสียงพูดภาษาไทยเปิดอยู่ · '+voiceName):'เสียงพูดปิดอยู่ · ยังมีเสียงสัญญาณเตือน');
+    box.textContent=msg||(speech.on?('เสียงพูดภาษาไทยเปิดอยู่ · '+voiceName+' · พบ '+voiceCount+' เสียง'):
+      ('เสียงพูดปิดอยู่ · พบเสียงไทยในเครื่อง '+voiceCount+' เสียง'));
   }
 }
 function paintVoiceBtn(){
@@ -1065,6 +1072,23 @@ function setVoice(on,test){
 $('btnVoice').onclick=function(){setVoice(!speech.on,speech.on===false)};
 $('btnVoiceSet').onclick=function(){setVoice(!speech.on,speech.on===false)};
 $('btnTestVoice').onclick=function(){setVoice(true,true)};
+$('btnRefreshVoice').onclick=function(){
+  var btn=this;if(!speechSupported()){paintVoiceStatus();return}
+  btn.disabled=true;btn.textContent='กำลังค้นหาเสียงไทย…';
+  speech.lastError='';paintVoiceStatus('กำลังค้นหาเสียงภาษาไทยที่ติดตั้งในอุปกรณ์…');
+  var delays=[0,300,900,1800];
+  delays.forEach(function(delay,index){
+    setTimeout(function(){
+      refreshVoices();
+      if(index===delays.length-1){
+        var count=availableThaiVoices().length;
+        btn.disabled=false;btn.textContent='ค้นหาเสียงไทยเพิ่มในเครื่อง';
+        paintVoiceStatus(count?('พบเสียงภาษาไทย '+count+' เสียง · เลือกผู้พูดจากรายการด้านบนได้เลย'):
+          'ยังไม่พบเสียงภาษาไทย · ติดตั้งเสียงไทยในตั้งค่าอุปกรณ์ แล้วกดค้นหาอีกครั้ง');
+      }
+    },delay);
+  });
+};
 $('voiceSelect').onchange=function(){
   speech.voiceKey=this.value||'auto';store.set('sf.voiceName',speech.voiceKey);
   pickVoice();setVoice(true,true);
@@ -1279,7 +1303,7 @@ $('btnFlip').onclick=function(){
 $('btnGoLive').onclick=async function(){
   if(!$('chkConsent').checked){$('chkConsent').focus();alert('กรุณากดยินยอมให้ใช้กล้องก่อนเริ่มตรวจ');return}
   unlockAudio();setVoice(true,false);pickVoice();
-  var startMsg=state.mode==='classroom'?'เริ่มตรวจแบบกลุ่ม เสียงเตือนเปิดอยู่ค่ะ':'เริ่มตรวจท่านั่ง เสียงเตือนเปิดอยู่ค่ะ';
+  var startMsg=state.mode==='classroom'?'เริ่มตรวจแบบกลุ่ม':'เริ่มตรวจท่านั่ง';
   if(!say(startMsg,true))chime();
   var prof={name:($('inName').value||'').trim()||'ผู้ใช้',userId:($('inId').value||'').trim()||'SF-0001'};
   store.set(LS.prof,prof);
