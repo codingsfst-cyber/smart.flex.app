@@ -38,7 +38,7 @@ a:hover{color:var(--g900)}
 .field{display:flex;flex-direction:column;gap:6px;flex:1}
 .pad>.field,.pad>.row,.pad>.card,.pad>.grid2,.pad>.btn,.pad>.pill{flex:none}
 .field label{font-size:12px;font-weight:700}
-.field input{padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:16px;background:#fff}
+.field input,.field select{padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:16px;background:#fff;color:var(--ink);width:100%}
 .pill{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--g100);border-radius:16px;background:#EAF4EF;width:100%;text-align:left;font-size:12.5px;color:var(--ink-soft)}
 .dot{width:9px;height:9px;border-radius:5px;flex:none;background:var(--warn)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -312,11 +312,23 @@ a:hover{color:var(--g900)}
     </div>
     <div class="eyebrow">เสียงเตือน</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="field">
+        <label for="voiceSelect">เลือกเสียงพูด</label>
+        <select id="voiceSelect"><option value="auto">อัตโนมัติ · เลือกเสียงภาษาไทยที่เหมาะที่สุด</option></select>
+      </div>
+      <div class="field">
+        <label for="voiceStyleSelect">ลักษณะเสียง</label>
+        <select id="voiceStyleSelect">
+          <option value="smooth">นุ่มนวล · ช้าลงเล็กน้อย (แนะนำ)</option>
+          <option value="natural">ธรรมชาติ · ความเร็วปกติ</option>
+          <option value="clear">ช้าและชัด · เหมาะกับห้องเรียน</option>
+        </select>
+      </div>
       <div class="row">
         <button class="btn sec" id="btnVoiceSet" style="flex:1">เสียงพูด: เปิด</button>
         <button class="btn" id="btnTestVoice" style="flex:1">ทดสอบเสียง</button>
       </div>
-      <div class="note" id="voiceStatus">ระบบจะพูดเมื่อพบท่าผิดค้างต่อเนื่อง และมีเสียงสัญญาณสำรอง</div>
+      <div class="note" id="voiceStatus">ระบบจะพูดเมื่อพบท่าผิดค้างต่อเนื่อง และมีเสียงสัญญาณสำรอง · รายการเสียงขึ้นอยู่กับอุปกรณ์และเบราว์เซอร์</div>
     </div>
     <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -474,7 +486,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.5 — complete camera-angle checks, actionable reports and unified logo
+   SmartFlex v4.6 — complete posture reports, unified logo and selectable smooth voice
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -890,19 +902,66 @@ var ADVICE={
 };
 
 /* ---------- เสียงพูดเตือน (Thai TTS) ---------- */
-var speech={on:store.get('sf.voice',true),last:'',at:0,voice:null,timer:null,lastError:''};
+var VOICE_STYLES={
+  smooth:{label:'นุ่มนวล',rate:.88,pitch:1.03,volume:.96},
+  natural:{label:'ธรรมชาติ',rate:.96,pitch:1,volume:1},
+  clear:{label:'ช้าและชัด',rate:.80,pitch:.98,volume:1}
+};
+var speech={on:store.get('sf.voice',true),last:'',at:0,voice:null,timer:null,lastError:'',
+  voiceKey:store.get('sf.voiceName','auto'),style:store.get('sf.voiceStyle','smooth')};
+if(!VOICE_STYLES[speech.style])speech.style='smooth';
 function speechSupported(){return 'speechSynthesis' in window&&'SpeechSynthesisUtterance' in window}
-function pickVoice(){
+function voiceId(v){return ((v&&v.voiceURI)||((v&&v.name)||''))+'@@'+((v&&v.lang)||'')}
+function thaiVoice(v){return /^th([-_]|$)/i.test((v&&v.lang)||'')||/thai|ไทย/i.test(((v&&v.name)||'')+' '+((v&&v.lang)||''))}
+function voiceScore(v){
+  var text=((v&&v.name)||'')+' '+((v&&v.voiceURI)||'');
+  var score=thaiVoice(v)?1000:0;
+  if(/natural|neural|premium|enhanced|online/i.test(text))score+=180;
+  if(/premwadee|kanya|narisa|female|woman|google.*ไทย/i.test(text))score+=120;
+  if(v&&v.localService===false)score+=20;
+  return score;
+}
+function bestVoice(vs){
+  return (vs||[]).slice().sort(function(a,b){return voiceScore(b)-voiceScore(a)})[0]||null;
+}
+function voiceOption(v){
+  var quality=/natural|neural|premium|enhanced/i.test((v.name||'')+' '+(v.voiceURI||''))?' · เสียงคุณภาพสูง':'';
+  return '<option value="'+esc(voiceId(v))+'">'+esc(v.name||'ไม่ระบุชื่อ')+' · '+esc(v.lang||'-')+quality+'</option>';
+}
+function populateVoiceOptions(vs){
+  var sel=$('voiceSelect');if(!sel)return;
+  vs=vs||[];
+  if(!vs.length){sel.innerHTML='<option value="auto">กำลังโหลดรายการเสียงจากอุปกรณ์…</option>';sel.disabled=true;return}
+  sel.disabled=false;
+  var thai=vs.filter(thaiVoice).sort(function(a,b){return voiceScore(b)-voiceScore(a)});
+  var other=vs.filter(function(v){return !thaiVoice(v)}).sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
+  var recommended=bestVoice(vs);
+  var html='<option value="auto">อัตโนมัติ · '+esc(recommended?recommended.name:'เสียงที่เหมาะที่สุด')+' (แนะนำ)</option>';
+  if(thai.length)html+='<optgroup label="เสียงภาษาไทย">'+thai.map(voiceOption).join('')+'</optgroup>';
+  if(other.length)html+='<optgroup label="เสียงภาษาอื่นในอุปกรณ์">'+other.map(voiceOption).join('')+'</optgroup>';
+  sel.innerHTML=html;
+  var exists=Array.prototype.some.call(sel.options,function(o){return o.value===speech.voiceKey});
+  sel.value=exists?speech.voiceKey:'auto';
+}
+function pickVoice(vs){
   if(!speechSupported())return null;
-  var vs=speechSynthesis.getVoices()||[];
-  speech.voice=vs.filter(function(v){return /^th([-_]|$)/i.test(v.lang||'')})[0]||
-    vs.filter(function(v){return /thai|ไทย/i.test((v.name||'')+' '+(v.lang||''))})[0]||vs[0]||null;
+  vs=vs||speechSynthesis.getVoices()||[];
+  var chosen=null;
+  if(speech.voiceKey&&speech.voiceKey!=='auto'){
+    chosen=vs.filter(function(v){return voiceId(v)===speech.voiceKey})[0]||null;
+  }
+  speech.voice=chosen||bestVoice(vs);
   return speech.voice;
 }
+function refreshVoices(){
+  if(!speechSupported())return;
+  var vs=speechSynthesis.getVoices()||[];
+  populateVoiceOptions(vs);pickVoice(vs);paintVoiceStatus();
+}
 if(speechSupported()){
-  pickVoice();
-  if(speechSynthesis.addEventListener)speechSynthesis.addEventListener('voiceschanged',pickVoice);
-  else speechSynthesis.onvoiceschanged=pickVoice;
+  refreshVoices();
+  if(speechSynthesis.addEventListener)speechSynthesis.addEventListener('voiceschanged',refreshVoices);
+  else speechSynthesis.onvoiceschanged=refreshVoices;
 }
 function say(text,force){
   if(!speech.on||!speechSupported()||!text)return false;
@@ -912,7 +971,9 @@ function say(text,force){
   speech.last=text;speech.at=now;
   try{
     var u=new SpeechSynthesisUtterance(text);
-    u.lang='th-TH';u.rate=.95;u.pitch=1;u.volume=1;
+    var style=VOICE_STYLES[speech.style]||VOICE_STYLES.smooth;
+    u.lang=(speech.voice&&speech.voice.lang)||'th-TH';
+    u.rate=style.rate;u.pitch=style.pitch;u.volume=style.volume;
     if(speech.voice)u.voice=speech.voice;
     u.onstart=function(){speech.lastError='';paintVoiceStatus('กำลังพูดเสียงเตือน…')};
     u.onend=function(){paintVoiceStatus()};
@@ -941,12 +1002,21 @@ function paintVoiceStatus(msg){
   var box=$('voiceStatus');if(!box)return;
   if(!speechSupported())box.textContent='อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับเสียงพูด — ระบบยังใช้เสียงสัญญาณเตือนได้';
   else if(speech.lastError)box.textContent='เสียงพูดมีปัญหา: '+speech.lastError+' · ลองกด “ทดสอบเสียง” อีกครั้ง';
-  else box.textContent=msg||(speech.on?'เสียงพูดเปิดอยู่ · พูดเมื่อท่าผิดค้างต่อเนื่อง':'เสียงพูดปิดอยู่ · ยังมีเสียงสัญญาณเตือน');
+  else{
+    var style=VOICE_STYLES[speech.style]||VOICE_STYLES.smooth;
+    var voiceName=speech.voice?(speech.voice.name+' · '+(speech.voice.lang||'-')):'กำลังค้นหาเสียงในอุปกรณ์';
+    box.textContent=msg||(speech.on?('เสียงพูดเปิดอยู่ · '+voiceName+' · โทน'+style.label):'เสียงพูดปิดอยู่ · ยังมีเสียงสัญญาณเตือน');
+  }
 }
 function paintVoiceBtn(){
   var label='เสียงพูด: '+(speech.on?'เปิด':'ปิด');
   if($('btnVoice'))$('btnVoice').textContent=label;
   if($('btnVoiceSet'))$('btnVoiceSet').textContent=label;
+  if($('voiceStyleSelect'))$('voiceStyleSelect').value=speech.style;
+  if($('voiceSelect')){
+    var exists=Array.prototype.some.call($('voiceSelect').options,function(o){return o.value===speech.voiceKey});
+    $('voiceSelect').value=exists?speech.voiceKey:'auto';
+  }
   paintVoiceStatus();
 }
 function setVoice(on,test){
@@ -955,11 +1025,19 @@ function setVoice(on,test){
     if(speech.timer)clearTimeout(speech.timer);
     speech.timer=null;speechSynthesis.cancel();
   }
-  if(test&&speech.on){pickVoice();say('ทดสอบเสียง SmartFlex พร้อมเตือนท่านั่งแล้วค่ะ',true)}
+  if(test&&speech.on){pickVoice();say('สวัสดีค่ะ SmartFlex พร้อมช่วยเตือนให้คุณนั่งอย่างเหมาะสมแล้วค่ะ',true)}
 }
 $('btnVoice').onclick=function(){setVoice(!speech.on,speech.on===false)};
 $('btnVoiceSet').onclick=function(){setVoice(!speech.on,speech.on===false)};
 $('btnTestVoice').onclick=function(){setVoice(true,true)};
+$('voiceSelect').onchange=function(){
+  speech.voiceKey=this.value||'auto';store.set('sf.voiceName',speech.voiceKey);
+  pickVoice();setVoice(true,true);
+};
+$('voiceStyleSelect').onchange=function(){
+  speech.style=VOICE_STYLES[this.value]?this.value:'smooth';store.set('sf.voiceStyle',speech.style);
+  paintVoiceBtn();setVoice(true,true);
+};
 
 /* ============================================================
    LIVE
