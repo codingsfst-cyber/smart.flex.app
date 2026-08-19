@@ -520,7 +520,8 @@ var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถ�
   total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
   lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null,
   classTracks:[],classTracksReady:false,lastClassSpeech:0,recoveringDetector:false,
-  neckSide:'',neckSideVotes:{left:0,right:0},currentHeadMode:'lateral'};
+  neckSide:'',neckSideVotes:{left:0,right:0},currentHeadMode:'lateral',
+  timeWarn60:false,timeWarn10:false,timeExpired:false};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function asArray(v){return Array.isArray(v)?v:[]}
@@ -1574,6 +1575,7 @@ function beginSession(){
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
   state.voiceIssueCursor=0;state.classVoiceCursor=0;
+  state.timeWarn60=false;state.timeWarn10=false;state.timeExpired=false;
   state.loopToken++;loop(state.loopToken);
   tickTimer=setInterval(tick,1000);
 }
@@ -1589,14 +1591,43 @@ function tick(){
     if(state.samples.length>SAMPLE_MAX)state.samples.shift();
     while(state.nextSampleAt<=s)state.nextSampleAt+=5;
   }
-  var limit=durationMin()*60;
+  var limit=durationMin()*60,clockEl=$('clock');
   if(limit>0){
     var left=Math.max(0,limit-s);
-    $('clock').textContent='เหลือ '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
-    if(left===60)say('อีกหนึ่งนาทีจะครบเวลา',true);
-    if(left<=0){say('ครบเวลาตรวจแล้ว',true);chime();endSession();return}
+    clockEl.textContent='เหลือ '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+    /* เตือนแบบ threshold แทน left===60 เพื่อไม่พลาดเมื่อแท็บเบื้องหลังถูก browser throttle */
+    if(!state.timeWarn60&&limit>=120&&left<=60&&left>10){
+      state.timeWarn60=true;
+      say('อีกหนึ่งนาทีจะครบเวลาตรวจค่ะ',true);
+      chime();
+    }
+    if(!state.timeWarn10&&left<=10&&left>0){
+      state.timeWarn10=true;
+      say('อีกสิบวินาทีจะครบเวลาตรวจค่ะ',true);
+      chime();
+    }
+    if(left<=10){
+      clockEl.style.background='rgba(229,72,77,.92)';
+      clockEl.style.color='#fff';
+    }else if(left<=60){
+      clockEl.style.background='rgba(200,160,46,.94)';
+      clockEl.style.color='#fff';
+    }else{
+      clockEl.style.background='rgba(255,255,255,.14)';
+      clockEl.style.color='#fff';
+    }
+    if(left<=0&&!state.timeExpired){
+      state.timeExpired=true;
+      state.running=false; /* หยุด AI ก่อน เพื่อกัน tick/loop ซ้ำระหว่างเสียงจบเวลา */
+      say('ครบเวลาตรวจแล้วค่ะ',true);
+      chime();
+      setTimeout(function(){endSession(true)},900);
+      return;
+    }
   }else{
-    $('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+    clockEl.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+    clockEl.style.background='rgba(255,255,255,.14)';
+    clockEl.style.color='#fff';
   }
 }
 /* แปลง 33 จุดของ MediaPipe เป็นโครง 17 จุดเดิม แล้วต่อท้ายส้น/ปลายเท้าและจุดมือ
@@ -2171,11 +2202,12 @@ $('btnStop').onclick=function(){endSession()};
    จบเซสชัน — คิดคะแนน บันทึก แล้วส่งขึ้นชีท
    ============================================================ */
 function grade(sc){return sc>=90?'ดีมาก':sc>=80?'ดี':sc>=60?'ควรปรับ':'ควรปรับทันที'}
-function endSession(){
+function endSession(keepFinishVoice){
   if(!state.startedAt)return;
   var started=state.startedAt;
-  if(speech.timer)clearTimeout(speech.timer);speech.timer=null;
-  if(speechSupported())speechSynthesis.cancel();
+  if(speech.timer&&!keepFinishVoice)clearTimeout(speech.timer);
+  if(!keepFinishVoice)speech.timer=null;
+  if(speechSupported()&&!keepFinishVoice)speechSynthesis.cancel();
   state.running=false;state.calibrating=false;state.loopToken++;
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);state.calibrationTimer=null;
   cancelLoopSchedule();if(tickTimer)clearInterval(tickTimer);
