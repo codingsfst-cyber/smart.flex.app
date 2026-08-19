@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SmartFlex — ผู้ช่วยดูแลท่านั่ง</title>
 <meta name="theme-color" content="#176340">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="icon" type="image/png" href="logo_sf.png">
 <link rel="shortcut icon" type="image/png" href="logo_sf.png">
 <link rel="apple-touch-icon" href="logo_sf.png">
@@ -418,7 +421,7 @@ a:hover{color:var(--g900)}
       <a href="https://doi.org/10.1016/j.apergo.2011.03.008" target="_blank" rel="noopener">doi:10.1016/j.apergo.2011.03.008</a><br>
       • ISO 11226:2000 — การประเมินท่าทางการทำงานแบบคงที่โดยพิจารณามุมร่างกายและระยะเวลา<br>
       <a href="https://www.iso.org/standard/25573.html" target="_blank" rel="noopener">ISO 11226:2000</a><br>
-      • เกณฑ์ปฏิบัติการของ SmartFlex: คอยื่นวัดเป็นความเบี่ยงไปด้านหน้าจากแนวลำตัวในภาพด้านข้าง ≤18° (ไม่ใช้แกน Z), ก้ม/เงยหรือเอียงศีรษะ ≤10°, หลัง ≤12°, ไหล่ ≤6°, ศอก 90–120°, ข้อมือเบี่ยงจากแนวตรง ≤15°, สะโพกและเข่า 90–120° และแนวส้น–ปลายเท้า ≤15°. ค่าที่ไม่ได้กำหนดเป็น cut-off โดย OSHA/NIOSH เป็น operational thresholds สำหรับ AI Pose Estimation ของต้นแบบ ไม่ใช่ค่าตัดวินิจฉัยโรค</div>
+      • เกณฑ์ปฏิบัติการของ SmartFlex: คอยื่นใช้ CVA แบบประมาณค่าจากแนวไหล่→หูในภาพด้านข้างจริง ≥48° (ไม่ใช้แกน Z และไม่ใช้มุมเฉียง), ก้ม/เงยหรือเอียงศีรษะ ≤10°, หลัง ≤12°, ไหล่ ≤6°, ศอก 90–120°, ข้อมือเบี่ยงจากแนวตรง ≤15°, สะโพกและเข่า 90–120° และแนวส้น–ปลายเท้า ≤15°. ค่าที่ไม่ได้กำหนดเป็น cut-off โดย OSHA/NIOSH เป็น operational thresholds สำหรับ AI Pose Estimation ของต้นแบบ ไม่ใช่ค่าตัดวินิจฉัยโรค</div>
     </div>
   </div>
 </section>
@@ -486,7 +489,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.13 — ปรับเกณฑ์ 7 จุดตาม neutral posture · ลด false alert คอยื่น · เพิ่มศอก/ข้อมือ
+   SmartFlex v4.14 — ปรับสูตรคอยื่นแบบ CVA proxy ด้านข้าง · คงระบบ 7 จุดเดิม
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -755,20 +758,21 @@ function parallelDeviation2D(a,b,c,d){
   var x=Math.abs(Math.atan2(b.y-a.y,b.x-a.x)-Math.atan2(d.y-c.y,d.x-c.x))*180/Math.PI;
   x=x%180;return x>90?180-x:x;
 }
-/* คอยื่น: วัดการเลื่อนศีรษะไปด้านหน้าจากแนวลำตัวในภาพ 2 มิติด้านข้างเท่านั้น
-   ไม่ใช้แกน Z เพื่อป้องกัน false alert เมื่อผู้ใช้/กล้องเฉียง และใช้ทิศหู→จมูกบอกว่า "ด้านหน้า" อยู่ทางใด
-   0° = หูอยู่ต่อแนวลำตัว, ค่ายิ่งมาก = ศีรษะเลื่อนไปด้านหน้า */
-function forwardHeadDeviation2D(ear,nose,shoulder,hip){
-  if(!(ear&&nose&&shoulder&&hip))return null;
-  var ux=shoulder.x-hip.x,uy=shoulder.y-hip.y,um=Math.hypot(ux,uy);
-  if(!um)return null;ux/=um;uy/=um;
-  var p1={x:-uy,y:ux},p2={x:uy,y:-ux};
-  var fx=nose.x-ear.x,fy=nose.y-ear.y;
-  var p=(fx*p1.x+fy*p1.y)>=(fx*p2.x+fy*p2.y)?p1:p2;
-  var vx=ear.x-shoulder.x,vy=ear.y-shoulder.y;
-  var up=vx*ux+vy*uy;if(up<=1)return null;
-  var forward=vx*p.x+vy*p.y;
-  return Math.atan2(Math.max(0,forward),up)*180/Math.PI;
+/* คอยื่น: ใช้ CVA proxy จากภาพด้านข้างจริง
+   - ใช้แนวไหล่→หูเทียบแนวนอนของภาพ และใช้หู→จมูกช่วยยืนยันทิศด้านหน้า
+   - ค่ายิ่งมาก = ศีรษะอยู่เหนือไหล่มากขึ้น, ค่ายิ่งต่ำ = ศีรษะยื่นไปด้านหน้า
+   - MediaPipe ไม่มี landmark C7 โดยตรง จึงเป็น CVA แบบประมาณค่าสำหรับ SmartFlex ไม่ใช่ clinical CVA
+   - ไม่ใช้ world Z และจะตัดคะแนนเฉพาะ view==='side' เพื่อลด false alert จากมุมเฉียง */
+function forwardHeadCVA2D(ear,nose,shoulder){
+  if(!(ear&&nose&&shoulder))return null;
+  var faceDx=nose.x-ear.x;
+  if(Math.abs(faceDx)<2)return null;
+  var frontSign=faceDx>=0?1:-1;
+  var forward=(ear.x-shoulder.x)*frontSign;
+  var vertical=Math.abs(shoulder.y-ear.y);
+  if(vertical<2)return null;
+  if(forward<=0)return 90;
+  return Math.atan2(vertical,forward)*180/Math.PI;
 }
 /* ไหล่เอียง: MediaPipe ใช้ world landmarks เพื่อลดผลจากมุมกล้อง; MoveNet fallback ใช้ภาพ 2 มิติ */
 function shoulderTiltAngle(a,b){
@@ -958,7 +962,7 @@ function cameraReason(view){
    ความไวต่ำ/กลาง/สูงจะขยายหรือบีบช่วงเตือนด้วย sens().tol */
 var POSTURE_RULES={
   /* เกณฑ์องศาเป็น operational screening thresholds ของ SmartFlex ไม่ใช่ค่าตัดวินิจฉัยโรค */
-  forwardHead:{center:0,tol:18,severe:30,label:'คอยื่น',flag:'neck'},
+  forwardHead:{min:48,severeMin:40,sensitivitySpan:6,label:'คอยื่น',flag:'neck'},
   headTilt:{center:0,tol:10,severe:20,label:'แนวศีรษะไม่เหมาะสม',flag:'neck'},
   torsoLean:{center:0,tol:12,severe:22,label:'หลังค่อม',flag:'torso'},
   shoulderTilt:{center:0,tol:6,severe:12,label:'ไหล่เอียง',flag:'shoulder'},
@@ -1003,9 +1007,9 @@ function analyse(kp){
     if(level){bad.push(R.label);flags[R.flag]=1;badGroups[gid]=1;if(level===2){severe.push(R.label);severeGroups[gid]=1}}
   }
 
-  /* คอยื่นใช้ side 2D จริงเท่านั้น: ไม่ใช้ world Z และไม่ตัดคะแนนจากมุม oblique */
-  if(use('forwardHead')&&view==='side'&&ear&&nose&&sh&&hip){
-    var fh=forwardHeadDeviation2D(ear,nose,sh,hip);
+  /* คอยื่นใช้ CVA proxy 2D เฉพาะ side จริง: ไม่ใช้ world Z และไม่ตัดคะแนนจากมุม oblique */
+  if(use('forwardHead')&&view==='side'&&ear&&nose&&sh){
+    var fh=forwardHeadCVA2D(ear,nose,sh);
     if(typeof fh==='number')m.forwardHead=Math.round(smoothMetric('forwardHead',fh));
     check('forwardHead');
   }
@@ -2339,7 +2343,7 @@ function scoredLabel(angleKey,usedMetrics){
    หน้าตั้งค่า · ตัวเลือกต่าง ๆ
    ============================================================ */
 var MEASURES=[
-  {keys:['forwardHead','headTilt'],label:'คอ/ศีรษะ',text:'คอยื่น: วัดการเลื่อนหูไปด้านหน้าจากแนวลำตัวในมุมข้าง โดยไม่ใช้แกน Z (ดี ≤18°) · ก้ม/เงยหรือเอียงศีรษะเบี่ยงไม่เกิน 10°'},
+  {keys:['forwardHead','headTilt'],label:'คอ/ศีรษะ',text:'คอยื่น: ใช้มุม CVA แบบประมาณค่าจากแนวไหล่→หูในมุมด้านข้างจริง (ดี ≥48°) · ก้ม/เงยหรือเอียงศีรษะเบี่ยงไม่เกิน 10°'},
   {keys:['torsoLean'],label:'หลัง',text:'แนวไหล่–สะโพกเบี่ยงจากแนวตั้งไม่เกิน 12° และควรมีพนักพิงรองรับหลัง'},
   {keys:['shoulderTilt'],label:'ไหล่',text:'ไหล่ผ่อนคลายและอยู่ใกล้ระดับเดียวกัน · SmartFlex ใช้เกณฑ์ปฏิบัติการความเอียงไม่เกิน 6°'},
   {keys:['elbowAngle'],label:'ศอก',text:'มุมไหล่–ศอก–ข้อมือประมาณ 90–120° และวางศอกใกล้ลำตัว'},
@@ -2434,7 +2438,7 @@ function findSession(id){
   return asArray(store.get(LS.hist,[])).filter(function(r){return r.sessionId===id})[0];
 }
 var DETAIL_ROWS=[
-  {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'มุมเบี่ยงของแนว หู–ไหล่ จากแนวลำตัวในภาพด้านข้าง 2 มิติ (ไม่ใช้แกน Z)',ok:'ไม่เกิน 18°',limit:{center:0,tol:18},fix:'เก็บคางเข้า ยกจอให้อยู่ระดับสายตา และนั่งให้ศีรษะสมดุลเหนือไหล่'},
+  {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'CVA แบบประมาณค่า: มุมแนวไหล่→หูเทียบแนวนอนจากภาพด้านข้างจริง (MediaPipe ไม่มีจุด C7 โดยตรง)',ok:'ตั้งแต่ 48° ขึ้นไป',limit:{min:48},fix:'เก็บคางเข้า ยกจอให้อยู่ระดับสายตา และนั่งให้ศีรษะสมดุลเหนือไหล่'},
   {key:'headTilt',th:'แนวศีรษะ',en:'Head alignment',how:'มุมข้าง: ทิศหู–จมูกเทียบลำตัว / มุมตรง: แนวหูเทียบแนวไหล่',ok:'เบี่ยงไม่เกิน 10°',limit:{center:0,tol:10},fix:'ปรับสายตาให้มองตรง ไม่ก้ม เงย หรือเอียงศีรษะค้าง'},
   {key:'torsoLean',th:'หลังค่อม / เอนตัว',en:'Trunk alignment',how:'มุมเอียงของแนวไหล่–สะโพกเทียบเส้นดิ่ง',ok:'ไม่เกิน 12°',limit:{center:0,tol:12},fix:'ดันสะโพกชิดพนักพิง ให้หลังส่วนล่างมีที่รองรับ'},
   {key:'shoulderTilt',th:'ไหล่สองข้างไม่เท่า',en:'Shoulder alignment',how:'ระดับไหล่ซ้าย–ขวา (MediaPipe ใช้ world landmarks เมื่อมี)',ok:'ไม่เกิน 6°',limit:{center:0,tol:6},fix:'ผ่อนไหล่และจัดที่วางแขนให้สมดุล'},
