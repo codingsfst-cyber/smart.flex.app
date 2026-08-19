@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>SmartFlex Analytics Dashboard</title>
+<meta name="theme-color" content="#176340" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-950:#0a3523;--green-900:#124f35;--green-800:#176340;--green-700:#1d7c50;--green-600:#26a369;
+  --green-500:#30cf85;--green-200:#aee8cd;--green-100:#dff5ea;--green-50:#f3fbf7;
+  --ink:#18241f;--muted:#66766e;--line:#e1ebe6;--white:#fff;
+  --good:#1fa971;--warn:#c9972f;--bad:#df5358;--blue:#3e7ccc;--purple:#7b64c5;
+  --shadow:0 16px 44px rgba(19,79,52,.08);--radius:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#f4f8f6;color:var(--ink);font-family:'Noto Sans Thai',system-ui,-apple-system,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#0d3f2b 0%,#0a2e20 100%);color:#fff;padding:24px 18px;display:flex;flex-direction:column;z-index:20}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 24px}
+.brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#4ee09a,#1e9c65);display:grid;place-items:center;font-weight:900;font-size:17px;box-shadow:0 10px 24px rgba(48,207,133,.2)}
+.brand b{display:block;font-size:17px}.brand small{display:block;color:rgba(255,255,255,.62);font-size:10px;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:6px}.nav a{color:rgba(255,255,255,.72);text-decoration:none;padding:11px 12px;border-radius:13px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}.nav a:hover,.nav a.on{background:rgba(255,255,255,.1);color:#fff}.nav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.side-note{margin-top:auto;border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:13px;background:rgba(255,255,255,.06);font-size:11px;line-height:1.6;color:rgba(255,255,255,.72)}
+.main{min-width:0;padding:26px 30px 52px}
+.topbar{display:flex;align-items:flex-start;gap:18px;justify-content:space-between;margin-bottom:18px}
+.title h1{margin:0;font-size:28px;line-height:1.25;color:var(--green-950)}.title p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px;align-items:center}.btn{border:1px solid var(--line);background:#fff;color:var(--green-900);border-radius:13px;padding:10px 14px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(19,79,52,.04)}.btn.primary{background:var(--green-800);color:#fff;border-color:var(--green-800)}.btn:hover{transform:translateY(-1px)}.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.statusline{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:9px}.statusdot{width:8px;height:8px;border-radius:50%;background:var(--warn)}.statusdot.ok{background:var(--good)}.statusdot.bad{background:var(--bad)}
+.filters{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px;margin-bottom:16px;box-shadow:0 8px 28px rgba(19,79,52,.04)}
+.filter label{display:block;font-size:10px;font-weight:800;color:#7a8a82;margin:0 0 5px 3px;letter-spacing:.02em}.filter select,.filter input{width:100%;height:40px;border:1px solid var(--line);border-radius:11px;background:#f9fbfa;color:var(--ink);padding:0 10px;font-size:12px;outline:none}.filter select:focus,.filter input:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(48,207,133,.12)}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-bottom:16px}.kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;min-height:116px;box-shadow:0 8px 28px rgba(19,79,52,.04);position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;right:-24px;top:-24px;background:var(--green-50)}.kpi .ico{width:34px;height:34px;border-radius:11px;background:var(--green-50);display:grid;place-items:center;color:var(--green-700);margin-bottom:10px}.kpi .ico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}.kpi b{display:block;font-size:25px;line-height:1;color:var(--green-950);position:relative;z-index:1}.kpi span{display:block;font-size:10.5px;color:var(--muted);margin-top:7px;position:relative;z-index:1}.kpi small{font-size:9.5px;color:#87958e;position:relative;z-index:1}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;margin-bottom:14px}.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}.span-4{grid-column:span 4}.span-5{grid-column:span 5}.span-6{grid-column:span 6}.span-7{grid-column:span 7}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
+.cardhead{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;margin-bottom:15px}.cardhead h2{font-size:15px;margin:0;color:var(--green-950)}.cardhead p{font-size:10.5px;color:var(--muted);margin:3px 0 0}.badge{font-size:9.5px;font-weight:800;color:var(--green-800);background:var(--green-50);border:1px solid var(--green-100);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.mode-wrap{display:flex;align-items:center;gap:22px;justify-content:center;padding:4px 0 10px}.donut{--p:50;width:142px;height:142px;border-radius:50%;background:conic-gradient(var(--green-600) calc(var(--p)*1%),#dfeee7 0);position:relative;flex:none}.donut:after{content:"";position:absolute;inset:19px;border-radius:50%;background:#fff}.donut-center{position:absolute;inset:0;z-index:1;display:grid;place-content:center;text-align:center}.donut-center b{font-size:25px;color:var(--green-950)}.donut-center span{font-size:9.5px;color:var(--muted)}.legend{display:flex;flex-direction:column;gap:10px;min-width:135px}.legend-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:11px}.swatch{width:9px;height:9px;border-radius:3px;background:var(--green-600)}.swatch.alt{background:#dfeee7;border:1px solid #c9ddd2}.legend-row b{font-size:13px}
+.issue-list{display:flex;flex-direction:column;gap:10px}.issue-row{display:grid;grid-template-columns:minmax(88px,130px) 1fr 46px;gap:10px;align-items:center}.issue-row .name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar{height:9px;background:#edf3f0;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green-600),var(--green-500));width:0}.issue-row .val{text-align:right;font-size:10.5px;color:var(--muted)}
+.chartbox{height:220px;position:relative}.chartbox svg{width:100%;height:100%;overflow:visible}.axistext{font-size:9px;fill:#829189}.gridline{stroke:#e8efeb;stroke-width:1}.trendline{stroke:var(--green-600);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}.trendarea{fill:url(#trendFill)}.dotpoint{fill:#fff;stroke:var(--green-600);stroke-width:2}.dotpoint:hover{r:5}
+.scorebands{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}.bandbox{border-radius:14px;padding:11px 10px;border:1px solid var(--line);background:#fafcfb}.bandbox b{display:block;font-size:17px}.bandbox span{font-size:9.5px;color:var(--muted)}.bandbox.good b{color:var(--good)}.bandbox.ok b{color:#4b8d62}.bandbox.warn b{color:var(--warn)}.bandbox.bad b{color:var(--bad)}.stack{height:12px;border-radius:999px;overflow:hidden;display:flex;background:#edf3f0}.stack i{display:block;height:100%}
+.cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cat{border:1px solid var(--line);background:#fafcfb;border-radius:15px;padding:12px}.cat-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.cat b{font-size:12px}.cat strong{font-size:14px;color:var(--green-800)}.cat .mini{height:6px;border-radius:999px;background:#e8f0ec;margin-top:9px;overflow:hidden}.cat .mini i{display:block;height:100%;background:var(--green-600);border-radius:999px}.cat small{display:block;font-size:9.5px;color:var(--muted);margin-top:6px}
+.insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.insight{border:1px solid var(--line);border-radius:16px;padding:13px;background:linear-gradient(145deg,#fff,#f8fbf9)}.insight .num{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--green-100);color:var(--green-800);font-weight:900;font-size:11px;margin-bottom:10px}.insight b{display:block;font-size:11.5px;color:var(--green-950)}.insight p{font-size:10.5px;color:var(--muted);line-height:1.6;margin:5px 0 0}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:15px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:11px 12px;border-bottom:1px solid #edf2ef;text-align:left;font-size:10.5px;white-space:nowrap}th{background:#f7faf8;color:#708078;font-size:9.5px;letter-spacing:.02em;position:sticky;top:0}td b{font-size:11px}.scorepill{display:inline-flex;min-width:38px;justify-content:center;padding:4px 8px;border-radius:999px;font-weight:800;background:#e9f8f0;color:var(--good)}.scorepill.warn{background:#fff4df;color:#a97918}.scorepill.bad{background:#fdebed;color:var(--bad)}.issuepill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#f2f6f4;color:#50635a}
+.empty{padding:34px 10px;text-align:center;color:var(--muted);font-size:11px}.skeleton{position:relative;overflow:hidden;background:#edf3f0!important;color:transparent!important;border-color:transparent!important}.skeleton:before{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:shimmer 1.2s infinite}@keyframes shimmer{100%{transform:translateX(100%)}}
+.toast{position:fixed;right:22px;bottom:22px;max-width:340px;background:#13261d;color:#fff;border-radius:14px;padding:12px 14px;font-size:11px;box-shadow:0 18px 45px rgba(0,0,0,.18);display:none;z-index:99}.toast.on{display:block}.toast.bad{background:#722f34}
+.mobile-head{display:none}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(3,1fr)}.span-4{grid-column:span 6}.span-5,.span-7{grid-column:span 6}.span-8{grid-column:span 12}}
+@media(max-width:860px){.shell{display:block}.sidebar{display:none}.mobile-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}.main{padding:18px 14px 42px}.topbar{flex-direction:column}.actions{width:100%}.actions .btn{flex:1;justify-content:center}.filters{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.grid{display:block}.card{margin-bottom:12px}.insights{grid-template-columns:1fr}.mode-wrap{justify-content:flex-start}.title h1{font-size:23px}}
+@media(max-width:520px){.filters{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr;gap:9px}.kpi{padding:13px;min-height:105px}.kpi b{font-size:22px}.scorebands{grid-template-columns:1fr 1fr}.cat-grid{grid-template-columns:1fr}.mode-wrap{align-items:flex-start;gap:15px}.donut{width:122px;height:122px}.donut:after{inset:17px}.legend{min-width:0;flex:1}.issue-row{grid-template-columns:92px 1fr 38px}.chartbox{height:190px}}
+@media print{.sidebar,.actions,.filters,.toast{display:none!important}.shell{display:block}.main{padding:0}.card,.kpi{box-shadow:none;break-inside:avoid}.grid{gap:8px}.topbar{margin-bottom:8px}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">SF</div><div><b>SmartFlex</b><small>ANALYTICS DASHBOARD</small></div></div>
+    <nav class="nav">
+      <a class="on" href="#overview"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>ภาพรวม</a>
+      <a href="#issues"><svg viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3z"/><path d="M12 9v4M12 16h.01"/></svg>ปัญหาท่าทาง</a>
+      <a href="#usage"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg>พฤติกรรมใช้งาน</a>
+      <a href="#risk"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M18 8h4M20 6v4"/></svg>กลุ่มเฝ้าระวัง</a>
+    </nav>
+    <div class="side-note">ข้อมูลวิดีโอและชื่อบุคคลไม่ถูกนำมาแสดงในหน้านี้<br>แดชบอร์ดแสดงเฉพาะข้อมูลสรุปแบบไม่ระบุตัวตน</div>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-head"><div class="brand-mark">SF</div><div><b style="color:var(--green-950)">SmartFlex</b><div style="font-size:10px;color:var(--muted)">Analytics Dashboard</div></div></div>
+    <section id="overview">
+      <div class="topbar">
+        <div class="title">
+          <h1>แดชบอร์ดสรุปผลการใช้งาน</h1>
+          <p>วิเคราะห์ภาพรวมแบบไม่ระบุตัวตน แสดงเฉพาะจำนวน คะแนน พฤติกรรม และปัญหาท่าทางที่ตรวจพบ</p>
+          <div class="statusline"><span class="statusdot" id="statusDot"></span><span id="statusText">กำลังเชื่อมต่อข้อมูล…</span><span>·</span><span id="updatedText">—</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnExport"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>ส่งออก CSV</button>
+          <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>พิมพ์</button>
+          <button class="btn primary" id="btnRefresh"><svg viewBox="0 0 24 24"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.6-2.4L20 11M4 13l2.3 4.4A7 7 0 0 0 18 15"/></svg>รีเฟรช</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="filter"><label>ช่วงเวลา</label><select id="fPeriod"><option value="30">30 วันล่าสุด</option><option value="7">7 วันล่าสุด</option><option value="90">90 วันล่าสุด</option><option value="365">1 ปีล่าสุด</option><option value="all">ทั้งหมด</option></select></div>
+        <div class="filter"><label>รูปแบบการตรวจ</label><select id="fMode"><option value="all">ทั้งหมด</option><option value="personal">ส่วนบุคคล</option><option value="classroom">ห้องเรียน</option></select></div>
+        <div class="filter"><label>ห้อง / กลุ่ม</label><select id="fRoom"><option value="all">ทั้งหมด</option></select></div>
+        <div class="filter"><label>กิจกรรม</label><select id="fActivity"><option value="all">ทั้งหมด</option></select></div>
+        <div class="filter"><label>อุปกรณ์</label><select id="fDevice"><option value="all">ทั้งหมด</option></select></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M17 11h5M19.5 8.5v5"/></svg></div><b id="kUsers">—</b><span>ผู้ใช้งานทั้งหมด</span><small id="kUsersSub">คนไม่ซ้ำ</small></div>
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></div><b id="kSessions">—</b><span>ครั้งที่ตรวจ</span><small id="kSessionsSub">เซสชัน</small></div>
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.4 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div><b id="kScore">—</b><span>คะแนนเฉลี่ย</span><small id="kScoreSub">จาก 100 คะแนน</small></div>
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><b id="kHours">—</b><span>เวลาใช้งานรวม</span><small>ชั่วโมง</small></div>
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3 3 20h18L12 3z"/><path d="M12 9v4M12 16h.01"/></svg></div><b id="kAlerts">—</b><span>เหตุการณ์เตือน</span><small id="kAlertsSub">ครั้ง</small></div>
+        <div class="kpi"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 15l4-4 3 2 5-6"/></svg></div><b id="kRisk">—</b><span>ผู้ใช้ควรเฝ้าระวัง</span><small>เฉลี่ยต่ำกว่า 80</small></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card span-4">
+        <div class="cardhead"><div><h2>ผู้ใช้งานตามรูปแบบ</h2><p>นับผู้ใช้ไม่ซ้ำ แยกส่วนบุคคลและห้องเรียน</p></div><span class="badge">USER MIX</span></div>
+        <div class="mode-wrap">
+          <div class="donut" id="modeDonut"><div class="donut-center"><b id="modeTotal">0</b><span>ผู้ใช้</span></div></div>
+          <div class="legend">
+            <div class="legend-row"><span class="swatch"></span><span>ส่วนบุคคล</span><b id="modePersonal">0</b></div>
+            <div class="legend-row"><span class="swatch alt"></span><span>ห้องเรียน</span><b id="modeClass">0</b></div>
+            <div style="font-size:9.5px;color:var(--muted);line-height:1.5" id="modeNote">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-8" id="issues">
+        <div class="cardhead"><div><h2>ปัญหาท่าทางที่ตรวจพบ</h2><p>เรียงจากปัญหาที่พบมากที่สุดจากเหตุการณ์เตือน/ผลสรุป</p></div><span class="badge" id="issueBadge">0 เหตุการณ์</span></div>
+        <div class="issue-list" id="issueList"><div class="empty">กำลังโหลดข้อมูล…</div></div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="card span-7">
+        <div class="cardhead"><div><h2>แนวโน้มคะแนนเฉลี่ย</h2><p>คะแนนเฉลี่ยรายวันของผู้ใช้งานในช่วงที่เลือก</p></div><span class="badge" id="trendBadge">—</span></div>
+        <div class="chartbox" id="trendChart"></div>
+      </section>
+      <section class="card span-5">
+        <div class="cardhead"><div><h2>ระดับคะแนนของผู้ใช้งาน</h2><p>สัดส่วนผลการตรวจตามระดับ SmartFlex Score</p></div><span class="badge">SCORE DISTRIBUTION</span></div>
+        <div class="scorebands">
+          <div class="bandbox good"><b id="b90">0</b><span>ดีมาก · 90–100</span></div>
+          <div class="bandbox ok"><b id="b80">0</b><span>ดี · 80–89</span></div>
+          <div class="bandbox warn"><b id="b60">0</b><span>ควรปรับ · 60–79</span></div>
+          <div class="bandbox bad"><b id="b0">0</b><span>ปรับทันที · &lt;60</span></div>
+        </div>
+        <div class="stack" id="scoreStack"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:9.5px;color:var(--muted)"><span id="scoreObs">0 ผลการตรวจ</span><span id="scoreRiskPct">0% ต่ำกว่า 80</span></div>
+      </section>
+    </div>
+
+    <div class="grid" id="usage">
+      <section class="card span-4">
+        <div class="cardhead"><div><h2>ผู้ใช้งานตามห้อง/กลุ่ม</h2><p>จำนวนคนไม่ซ้ำในแต่ละห้องหรือกลุ่มที่มีข้อมูล</p></div><span class="badge">ROOM / GROUP</span></div>
+        <div class="cat-grid" id="roomGrid"><div class="empty">ยังไม่มีข้อมูล</div></div>
+      </section>
+      <section class="card span-4">
+        <div class="cardhead"><div><h2>ผู้ใช้งานตามกิจกรรม</h2><p>จำนวนคนไม่ซ้ำและคะแนนเฉลี่ยในแต่ละกิจกรรม</p></div><span class="badge">ACTIVITY</span></div>
+        <div class="cat-grid" id="activityGrid"><div class="empty">ยังไม่มีข้อมูล</div></div>
+      </section>
+      <section class="card span-4">
+        <div class="cardhead"><div><h2>ผู้ใช้งานตามอุปกรณ์</h2><p>เปรียบเทียบจำนวนผู้ใช้ คะแนน และการเตือนตามอุปกรณ์</p></div><span class="badge">DEVICE</span></div>
+        <div class="cat-grid" id="deviceGrid"><div class="empty">ยังไม่มีข้อมูล</div></div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="card span-12">
+        <div class="cardhead"><div><h2>สรุปวิเคราะห์อัตโนมัติ</h2><p>แปลข้อมูลเป็นประเด็นที่อ่านง่ายเพื่อใช้รายงาน/นำเสนอ</p></div><span class="badge">SMART INSIGHTS</span></div>
+        <div class="insights" id="insightGrid"><div class="empty">กำลังวิเคราะห์ข้อมูล…</div></div>
+      </section>
+    </div>
+
+    <div class="grid" id="risk">
+      <section class="card span-12">
+        <div class="cardhead"><div><h2>กลุ่มผู้ใช้ที่ควรติดตาม</h2><p>จัดลำดับจากคะแนนเฉลี่ยต่ำและจำนวนการเตือนสูง โดยไม่แสดงชื่อหรือรหัสประจำตัว</p></div><span class="badge" id="riskBadge">0 คน</span></div>
+        <div class="tablewrap"><table><thead><tr><th>รหัสไม่ระบุตัวตน</th><th>ห้อง/กลุ่ม</th><th>ประเภท</th><th>จำนวนครั้ง</th><th>คะแนนเฉลี่ย</th><th>เตือน</th><th>ปัญหาหลัก</th><th>สถานะ</th></tr></thead><tbody id="riskBody"><tr><td colspan="8"><div class="empty">กำลังโหลดข้อมูล…</div></td></tr></tbody></table></div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="card span-12">
+        <div class="cardhead"><div><h2>รายการตรวจล่าสุด</h2><p>แสดง 10 เซสชันล่าสุดโดยไม่แสดงชื่อหรือรหัสผู้ใช้</p></div><span class="badge">RECENT</span></div>
+        <div class="tablewrap"><table><thead><tr><th>วันเวลา</th><th>ห้อง/กลุ่ม</th><th>รูปแบบ</th><th>กิจกรรม</th><th>อุปกรณ์</th><th>เวลา</th><th>คะแนน</th><th>ปัญหาหลัก</th></tr></thead><tbody id="recentBody"><tr><td colspan="8"><div class="empty">กำลังโหลดข้อมูล…</div></td></tr></tbody></table></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+'use strict';
+
+/* ใช้ Apps Script เดียวกับ SmartFlex หลัก */
+var API_URL='https://script.google.com/macros/s/AKfycbwt7xgVaQJ0QRTK6M-WfpIp5rOFmJfXG1LdhB888Uk7XO-3uBuukP5SpDXUgJz2lomcQw/exec';
+var LIMIT=5000, TIMEOUT=30000;
+var RAW={sessions:[],students:[],events:[],users:[]};
+var FILTERED={};
+var $=function(id){return document.getElementById(id)};
+var ISSUE_ADVICE={
+  'คอยื่น':'ควรยกจอขึ้นระดับสายตา เก็บคางเข้า และลดการยื่นหน้าเข้าหาจอ',
+  'ก้ม/เงยศีรษะ':'ควรปรับระดับจอให้อยู่ในแนวสายตาและหลีกเลี่ยงการก้ม/เงยค้าง',
+  'หลังค่อม':'ควรปรับพนักพิง รองรับหลังส่วนล่าง และดันสะโพกชิดพนักพิง',
+  'ไหล่เอียง':'ควรจัดระดับโต๊ะ/ที่เท้าแขนและวางแขนสองข้างให้สมดุล',
+  'ศีรษะเอียง':'ควรตั้งศีรษะตรงและหลีกเลี่ยงการหนีบโทรศัพท์ที่ไหล่',
+  'มุมสะโพก':'ควรปรับความสูงเก้าอี้และดันสะโพกชิดพนักพิง',
+  'มุมเข่า':'ควรปรับความสูงหรือระยะเก้าอี้ให้เข่าอยู่ในช่วงเหมาะสม',
+  'เท้าไม่วางราบ':'ควรวางเท้าราบเต็มพื้นหรือใช้ที่พักเท้าเมื่อเท้าไม่ถึงพื้น'
+};
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function n(v){var x=Number(v);return isFinite(x)?x:0}
+function fmt(v){return new Intl.NumberFormat('th-TH').format(Math.round(n(v)))}
+function fmt1(v){return n(v).toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}
+function norm(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,' ')}
+function dateOf(r){var v=r&& (r.startedAt||r.savedAt||r.at||r.updatedAt);if(!v)return null;var d=new Date(v);return isNaN(d.getTime())?null:d}
+function dayKey(d){if(!d)return '';var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),x=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+x}
+function fmtDate(d){if(!d)return '—';return d.toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}
+function personKey(id,name,room){var a=norm(id);if(a)return 'id:'+a;return 'name:'+norm(name)+'|'+norm(room)}
+function observationKey(r,type){return personKey(type==='classroom'?r.studentId:r.userId,r.name,r.room)}
+function uniq(arr){return Array.from(new Set(arr.filter(Boolean)))}
+function mean(arr){if(!arr.length)return 0;return arr.reduce(function(a,b){return a+n(b)},0)/arr.length}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function countBy(arr,keyFn){var o={};arr.forEach(function(x){var k=keyFn(x);if(!k||k==='-')return;o[k]=(o[k]||0)+1});return o}
+function entriesDesc(o){return Object.keys(o).map(function(k){return [k,o[k]]}).sort(function(a,b){return b[1]-a[1]})}
+function scoreClass(v){return v<60?'bad':v<80?'warn':''}
+function toast(msg,bad){var t=$('toast');t.textContent=msg;t.className='toast on'+(bad?' bad':'');clearTimeout(toast._t);toast._t=setTimeout(function(){t.className='toast'},3500)}
+
+function jsonp(url,timeout){
+  return new Promise(function(res,rej){
+    var cb='sfdash'+Date.now()+Math.floor(Math.random()*1e5),s=document.createElement('script'),done=false;
+    var to=setTimeout(function(){finish(null,new Error('หมดเวลาเชื่อมต่อ Google Sheets'))},timeout||TIMEOUT);
+    function cleanup(){clearTimeout(to);try{delete window[cb]}catch(e){window[cb]=undefined}if(s.parentNode)s.parentNode.removeChild(s)}
+    function finish(data,err){if(done)return;done=true;cleanup();if(err)return rej(err);if(data&&data.ok===false)return rej(new Error(data.error||'เซิร์ฟเวอร์ปฏิเสธคำขอ'));res(data||{ok:true})}
+    window[cb]=function(d){finish(d)};
+    s.onerror=function(){finish(null,new Error('เชื่อมต่อไม่ได้ กรุณาตรวจ Apps Script deployment'))};
+    s.src=url+(url.indexOf('?')<0?'?':'&')+'callback='+encodeURIComponent(cb);
+    document.head.appendChild(s);
+  });
+}
+function apiList(sheet){return jsonp(API_URL+'?action=list&sheet='+encodeURIComponent(sheet)+'&limit='+LIMIT,TIMEOUT).then(function(r){return (r&&r.data)||[]})}
+
+async function loadData(){
+  setStatus('loading','กำลังอ่านข้อมูลจาก Google Sheets…');
+  $('btnRefresh').disabled=true;
+  try{
+    var out=await Promise.all([apiList('Sessions'),apiList('StudentResults'),apiList('Events'),apiList('Users')]);
+    RAW.sessions=out[0];RAW.students=out[1];RAW.events=out[2];RAW.users=out[3];
+    populateFilters();applyFilters();
+    var cap=[];if(RAW.sessions.length>=LIMIT)cap.push('Sessions');if(RAW.students.length>=LIMIT)cap.push('StudentResults');if(RAW.events.length>=LIMIT)cap.push('Events');
+    setStatus('ok','เชื่อมต่อข้อมูลสำเร็จ'+(cap.length?' · '+cap.join(', ')+' แสดง '+LIMIT.toLocaleString('th-TH')+' รายการล่าสุด':''));
+    $('updatedText').textContent='อัปเดต '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  }catch(err){
+    console.error(err);setStatus('bad','โหลดข้อมูลไม่สำเร็จ');toast(err.message||String(err),true);renderEmptyAll();
+  }finally{$('btnRefresh').disabled=false}
+}
+function setStatus(type,text){$('statusDot').className='statusdot '+(type==='ok'?'ok':type==='bad'?'bad':'');$('statusText').textContent=text}
+
+function populateFilters(){
+  fillSelect('fRoom',uniq(RAW.sessions.map(function(r){return r.room}).concat(RAW.students.map(function(r){return r.room}))).sort());
+  fillSelect('fActivity',uniq(RAW.sessions.map(function(r){return r.activity})).sort());
+  fillSelect('fDevice',uniq(RAW.sessions.map(function(r){return r.device})).sort());
+}
+function fillSelect(id,vals){var el=$(id),keep=el.value,html='<option value="all">ทั้งหมด</option>';vals.forEach(function(v){html+='<option value="'+esc(v)+'">'+esc(v)+'</option>'});el.innerHTML=html;if(vals.indexOf(keep)>-1)el.value=keep}
+
+function applyFilters(){
+  var days=$('fPeriod').value,mode=$('fMode').value,room=$('fRoom').value,activity=$('fActivity').value,device=$('fDevice').value;
+  var cutoff=null;if(days!=='all'){cutoff=new Date();cutoff.setHours(0,0,0,0);cutoff.setDate(cutoff.getDate()-Number(days)+1)}
+  var sessions=RAW.sessions.filter(function(r){var d=dateOf(r);if(cutoff&&(!d||d<cutoff))return false;if(mode!=='all'&&r.appMode!==mode)return false;if(room!=='all'&&String(r.room)!==room)return false;if(activity!=='all'&&String(r.activity)!==activity)return false;if(device!=='all'&&String(r.device)!==device)return false;return true});
+  var ids=new Set(sessions.map(function(r){return String(r.sessionId)}));
+  var students=RAW.students.filter(function(r){return ids.has(String(r.sessionId))});
+  var events=RAW.events.filter(function(r){return ids.has(String(r.sessionId))});
+  var sessionMap={};sessions.forEach(function(r){sessionMap[String(r.sessionId)]=r});
+  FILTERED={sessions:sessions,students:students,events:events,sessionMap:sessionMap,days:days};
+  renderAll();
+}
+
+function buildObservations(){
+  var obs=[];
+  FILTERED.sessions.forEach(function(r){if(r.appMode==='personal')obs.push({type:'personal',key:observationKey(r,'personal'),name:r.name||r.userId||'ไม่ระบุชื่อ',id:r.userId||'',room:r.room||'',score:n(r.score),alerts:n(r.alertCount),issue:r.mainIssue||'',date:dateOf(r),sessionId:r.sessionId,activity:r.activity||'ไม่ระบุ',device:r.device||'ไม่ระบุ'})});
+  FILTERED.students.forEach(function(r){var s=FILTERED.sessionMap[String(r.sessionId)]||{};obs.push({type:'classroom',key:observationKey(r,'classroom'),name:r.name||r.studentId||'ไม่ระบุชื่อ',id:r.studentId||'',room:r.room||s.room||'',score:n(r.score),alerts:n(r.alertCount),issue:r.mainIssue||'',date:dateOf(r)||dateOf(s),sessionId:r.sessionId,activity:s.activity||'ไม่ระบุ',device:s.device||'ไม่ระบุ'})});
+  return obs;
+}
+function aggregateUsers(obs){
+  var map={};obs.forEach(function(o){if(!o.key)return;var u=map[o.key]||(map[o.key]={key:o.key,name:o.name,id:o.id,room:o.room,type:o.type,scores:[],alerts:0,issues:{},sessions:new Set(),activities:{},devices:{},last:null});u.scores.push(o.score);u.alerts+=o.alerts;u.sessions.add(String(o.sessionId));if(o.issue&&o.issue!=='-')u.issues[o.issue]=(u.issues[o.issue]||0)+1;u.activities[o.activity]=(u.activities[o.activity]||0)+1;u.devices[o.device]=(u.devices[o.device]||0)+1;if(o.date&&(!u.last||o.date>u.last))u.last=o.date});
+  return Object.keys(map).map(function(k){var u=map[k];u.avg=mean(u.scores);u.sessionCount=u.sessions.size;u.topIssue=entriesDesc(u.issues)[0]?.[0]||'-';u.mainActivity=entriesDesc(u.activities)[0]?.[0]||'-';u.mainDevice=entriesDesc(u.devices)[0]?.[0]||'-';return u});
+}
+
+function renderAll(){
+  var obs=buildObservations(),users=aggregateUsers(obs),sessions=FILTERED.sessions,events=FILTERED.events;
+  renderKpis(obs,users,sessions,events);renderMode(users);renderIssues(obs,events);renderTrend(obs);renderScoreBands(obs);renderCategory(obs,'room','roomGrid');renderCategory(obs,'activity','activityGrid');renderCategory(obs,'device','deviceGrid');renderInsights(obs,users,events);renderRisk(users);renderRecent(sessions);
+}
+function renderKpis(obs,users,sessions,events){
+  var avg=mean(obs.map(function(o){return o.score})),hours=sessions.reduce(function(a,r){return a+n(r.totalSeconds)},0)/3600;
+  var alerts=events.length?events.length:obs.reduce(function(a,o){return a+o.alerts},0),risk=users.filter(function(u){return u.avg<80}).length;
+  $('kUsers').textContent=fmt(users.length);$('kUsersSub').textContent=users.length?'คนไม่ซ้ำจาก '+fmt(obs.length)+' ผลการตรวจ':'ยังไม่มีข้อมูล';
+  $('kSessions').textContent=fmt(sessions.length);$('kSessionsSub').textContent='ส่วนบุคคล '+fmt(sessions.filter(function(r){return r.appMode==='personal'}).length)+' · ห้องเรียน '+fmt(sessions.filter(function(r){return r.appMode==='classroom'}).length);
+  $('kScore').textContent=obs.length?Math.round(avg):'—';$('kScoreSub').textContent=obs.length?(avg>=90?'ระดับดีมาก':avg>=80?'ระดับดี':avg>=60?'ควรปรับ':'ควรปรับทันที'):'จาก 100 คะแนน';
+  $('kHours').textContent=hours?fmt1(hours):'0.0';$('kAlerts').textContent=fmt(alerts);$('kAlertsSub').textContent=events.length?'จาก Events':'รวมจากผลสรุป';$('kRisk').textContent=fmt(risk);
+}
+function renderMode(users){
+  var p=users.filter(function(u){return u.type==='personal'}).length,c=users.filter(function(u){return u.type==='classroom'}).length,t=p+c,pct=t?p/t*100:0;
+  $('modeDonut').style.setProperty('--p',pct);$('modeTotal').textContent=fmt(t);$('modePersonal').textContent=fmt(p);$('modeClass').textContent=fmt(c);
+  $('modeNote').textContent=t?(p>=c?'ผู้ใช้ส่วนบุคคลคิดเป็น '+Math.round(pct)+'% ของผู้ใช้ทั้งหมด':'ผู้ใช้ห้องเรียนคิดเป็น '+Math.round(100-pct)+'% ของผู้ใช้ทั้งหมด'):'ยังไม่มีข้อมูลผู้ใช้';
+}
+function renderIssues(obs,events){
+  var counts={};if(events.length){events.forEach(function(e){var x=String(e.issue||'').trim();if(x&&x!=='-')counts[x]=(counts[x]||0)+1})}else{obs.forEach(function(o){var x=String(o.issue||'').trim();if(x&&x!=='-')counts[x]=(counts[x]||0)+1})}
+  var arr=entriesDesc(counts),total=arr.reduce(function(a,x){return a+x[1]},0),max=arr[0]?.[1]||1;$('issueBadge').textContent=fmt(total)+' เหตุการณ์';
+  if(!arr.length){$('issueList').innerHTML='<div class="empty">ไม่พบปัญหาท่าทางในข้อมูลที่เลือก</div>';return}
+  $('issueList').innerHTML=arr.slice(0,8).map(function(x){var pct=Math.round(x[1]/max*100),share=total?Math.round(x[1]/total*100):0;return '<div class="issue-row"><div class="name" title="'+esc(x[0])+'">'+esc(x[0])+'</div><div class="bar"><i style="width:'+pct+'%"></i></div><div class="val"><b>'+fmt(x[1])+'</b> · '+share+'%</div></div>'}).join('');
+}
+function renderTrend(obs){
+  var box=$('trendChart');if(!obs.length){box.innerHTML='<div class="empty">ยังไม่มีข้อมูลคะแนนในช่วงที่เลือก</div>';$('trendBadge').textContent='—';return}
+  var map={};obs.forEach(function(o){if(!o.date)return;var k=dayKey(o.date);(map[k]||(map[k]=[])).push(o.score)});var keys=Object.keys(map).sort();
+  if(keys.length>31)keys=keys.slice(-31);var vals=keys.map(function(k){return mean(map[k])});var last=vals[vals.length-1]||0,first=vals[0]||0,diff=last-first;$('trendBadge').textContent=(diff>0?'+':'')+Math.round(diff)+' คะแนนจากวันแรก';
+  var W=720,H=220,L=36,R=12,T=12,B=34,iw=W-L-R,ih=H-T-B,min=40,max=100;
+  var pts=vals.map(function(v,i){var x=L+(keys.length===1?iw/2:i*iw/(keys.length-1));var y=T+(max-clamp(v,min,max))/(max-min)*ih;return {x:x,y:y,v:v,k:keys[i]}});
+  var path=pts.map(function(p,i){return (i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}).join(' ');var area=path+' L '+(pts[pts.length-1]?.x||L)+' '+(T+ih)+' L '+(pts[0]?.x||L)+' '+(T+ih)+' Z';
+  var grids=[40,60,80,100].map(function(v){var y=T+(max-v)/(max-min)*ih;return '<line class="gridline" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="axistext" x="2" y="'+(y+3)+'">'+v+'</text>'}).join('');
+  var step=Math.max(1,Math.ceil(keys.length/6));var labels=keys.map(function(k,i){if(i%step!==0&&i!==keys.length-1)return '';var d=new Date(k+'T00:00:00');return '<text class="axistext" text-anchor="middle" x="'+pts[i].x+'" y="'+(H-8)+'">'+d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+'</text>'}).join('');
+  var dots=pts.map(function(p){return '<circle class="dotpoint" cx="'+p.x+'" cy="'+p.y+'" r="3"><title>'+esc(p.k)+' · '+Math.round(p.v)+' คะแนน</title></circle>'}).join('');
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#30cf85" stop-opacity=".22"/><stop offset="100%" stop-color="#30cf85" stop-opacity="0"/></linearGradient></defs>'+grids+'<path class="trendarea" d="'+area+'"/><path class="trendline" d="'+path+'"/>'+dots+labels+'</svg>';
+}
+function renderScoreBands(obs){
+  var b=[0,0,0,0];obs.forEach(function(o){var s=o.score;if(s>=90)b[0]++;else if(s>=80)b[1]++;else if(s>=60)b[2]++;else b[3]++});$('b90').textContent=fmt(b[0]);$('b80').textContent=fmt(b[1]);$('b60').textContent=fmt(b[2]);$('b0').textContent=fmt(b[3]);var t=obs.length||1,cols=['#1fa971','#69a77e','#c9972f','#df5358'];$('scoreStack').innerHTML=b.map(function(v,i){return '<i style="width:'+(v/t*100)+'%;background:'+cols[i]+'"></i>'}).join('');$('scoreObs').textContent=fmt(obs.length)+' ผลการตรวจ';$('scoreRiskPct').textContent=Math.round((b[2]+b[3])/t*100)+'% ต่ำกว่า 80';
+}
+function renderCategory(obs,field,target){
+  var map={};obs.forEach(function(o){var k=o[field]||'ไม่ระบุ';var x=map[k]||(map[k]={users:new Set(),scores:[],alerts:0});x.users.add(o.key);x.scores.push(o.score);x.alerts+=o.alerts});var arr=Object.keys(map).map(function(k){return {name:k,users:map[k].users.size,avg:mean(map[k].scores),alerts:map[k].alerts}}).sort(function(a,b){return b.users-a.users});var max=arr[0]?.users||1;if(!arr.length){$(target).innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>';return}$(target).innerHTML=arr.slice(0,8).map(function(x){return '<div class="cat"><div class="cat-top"><b>'+esc(x.name)+'</b><strong>'+fmt(x.users)+' คน</strong></div><div class="mini"><i style="width:'+(x.users/max*100)+'%"></i></div><small>คะแนนเฉลี่ย '+(x.avg?Math.round(x.avg):'—')+' · เตือน '+fmt(x.alerts)+' ครั้ง</small></div>'}).join('');
+}
+function renderInsights(obs,users,events){
+  var cards=[];
+  var ic={};(events.length?events.map(function(e){return e.issue}):obs.map(function(o){return o.issue})).forEach(function(x){x=String(x||'').trim();if(x&&x!=='-')ic[x]=(ic[x]||0)+1});var top=entriesDesc(ic)[0];if(top){var total=Object.values(ic).reduce(function(a,b){return a+b},0);cards.push({t:'ปัญหาหลักที่ควรจัดการก่อน',p:'พบ “'+top[0]+'” มากที่สุด '+fmt(top[1])+' ครั้ง คิดเป็น '+Math.round(top[1]/total*100)+'% ของปัญหาที่ตรวจพบทั้งหมด '+(ISSUE_ADVICE[top[0]]||'ควรใช้เป็นประเด็นหลักในการให้คำแนะนำผู้ใช้')});}
+  var p=obs.filter(function(o){return o.type==='personal'}),c=obs.filter(function(o){return o.type==='classroom'});if(p.length&&c.length){var pa=mean(p.map(function(o){return o.score})),ca=mean(c.map(function(o){return o.score})),low=pa<ca?'ส่วนบุคคล':'ห้องเรียน',gap=Math.abs(pa-ca);cards.push({t:'เปรียบเทียบรูปแบบการใช้งาน',p:'โหมด'+low+'มีคะแนนเฉลี่ยต่ำกว่าอีกโหมดประมาณ '+fmt1(gap)+' คะแนน (ส่วนบุคคล '+Math.round(pa)+' / ห้องเรียน '+Math.round(ca)+') ควรเจาะดูสภาพแวดล้อมของกลุ่มนี้เพิ่มเติม'});}
+  var acts={};obs.forEach(function(o){var k=o.activity||'ไม่ระบุ';(acts[k]||(acts[k]=[])).push(o.score)});var ar=Object.keys(acts).map(function(k){return [k,mean(acts[k]),acts[k].length]}).filter(function(x){return x[2]>=2}).sort(function(a,b){return a[1]-b[1]});if(ar.length){cards.push({t:'กิจกรรมที่ควรเฝ้าระวัง',p:'“'+ar[0][0]+'” มีคะแนนเฉลี่ยต่ำสุดที่ '+Math.round(ar[0][1])+' คะแนน จาก '+fmt(ar[0][2])+' ผลการตรวจ ควรพิจารณาปรับโต๊ะ เก้าอี้ ตำแหน่งจอ หรือช่วงพักให้เหมาะกับกิจกรรมนี้'});}
+  var dev={};obs.forEach(function(o){var k=o.device||'ไม่ระบุ';(dev[k]||(dev[k]=[])).push(o.score)});var dr=Object.keys(dev).map(function(k){return [k,mean(dev[k]),dev[k].length]}).filter(function(x){return x[2]>=2}).sort(function(a,b){return a[1]-b[1]});if(dr.length&&cards.length<3){cards.push({t:'อุปกรณ์ที่ควรจับตา',p:'ผู้ใช้ “'+dr[0][0]+'” มีคะแนนเฉลี่ย '+Math.round(dr[0][1])+' คะแนน ต่ำสุดในกลุ่มอุปกรณ์ที่มีข้อมูลเพียงพอ ควรเน้นการจัดระดับจอและระยะมอง'});}
+  if(!cards.length)cards.push({t:'ยังวิเคราะห์เชิงเปรียบเทียบไม่ได้',p:'ข้อมูลในช่วงที่เลือกยังมีน้อย เมื่อมีการใช้งานมากขึ้น ระบบจะชี้ปัญหาหลัก เปรียบเทียบกลุ่ม และจัดลำดับความเสี่ยงให้ชัดเจนขึ้น'});
+  while(cards.length<3)cards.push({t:'ภาพรวมผู้ใช้',p:'ขณะนี้มีผู้ใช้ '+fmt(users.length)+' คน และ '+fmt(obs.length)+' ผลการตรวจในช่วงที่เลือก สามารถใช้ตัวกรองด้านบนเพื่อดูเฉพาะห้อง กิจกรรม หรืออุปกรณ์ที่ต้องการได้'});
+  $('insightGrid').innerHTML=cards.slice(0,3).map(function(x,i){return '<div class="insight"><div class="num">0'+(i+1)+'</div><b>'+esc(x.t)+'</b><p>'+esc(x.p)+'</p></div>'}).join('');
+}
+function renderRisk(users){
+  var arr=users.filter(function(u){return u.avg<80||u.alerts>=3}).sort(function(a,b){var ra=(80-a.avg)+Math.min(a.alerts,20),rb=(80-b.avg)+Math.min(b.alerts,20);return rb-ra}).slice(0,20);$('riskBadge').textContent=fmt(arr.length)+' คน';if(!arr.length){$('riskBody').innerHTML='<tr><td colspan="8"><div class="empty">ไม่พบผู้ใช้ที่เข้าเกณฑ์เฝ้าระวังในช่วงที่เลือก</div></td></tr>';return}$('riskBody').innerHTML=arr.map(function(u,i){var st=u.avg<60?'ควรปรับทันที':u.avg<80?'ควรปรับ':'ติดตาม';return '<tr><td><b>'+anonLabel(i)+'</b><div style="font-size:9px;color:var(--muted)">ไม่แสดงชื่อ/รหัสจริง</div></td><td>'+esc(u.room||'—')+'</td><td>'+(u.type==='personal'?'ส่วนบุคคล':'ห้องเรียน')+'</td><td>'+fmt(u.sessionCount)+'</td><td><span class="scorepill '+scoreClass(u.avg)+'">'+Math.round(u.avg)+'</span></td><td>'+fmt(u.alerts)+'</td><td><span class="issuepill">'+esc(u.topIssue)+'</span></td><td>'+esc(st)+'</td></tr>'}).join('');
+}
+function renderRecent(sessions){
+  var arr=sessions.slice().sort(function(a,b){return (dateOf(b)?.getTime()||0)-(dateOf(a)?.getTime()||0)}).slice(0,10);if(!arr.length){$('recentBody').innerHTML='<tr><td colspan="8"><div class="empty">ยังไม่มีรายการตรวจในช่วงที่เลือก</div></td></tr>';return}$('recentBody').innerHTML=arr.map(function(r){var sc=n(r.score);var place=r.room||'—';return '<tr><td>'+esc(fmtDate(dateOf(r)))+'</td><td><b>'+esc(place)+'</b><div style="font-size:9px;color:var(--muted)">ไม่แสดงชื่อ/รหัสผู้ใช้</div></td><td>'+(r.appMode==='classroom'?'ห้องเรียน':'ส่วนบุคคล')+'</td><td>'+esc(r.activity||'—')+'</td><td>'+esc(r.device||'—')+'</td><td>'+fmt1(n(r.totalSeconds)/60)+' นาที</td><td><span class="scorepill '+scoreClass(sc)+'">'+Math.round(sc)+'</span></td><td>'+esc(r.mainIssue||'—')+'</td></tr>'}).join('');
+}
+function renderEmptyAll(){['kUsers','kSessions','kScore','kHours','kAlerts','kRisk'].forEach(function(id){$(id).textContent='—'});$('issueList').innerHTML='<div class="empty">ไม่สามารถโหลดข้อมูลได้</div>';$('trendChart').innerHTML='<div class="empty">ไม่สามารถโหลดข้อมูลได้</div>';$('insightGrid').innerHTML='<div class="empty">ไม่สามารถโหลดข้อมูลได้</div>'}
+
+function anonLabel(i){return 'ANON-'+String(i+1).padStart(3,'0')}
+function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}
+function exportCsv(){var rows=[['วันที่','รูปแบบ','ห้อง/กลุ่ม','กิจกรรม','อุปกรณ์','เวลา(นาที)','คะแนน','จำนวนเตือน','ปัญหาหลัก']];FILTERED.sessions.forEach(function(r){rows.push([fmtDate(dateOf(r)),r.appMode==='classroom'?'ห้องเรียน':'ส่วนบุคคล',r.room||'',r.activity||'',r.device||'',(n(r.totalSeconds)/60).toFixed(1),r.score,r.alertCount,r.mainIssue||''])});var csv='\ufeff'+rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SmartFlex_dashboard_anonymous_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)}
+
+['fPeriod','fMode','fRoom','fActivity','fDevice'].forEach(function(id){$(id).addEventListener('change',applyFilters)});$('btnRefresh').addEventListener('click',loadData);$('btnExport').addEventListener('click',exportCsv);
+loadData();
+})();
+</script>
+</body>
+</html>
