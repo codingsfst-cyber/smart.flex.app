@@ -243,13 +243,14 @@ a:hover{color:var(--g900)}
       <button class="chip" data-angle="full" style="flex:0 0 auto">เต็มตัว</button>
     </div>
     <div class="card" id="angleInfo" style="display:flex;flex-direction:column;gap:10px"></div>
-    <div class="eyebrow">กิจกรรม · อุปกรณ์</div>
+    <div class="eyebrow">กิจกรรม</div>
     <div class="row" style="flex-wrap:wrap">
       <button class="chip" data-act="เรียน" style="flex:0 0 auto">เรียน</button>
       <button class="chip" data-act="ทำงาน" style="flex:0 0 auto">ทำงาน</button>
       <button class="chip" data-act="อ่านหนังสือ" style="flex:0 0 auto">อ่านหนังสือ</button>
       <button class="chip" data-act="เล่นเกม" style="flex:0 0 auto">เล่นเกม</button>
     </div>
+    <div class="eyebrow">ชนิดอุปกรณ์ตรวจ</div>
     <div class="row" style="flex-wrap:wrap">
       <button class="chip" data-dev="มือถือ" style="flex:0 0 auto">มือถือ</button>
       <button class="chip" data-dev="แท็บเล็ต" style="flex:0 0 auto">แท็บเล็ต</button>
@@ -1167,7 +1168,7 @@ $('voiceSelect').onchange=function(){
 /* ============================================================
    LIVE
    ============================================================ */
-var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,tickTimer=null;
+var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,bgLoopTimer=null,tickTimer=null;
 var AI_LIBS=[
   ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js',
    'https://unpkg.com/@tensorflow/tfjs@4.11.0/dist/tf.min.js'],
@@ -1304,10 +1305,17 @@ function stopStream(){
   if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
   vid.srcObject=null;
 }
+function backgroundMonitorEnabled(){
+  /* เปิดเฉพาะเมื่อผู้ใช้ระบุว่าใช้อุปกรณ์แบบคอม/โน้ตบุ๊ก
+     มือถือและแท็บเล็ตยังคงพัก AI เมื่อซ่อนหน้า เพื่อไม่กินแบตเตอรี่ */
+  return state.dev==='โน้ตบุ๊ก'||state.dev==='คอมตั้งโต๊ะ';
+}
 function videoFrameReady(){
   /* Safari/iPhone อาจรายงาน currentTime ก่อนเฟรมกล้องมีขนาดจริง
-     ห้ามส่งเฟรมดังกล่าวเข้า MediaPipe เพราะจะทำให้ ROI เป็น 0x0 และกราฟหยุดทำงาน */
-  return !!(vid.srcObject&&!document.hidden&&!vid.paused&&!vid.ended&&!vid.seeking&&
+     ห้ามส่งเฟรมดังกล่าวเข้า MediaPipe เพราะจะทำให้ ROI เป็น 0x0 และกราฟหยุดทำงาน
+     บนคอม/โน้ตบุ๊ก อนุญาตให้ลองอ่านเฟรมต่อเมื่อสลับไปแท็บอื่น */
+  var pageUsable=!document.hidden||backgroundMonitorEnabled();
+  return !!(vid.srcObject&&pageUsable&&!vid.paused&&!vid.ended&&!vid.seeking&&
     vid.readyState>=2&&Number.isFinite(vid.currentTime)&&
     Number.isFinite(vid.videoWidth)&&Number.isFinite(vid.videoHeight)&&
     vid.videoWidth>1&&vid.videoHeight>1);
@@ -1354,10 +1362,19 @@ vid.addEventListener('loadedmetadata',syncCanvasSize);
 vid.addEventListener('resize',syncCanvasSize);
 window.addEventListener('resize',refreshCameraView);
 window.addEventListener('orientationchange',refreshCameraView);
-document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshCameraView()});
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden)refreshCameraView();
+  /* requestAnimationFrame จะหยุดเมื่อแท็บถูกซ่อน จึงสลับ scheduler อัตโนมัติ
+     สำหรับคอม/โน้ตบุ๊ก และเริ่มวงรอบใหม่ทันทีเมื่อกลับมาที่ SmartFlex */
+  if(state.running){
+    cancelLoopSchedule();
+    state.lastFrameAt=performance.now();
+    scheduleLoop(state.loopToken);
+  }
+});
 function leaveLive(){
   state.running=false;state.calibrating=false;state.loopToken++;
-  if(rafId)cancelAnimationFrame(rafId);
+  cancelLoopSchedule();
   if(tickTimer)clearInterval(tickTimer);
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);
   state.calibrationTimer=null;state.startedAt=null;
@@ -1391,7 +1408,7 @@ async function startCamera(){
 $('btnFlip').onclick=function(){
   state.facing=state.facing==='user'?'environment':'user';
   var wasRunning=state.running;state.running=false;state.loopToken++;
-  if(rafId)cancelAnimationFrame(rafId);
+  cancelLoopSchedule();
   showOverlay('กำลังสลับกล้อง','รอสักครู่',true);
   startCamera().then(function(){
     hideOverlay();state.running=wasRunning;state.lastFrameAt=performance.now();if(wasRunning){state.loopToken++;loop(state.loopToken)}
@@ -1546,11 +1563,25 @@ async function recoverMediaPipe(err){
     state.recoveringDetector=false;
   }
 }
+function cancelLoopSchedule(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  if(bgLoopTimer){clearTimeout(bgLoopTimer);bgLoopTimer=null}
+}
+function scheduleLoop(token){
+  if(!state.running||token!==state.loopToken)return;
+  if(document.hidden&&backgroundMonitorEnabled()){
+    /* Background tabs ไม่มี requestAnimationFrame: ใช้ timer แบบประหยัดแทน
+       เบราว์เซอร์ยังมีสิทธิ์ลดความถี่ timer ตามนโยบายพลังงานของเครื่อง */
+    bgLoopTimer=setTimeout(function(){bgLoopTimer=null;loop(token)},350);
+  }else if(!document.hidden){
+    rafId=requestAnimationFrame(function(){rafId=null;loop(token)});
+  }
+}
 async function loop(token){
   if(!state.running||token!==state.loopToken)return;
   try{
     if(!videoFrameReady()||!syncCanvasSize()){
-      if(state.running&&token===state.loopToken)rafId=requestAnimationFrame(function(){loop(token)});
+      scheduleLoop(token);
       return;
     }
     var poses=await estimateCurrentPoses();
@@ -1570,7 +1601,7 @@ async function loop(token){
       return;
     }
   }
-  if(state.running&&token===state.loopToken)rafId=requestAnimationFrame(function(){loop(token)});
+  scheduleLoop(token);
 }
 var EDGES=[[5,7,'arm'],[7,9,'arm'],[6,8,'arm'],[8,10,'arm'],[5,6,'shoulder'],[5,11,'torso'],
   [6,12,'torso'],[11,12,'torso'],[11,13,'hip'],[13,15,'knee'],[12,14,'hip'],[14,16,'knee'],
@@ -1750,7 +1781,10 @@ function frameDelta(){
   var now=performance.now(),last=state.lastFrameAt||now;
   state.lastFrameAt=now;
   if(state.calibrating)return 0;
-  return Math.max(0,Math.min(.75,(now-last)/1000));
+  /* แท็บเบื้องหลังบนคอม/โน้ตบุ๊กมักถูกลด timer เหลือประมาณระดับวินาที
+     จึงยอมรับ delta กว้างขึ้นเล็กน้อย แต่ยัง cap ไว้ไม่ให้เฟรมเดียวแทนเวลาที่หายไปนานเกินจริง */
+  var cap=(document.hidden&&backgroundMonitorEnabled())?1.5:.75;
+  return Math.max(0,Math.min(cap,(now-last)/1000));
 }
 function addOverall(status,bads,seconds,complete){
   if(!seconds)return;
@@ -2044,7 +2078,7 @@ function endSession(){
   if(speechSupported())speechSynthesis.cancel();
   state.running=false;state.calibrating=false;state.loopToken++;
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);state.calibrationTimer=null;
-  if(rafId)cancelAnimationFrame(rafId);if(tickTimer)clearInterval(tickTimer);
+  cancelLoopSchedule();if(tickTimer)clearInterval(tickTimer);
   stopStream();
   $('live').classList.remove('on','classroom');$('tabs').classList.remove('hidden');
 
