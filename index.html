@@ -477,7 +477,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.10 — concise start speech and expanded Thai device-voice discovery
+   SmartFlex v4.11 — iPhone/Safari camera-frame guard and MediaPipe recovery
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -510,7 +510,7 @@ var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถ�
   running:false,calibrating:false,detector:null,detectorEngine:'',detectorMode:'',startedAt:null,
   total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
   lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null,
-  classTracks:[],classTracksReady:false,lastClassSpeech:0};
+  classTracks:[],classTracksReady:false,lastClassSpeech:0,recoveringDetector:false};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function asArray(v){return Array.isArray(v)?v:[]}
@@ -1234,9 +1234,32 @@ function stopStream(){
   if(vid.srcObject)vid.srcObject.getTracks().forEach(function(t){t.stop()});
   vid.srcObject=null;
 }
+function videoFrameReady(){
+  /* Safari/iPhone อาจรายงาน currentTime ก่อนเฟรมกล้องมีขนาดจริง
+     ห้ามส่งเฟรมดังกล่าวเข้า MediaPipe เพราะจะทำให้ ROI เป็น 0x0 และกราฟหยุดทำงาน */
+  return !!(vid.srcObject&&!document.hidden&&!vid.paused&&!vid.ended&&!vid.seeking&&
+    vid.readyState>=2&&Number.isFinite(vid.currentTime)&&
+    Number.isFinite(vid.videoWidth)&&Number.isFinite(vid.videoHeight)&&
+    vid.videoWidth>1&&vid.videoHeight>1);
+}
+function waitForVideoFrame(timeoutMs){
+  timeoutMs=timeoutMs||4000;
+  return new Promise(function(resolve,reject){
+    var started=performance.now();
+    function check(){
+      if(videoFrameReady()){syncCanvasSize();resolve();return}
+      if(performance.now()-started>=timeoutMs){
+        reject(new Error('กล้องยังไม่ส่งภาพ กรุณาปิดหน้าต่างอื่นที่ใช้กล้องแล้วลองใหม่'));
+        return;
+      }
+      setTimeout(check,40);
+    }
+    check();
+  });
+}
 function syncCanvasSize(){
   var w=vid.videoWidth||0,h=vid.videoHeight||0;
-  if(!w||!h)return false;
+  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=1||h<=1)return false;
   if(cv.width!==w)cv.width=w;
   if(cv.height!==h)cv.height=h;
   return true;
@@ -1250,7 +1273,9 @@ function refreshCameraView(){
       try{
         var playing=vid.play();
         if(playing&&playing.catch)playing.catch(function(){});
-        if(vid.requestVideoFrameCallback)vid.requestVideoFrameCallback(function(){syncCanvasSize()});
+        if(vid.requestVideoFrameCallback)vid.requestVideoFrameCallback(function(){
+          syncCanvasSize();state.mpVideoTime=-1;
+        });
       }catch(e){}
     }
   },220);
@@ -1286,7 +1311,9 @@ async function startCamera(){
   var stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoOptions});
   vid.muted=true;vid.playsInline=true;vid.srcObject=stream;
   await vid.play();
-  syncCanvasSize();setTimeout(syncCanvasSize,250);
+  await waitForVideoFrame(5000);
+  syncCanvasSize();state.mpVideoTime=-1;state.mpLastPoses=[];
+  setTimeout(syncCanvasSize,250);
   /* กล้องหน้าเท่านั้นที่ควรกลับด้านภาพ กล้องหลังกลับด้านแล้วจะสับสน */
   var mir=state.facing==='user';
   vid.classList.toggle('mirror',mir);cv.classList.toggle('mirror',mir);
@@ -1408,23 +1435,53 @@ function mediaPipeResultToPoses(result){
   });
 }
 async function estimateCurrentPoses(){
+  /* เฟรมวิดีโอยังไม่พร้อมเป็นสถานะชั่วคราว ไม่ใช่ AI error */
+  if(!videoFrameReady()||!syncCanvasSize())return state.mpLastPoses||[];
   if(state.detectorEngine!=='mediapipe'){
     /* ขอผลเท่าจำนวนที่กรอกจริง ลดคนแปลกปลอม/ภาพซ้ำและลดภาระเครื่อง */
     return state.detector.estimatePoses(vid,{maxPoses:state.mode==='classroom'?expectedClassCount():1});
   }
   /* ไม่ประมวลผลเฟรมกล้องเดิมซ้ำ ช่วยลดความร้อนและการใช้แบตเตอรี่บน iPad/มือถือ */
   if(vid.currentTime===state.mpVideoTime)return state.mpLastPoses||[];
-  state.mpVideoTime=vid.currentTime;
   var stamp=Math.max(performance.now(),(state.mpLastTimestamp||0)+.01);
-  state.mpLastTimestamp=stamp;
   var result=state.detector.detectForVideo(vid,stamp);
+  /* อัปเดตเวลาเฉพาะหลังประมวลผลสำเร็จ เพื่อไม่เก็บเฟรมเสียเป็นเฟรมล่าสุด */
+  state.mpVideoTime=vid.currentTime;
+  state.mpLastTimestamp=stamp;
   state.mpLastPoses=mediaPipeResultToPoses(result);
   return state.mpLastPoses;
+}
+function isMediaPipeGraphError(err){
+  var msg=String(err&&err.message||err||'');
+  return /ROI width and height|roi->width|Graph has errors|WaitUntilIdle|NormalizedRect|CalculatorGraph::Run/i.test(msg);
+}
+async function recoverMediaPipe(err){
+  if(state.recoveringDetector)return false;
+  state.recoveringDetector=true;
+  try{
+    showOverlay('กำลังกู้คืนระบบ AI','MediaPipe พบเฟรมกล้องที่ไม่สมบูรณ์ · กำลังสลับไปใช้ MoveNet เพื่อให้ตรวจต่อได้',true);
+    state.detectorFallback='MediaPipe หยุดจากเฟรมกล้องไม่สมบูรณ์ จึงสลับเป็น MoveNet สำรอง: '+
+      String(err&&err.message||err||'').slice(0,240);
+    await ensureMoveNetDetector('personal');
+    state.mpVideoTime=-1;state.mpLastTimestamp=0;state.mpLastPoses=[];
+    state.loopErrors=0;
+    $('liveMode').textContent='กำลังตรวจ · MoveNet สำรอง';
+    hideOverlay();
+    return true;
+  }catch(fallbackError){
+    showOverlay('กู้คืนระบบ AI ไม่สำเร็จ',(fallbackError&&fallbackError.message||'')+' · กดย้อนกลับแล้วเริ่มใหม่',true);
+    return false;
+  }finally{
+    state.recoveringDetector=false;
+  }
 }
 async function loop(token){
   if(!state.running||token!==state.loopToken)return;
   try{
-    syncCanvasSize();
+    if(!videoFrameReady()||!syncCanvasSize()){
+      if(state.running&&token===state.loopToken)rafId=requestAnimationFrame(function(){loop(token)});
+      return;
+    }
     var poses=await estimateCurrentPoses();
     if(!state.running||token!==state.loopToken)return;
     state.loopErrors=0;state.lastDetectionAt=Date.now();
@@ -1432,6 +1489,10 @@ async function loop(token){
     if(state.mode==='classroom')paintClass(poses);else paintPersonal(poses[0]);
   }catch(e){
     state.loopErrors++;
+    if(state.detectorEngine==='mediapipe'&&isMediaPipeGraphError(e)){
+      var recovered=await recoverMediaPipe(e);
+      if(!recovered){state.running=false;return}
+    }
     if(state.loopErrors>=30){
       state.running=false;
       showOverlay('ระบบ AI หยุดประมวลผล',(e&&e.message||'เกิดข้อผิดพลาดระหว่างตรวจท่า')+' · กดย้อนกลับแล้วเริ่มใหม่',true);
