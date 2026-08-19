@@ -409,7 +409,7 @@ a:hover{color:var(--g900)}
       <a href="https://doi.org/10.1016/j.apergo.2011.03.008" target="_blank" rel="noopener">doi:10.1016/j.apergo.2011.03.008</a><br>
       • ISO 11226:2000 — การประเมินท่าทางการทำงานแบบคงที่โดยพิจารณามุมร่างกายและระยะเวลา<br>
       <a href="https://www.iso.org/standard/25573.html" target="_blank" rel="noopener">ISO 11226:2000</a><br>
-      • ช่วงองศาที่ต้นแบบ SmartFlex ใช้: คอ 150–180°, หลัง ≤12°, ไหล่ ≤6°, ศีรษะ ≤8°, สะโพก 80–115°, เข่า 80–115° และแนวส้น–ปลายเท้าเอียงจากพื้นไม่เกิน 15° เป็นเกณฑ์ปฏิบัติการสำหรับ AI Pose Estimation (การวางเท้าใช้จุดส้นและปลายเท้าของ MediaPipe ในโหมดรายบุคคล) ไม่ใช่ค่าตัดวินิจฉัยโรค</div>
+      • ช่วงองศาที่ต้นแบบ SmartFlex ใช้: แนวคอ ≥150°, หลัง ≤12°, ไหล่ ≤6°, แนวศีรษะเบี่ยง ≤10°, สะโพก 80–115°, เข่า 80–115° และแนวส้น–ปลายเท้าเอียงจากพื้นไม่เกิน 15° เป็นเกณฑ์ปฏิบัติการสำหรับ AI Pose Estimation ไม่ใช่ค่าตัดวินิจฉัยโรค โดยมุมข้างใช้แนวใบหน้าเทียบลำตัวเพื่อตรวจก้ม–เงย ส่วนมุมตรงใช้แนวหูเทียบแนวไหล่เพื่อตรวจเอียงซ้าย–ขวา</div>
     </div>
   </div>
 </section>
@@ -477,7 +477,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.11 — iPhone/Safari camera-frame guard and MediaPipe recovery
+   SmartFlex v4.12 — แยกคอยื่นออกจากก้ม/เงยศีรษะและตรวจมุมกล้องก่อนให้คะแนน
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -510,7 +510,8 @@ var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถ�
   running:false,calibrating:false,detector:null,detectorEngine:'',detectorMode:'',startedAt:null,
   total:0,good:0,warn:0,bad:0,unknown:0,alerts:0,issues:{},badSince:0,lastAlert:0,
   lastFrameAt:0,lastDetectionAt:0,loopErrors:0,loopToken:0,calibrationTimer:null,
-  classTracks:[],classTracksReady:false,lastClassSpeech:0,recoveringDetector:false};
+  classTracks:[],classTracksReady:false,lastClassSpeech:0,recoveringDetector:false,
+  neckSide:'',neckSideVotes:{left:0,right:0},currentHeadMode:'lateral'};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function asArray(v){return Array.isArray(v)?v:[]}
@@ -717,6 +718,33 @@ function bodyAngle(a,b,c){
   var mag=Math.hypot(v1.x,v1.y,v1.z)*Math.hypot(v2.x,v2.y,v2.z);
   return mag?Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI:ang(a,b,c);
 }
+/* มุมระหว่างเส้นอิสระ 2 เส้น ใช้ world landmarks เมื่อมีครบ และย้อนกลับเป็น 2 มิติเมื่อไม่มี
+   ใช้แยก "ทิศใบหน้า" ออกจาก "ตำแหน่งศีรษะ" เพื่อไม่ให้ก้มหน้าถูกตีความเป็นคอยื่น */
+function vectorAngle(a,b,c,d){
+  var aw=worldPoint(a),bw=worldPoint(b),cw=worldPoint(c),dw=worldPoint(d),v1,v2;
+  if(aw&&bw&&cw&&dw){
+    v1={x:bw.x-aw.x,y:bw.y-aw.y,z:bw.z-aw.z};
+    v2={x:dw.x-cw.x,y:dw.y-cw.y,z:dw.z-cw.z};
+  }else{
+    if(!(a&&b&&c&&d))return null;
+    v1={x:b.x-a.x,y:b.y-a.y,z:0};v2={x:d.x-c.x,y:d.y-c.y,z:0};
+  }
+  var mag=Math.hypot(v1.x,v1.y,v1.z)*Math.hypot(v2.x,v2.y,v2.z);
+  if(!mag)return null;
+  var dot=v1.x*v2.x+v1.y*v2.y+v1.z*v2.z;
+  return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
+}
+/* ใบหน้าปกติควรเกือบตั้งฉากกับแนวลำตัว: 0° = ไม่ก้ม/ไม่เงย */
+function headPitchDeviation(ear,nose,shoulder,hip){
+  var a=vectorAngle(ear,nose,shoulder,hip);
+  return typeof a==='number'?Math.abs(90-a):null;
+}
+/* เปรียบเทียบแนวหูกับแนวไหล่แทนการเทียบขอบภาพ จึงไม่เตือนผิดเมื่อโทรศัพท์วางเอียง */
+function parallelDeviation2D(a,b,c,d){
+  if(!(a&&b&&c&&d))return null;
+  var x=Math.abs(Math.atan2(b.y-a.y,b.x-a.x)-Math.atan2(d.y-c.y,d.x-c.x))*180/Math.PI;
+  x=x%180;return x>90?180-x:x;
+}
 function torsoAngle(sh,hip){
   var sw=worldPoint(sh),hw=worldPoint(hip);
   if(!(sw&&hw))return Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI);
@@ -751,16 +779,17 @@ var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนไ�
 function sens(){return SENS[state.sens]||SENS.mid}
 
 var ANGLE_INFO={
-  auto:{name:'อัตโนมัติ',hint:'โหมดรายบุคคลใช้ MediaPipe 3 มิติและตรวจทั้ง 7 จุดเมื่อเห็นเต็มตัว ส่วนโหมดห้องเรียนจะเลือกเฉพาะจุด 2 มิติที่ MoveNet ตรวจได้จริงโดยอัตโนมัติ',on:['forwardHead','torsoLean','hipAngle','kneeAngle','footFlat','shoulderTilt','headTilt']},
-  side:{name:'มุมข้าง',hint:'วางกล้องด้านข้างลำตัว ระดับอก ห่าง 80–150 ซม. ให้เห็นตั้งแต่ศีรษะถึงปลายเท้า — ตรวจคอ หลัง สะโพก เข่า และการวางเท้า',on:['forwardHead','torsoLean','hipAngle','kneeAngle','footFlat']},
-  front:{name:'มุมตรง',hint:'วางกล้องตรงหน้า ระดับสายตา ให้เห็นไหล่ทั้งสองข้าง — ดีสำหรับความสมมาตรซ้าย–ขวา',on:['shoulderTilt','headTilt']},
-  full:{name:'เต็มตัว',hint:'ถอยกล้องออกเฉียงด้านข้างให้เห็นตั้งแต่ศีรษะถึงปลายเท้าทั้งสองข้าง — ตรวจครบทั้ง 7 จุด และจะไม่ยืนยันว่าท่าดีหากจุดใดหายจากเฟรม',on:['forwardHead','torsoLean','hipAngle','kneeAngle','footFlat','shoulderTilt','headTilt']}
+  auto:{name:'อัตโนมัติ',hint:'ระบบตรวจมุมกล้องก่อนทุกเฟรม แล้วเลือกเฉพาะจุดที่เชื่อถือได้: มุมข้างตรวจคอยื่นและก้ม–เงย ส่วนมุมตรงตรวจไหล่และศีรษะเอียงซ้าย–ขวา',on:['forwardHead','torsoLean','hipAngle','kneeAngle','footFlat','shoulderTilt','headTilt']},
+  side:{name:'มุมข้าง',hint:'วางกล้องด้านข้างลำตัว ระดับอก ห่าง 80–150 ซม. ให้เห็นใบหน้าและเต็มตัว — ตรวจคอยื่น ก้ม–เงย ลำตัว สะโพก เข่า และการวางเท้า',on:['forwardHead','headTilt','torsoLean','hipAngle','kneeAngle','footFlat']},
+  front:{name:'มุมตรง',hint:'วางกล้องตรงหน้า ระดับสายตา ให้เห็นหูและไหล่ทั้งสองข้าง — ตรวจความสมมาตรซ้าย–ขวาโดยหักความเอียงของกล้องออก',on:['shoulderTilt','headTilt']},
+  full:{name:'เต็มตัว',hint:'ถอยกล้องออกและวางเฉียงด้านข้างให้เห็นตั้งแต่ศีรษะถึงปลายเท้าทั้งสองข้าง — ตรวจครบ 7 จุด และจะขอให้ปรับมุมกล้องหากยังเป็นมุมตรงหรือมุมข้างเกินไป',on:['forwardHead','torsoLean','hipAngle','kneeAngle','footFlat','shoulderTilt','headTilt']}
 };
 var METRIC_NAMES={forwardHead:'คอ',torsoLean:'หลัง',hipAngle:'สะโพก',kneeAngle:'เข่า',
   footFlat:'การวางเท้า',shoulderTilt:'ไหล่',headTilt:'ศีรษะ'};
 function frameInstruction(){
   if(state.angle==='front')return 'ให้เห็นศีรษะ หู และไหล่ทั้งสองข้างครบ';
-  return 'ให้เห็นตั้งแต่ศีรษะ สะโพก เข่า ส้นเท้า จนถึงปลายเท้า';
+  if(state.angle==='full')return 'วางกล้องเฉียงด้านข้าง ให้เห็นใบหน้า ไหล่ และเต็มตัวครบ';
+  return 'ให้เห็นจมูก หู ไหล่ สะโพก เข่า ส้นเท้า และปลายเท้า';
 }
 function plannedModelName(mode){
   mode=mode||state.mode;
@@ -777,7 +806,7 @@ function inspectionPlanText(model,stage,mode){
   mode=mode||state.mode;
   var A=ANGLE_INFO[state.angle]||ANGLE_INFO.auto;
   var form=mode==='classroom'?('แบบกลุ่ม '+expectedClassCount()+' คน'):'รายบุคคล 1 คน';
-  var keys=plannedMetricKeys(mode,model),prefix=state.angle==='auto'&&mode==='classroom'?'ตรวจตามมุมที่เห็น: ':'รายการตรวจ: ';
+  var keys=plannedMetricKeys(mode,model),prefix=state.angle==='auto'?'รายการที่เลือกตรวจตามมุม: ':'รายการตรวจ: ';
   var lines=['โมเดล: '+model,'รูปแบบ: '+form+' · '+A.name,prefix+keys.map(function(k){return METRIC_NAMES[k]}).join(' · ')];
   if(mode==='classroom')lines.push('การวางเท้าแบบส้น–ปลายเท้าใช้ได้ในโหมดรายบุคคล');
   if(stage)lines.push(stage);
@@ -799,41 +828,71 @@ function detectCameraView(kp){
   if((sl||sr)&&(hl||hr))return 'side';
   return 'unknown';
 }
+function packSide(kp,side){
+  var ids=side==='left'?[K.leftEar,K.leftShoulder,K.leftHip,K.leftKnee,K.leftAnkle,K.leftHeel,K.leftFoot]
+    :[K.rightEar,K.rightShoulder,K.rightHip,K.rightKnee,K.rightAnkle,K.rightHeel,K.rightFoot];
+  var pts=ids.map(function(i){return pick(kp,i)});
+  return {ear:pts[0],shoulder:pts[1],hip:pts[2],knee:pts[3],ankle:pts[4],
+    heel:pts[5],foot:pts[6],score:pts.reduce(function(s,p){return s+(p?(p.score||0):0)},0),side:side};
+}
 function sidePoints(kp){
-  function pack(side){
-    var ids=side==='left'?[K.leftEar,K.leftShoulder,K.leftHip,K.leftKnee,K.leftAnkle,K.leftHeel,K.leftFoot]
-      :[K.rightEar,K.rightShoulder,K.rightHip,K.rightKnee,K.rightAnkle,K.rightHeel,K.rightFoot];
-    var pts=ids.map(function(i){return pick(kp,i)});
-    var score=pts.reduce(function(s,p){return s+(p?(p.score||0):0)},0);
-    return {ear:pts[0],shoulder:pts[1],hip:pts[2],knee:pts[3],ankle:pts[4],
-      heel:pts[5],foot:pts[6],score:score,side:side};
+  var l=packSide(kp,'left'),r=packSide(kp,'right');return l.score>=r.score?l:r;
+}
+/* งานคอเลือกข้างจากหู–ไหล่–สะโพกเท่านั้น ไม่ให้คะแนนขาหรือเท้ามาชี้ว่าควรใช้หูข้างใด
+   โหมดรายบุคคลลงคะแนนหลายเฟรมแล้วล็อกข้าง เพื่อลดค่ากระโดดจากการสลับซ้าย–ขวา */
+function neckSidePoints(kp,track){
+  function neckScore(p){return [p.ear,p.shoulder,p.hip].reduce(function(s,x){return s+(x?(x.score||0):0)},0)}
+  var l=packSide(kp,'left'),r=packSide(kp,'right'),chosen;
+  l.neckScore=neckScore(l);r.neckScore=neckScore(r);
+  if(state.mode==='personal'&&state.neckSide){
+    chosen=state.neckSide==='left'?l:r;
+    if(chosen.ear&&chosen.shoulder&&chosen.hip)return chosen;
   }
-  var l=pack('left'),r=pack('right');return l.score>=r.score?l:r;
+  chosen=l.neckScore>=r.neckScore?l:r;
+  if(track&&state.mode==='personal'&&chosen.ear&&chosen.shoulder&&chosen.hip){
+    state.neckSideVotes=state.neckSideVotes||{left:0,right:0};
+    state.neckSideVotes[chosen.side]=(state.neckSideVotes[chosen.side]||0)+1;
+    var total=(state.neckSideVotes.left||0)+(state.neckSideVotes.right||0);
+    if(total>=12)state.neckSide=state.neckSideVotes.left>=state.neckSideVotes.right?'left':'right';
+  }
+  return chosen;
 }
 function scored(view){
-  if(state.angle!=='auto')return (ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on.filter(function(k){
-    return state.detectorEngine==='mediapipe'||k!=='footFlat';
-  });
-  if(state.detectorEngine==='mediapipe')return ANGLE_INFO.full.on;
-  if(view==='front')return ANGLE_INFO.front.on;
-  /* MoveNet มีข้อเท้าแต่ไม่มีส้นและปลายเท้า จึงไม่อ้างว่าวัดฝ่าเท้าราบได้ */
-  if(view==='side'||view==='oblique')return ANGLE_INFO.side.on.filter(function(k){return k!=='footFlat'});
+  function available(keys){return keys.filter(function(k){return state.detectorEngine==='mediapipe'||k!=='footFlat'})}
+  if(state.angle==='front')return view==='front'?available(ANGLE_INFO.front.on):[];
+  if(state.angle==='side')return (view==='side'||view==='oblique')?available(ANGLE_INFO.side.on):[];
+  if(state.angle==='full')return view==='oblique'?available(ANGLE_INFO.full.on):[];
+  if(view==='front')return available(ANGLE_INFO.front.on);
+  if(view==='side'||view==='oblique')return available(ANGLE_INFO.side.on);
   return [];
+}
+function cameraReason(view){
+  if(state.angle==='front'&&view!=='front')return 'turnFront';
+  if(state.angle==='side'&&view!=='side'&&view!=='oblique')return 'turnSide';
+  if(state.angle==='full'&&view!=='oblique')return 'turnOblique';
+  return '';
 }
 
 /* เกณฑ์กลาง: ช่วงเตือน และช่วงรุนแรง (องศา)
    ความไวต่ำ/กลาง/สูงจะขยายหรือบีบช่วงเตือนด้วย sens().tol */
 var POSTURE_RULES={
-  forwardHead:{center:165,tol:15,severe:30,label:'คอยื่น',flag:'neck'},
+  /* คอยื่นเป็นเกณฑ์ด้านเดียว: มุมยิ่งใกล้ 180° ยิ่งตรง ห้ามบีบขอบบนในโหมดความไวสูง */
+  forwardHead:{min:150,severeMin:135,sensitivitySpan:20,label:'คอยื่น',flag:'neck'},
   torsoLean:{center:0,tol:12,severe:22,label:'หลังค่อม',flag:'torso'},
   hipAngle:{center:97.5,tol:17.5,severe:32.5,label:'มุมสะโพก',flag:'hip'},
   kneeAngle:{center:97.5,tol:17.5,severe:32.5,label:'มุมเข่า',flag:'knee'},
   footFlat:{center:0,tol:15,severe:30,label:'เท้าไม่วางราบ',flag:'foot'},
   shoulderTilt:{center:0,tol:6,severe:12,label:'ไหล่เอียง',flag:'shoulder'},
-  headTilt:{center:0,tol:8,severe:15,label:'ศีรษะเอียง',flag:'neck'}
+  headTilt:{center:0,tol:10,severe:20,label:'แนวศีรษะไม่เหมาะสม',flag:'neck'}
 };
 function metricLevel(key,value,tolScale){
   var R=POSTURE_RULES[key];if(!R||typeof value!=='number')return 0;
+  if(typeof R.min==='number'){
+    var shift=(1-tolScale)*(R.sensitivitySpan||0);
+    var min=R.min+shift,severeMin=R.severeMin+shift;
+    if(value>=min)return 0;
+    return value<severeMin?2:1;
+  }
   var delta=Math.abs(value-R.center);
   if(delta<=R.tol*tolScale)return 0;
   return delta>R.severe*tolScale?2:1;
@@ -846,15 +905,17 @@ function metricLevel(key,value,tolScale){
 function analyse(kp){
   var view=detectCameraView(kp),on=scored(view),t=sens().tol;
   var use=function(k){return on.indexOf(k)>-1};
-  var side=sidePoints(kp),ear=side.ear,sh=side.shoulder,hip=side.hip,knee=side.knee,ankle=side.ankle;
+  var side=sidePoints(kp),neckSide=neckSidePoints(kp,view==='side'||view==='oblique');
+  var ear=neckSide.ear,sh=neckSide.shoulder,hip=neckSide.hip;
+  var legHip=side.hip,knee=side.knee,ankle=side.ankle,nose=pick(kp,K.nose);
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
   var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar);
-  var m={},bad=[],severe=[],flags={},checked=[];
+  var m={},bad=[],severe=[],flags={},checked=[],headMode=view==='front'?'lateral':'pitch';
 
-  function check(key){
+  function check(key,override){
     if(!use(key)||typeof m[key]!=='number')return;
     checked.push(key);
-    var level=metricLevel(key,m[key],t),R=POSTURE_RULES[key];
+    var level=metricLevel(key,m[key],t),R=override||POSTURE_RULES[key];
     if(level){bad.push(R.label);flags[R.flag]=1;if(level===2)severe.push(R.label)}
   }
 
@@ -862,12 +923,24 @@ function analyse(kp){
     m.forwardHead=Math.round(smoothMetric('forwardHead',bodyAngle(ear,sh,hip)));
     check('forwardHead');
   }
-  if(sh&&hip&&knee){
-    m.hipAngle=Math.round(smoothMetric('hipAngle',bodyAngle(sh,hip,knee)));
+  /* จุดศีรษะยังคงเป็น 1 ใน 7 หมวด แต่เลือกสูตรตามมุมที่เห็น
+     - มุมข้าง/เฉียง: ก้ม–เงยจากแนวหู→จมูกเทียบแนวไหล่→สะโพก
+     - มุมตรง: เอียงซ้าย–ขวาจากแนวหูเทียบแนวไหล่ */
+  if(use('headTilt')&&view==='front'&&el&&er&&sl&&sr){
+    m.headTilt=Math.round(smoothMetric('headTilt',parallelDeviation2D(el,er,sl,sr)));
+    headMode='lateral';check('headTilt',{label:'ศีรษะเอียง',flag:'neck'});
+  }else if(use('headTilt')&&(view==='side'||view==='oblique')&&ear&&nose&&sh&&hip){
+    var pitch=headPitchDeviation(ear,nose,sh,hip);
+    if(typeof pitch==='number')m.headTilt=Math.round(smoothMetric('headTilt',pitch));
+    headMode='pitch';check('headTilt',{label:'ก้ม/เงยศีรษะ',flag:'neck'});
+  }
+  m.headMode=headMode;state.currentHeadMode=headMode;
+  if(side.shoulder&&legHip&&knee){
+    m.hipAngle=Math.round(smoothMetric('hipAngle',bodyAngle(side.shoulder,legHip,knee)));
     check('hipAngle');
   }
-  if(hip&&knee&&ankle){
-    m.kneeAngle=Math.round(smoothMetric('kneeAngle',bodyAngle(hip,knee,ankle)));
+  if(legHip&&knee&&ankle){
+    m.kneeAngle=Math.round(smoothMetric('kneeAngle',bodyAngle(legHip,knee,ankle)));
     check('kneeAngle');
   }
   if(side.heel&&side.foot){
@@ -878,10 +951,6 @@ function analyse(kp){
     m.shoulderTilt=Math.round(smoothMetric('shoulderTilt',tilt(sl,sr)));
     check('shoulderTilt');
   }
-  if(el&&er){
-    m.headTilt=Math.round(smoothMetric('headTilt',tilt(el,er)));
-    check('headTilt');
-  }
   if(sh&&hip){
     m.torsoLean=Math.round(smoothMetric('torsoLean',torsoAngle(sh,hip)));
     check('torsoLean');
@@ -889,15 +958,14 @@ function analyse(kp){
   var missing=on.filter(function(k){return checked.indexOf(k)<0});
   /* ตัวเลือกที่ผู้ใช้เลือกต้องตรวจครบตามที่หน้าตั้งค่าระบุ
      หากตรวจพบปัญหาบางจุดยังเตือนทันที แต่จะไม่ยืนยันว่า “ท่าดี” จนกว่าจะเห็นครบ */
-  var reason=missing.length?'insufficient':'';
-  /* มุมตรงวัดความลึกไม่ได้ จึงห้ามยืนยันว่า “ท่าดี” ในโหมดอัตโนมัติ */
-  if(state.angle==='auto'&&state.detectorEngine!=='mediapipe'&&view==='front'&&!bad.length)reason='turnSide';
+  var reason=cameraReason(view)||(missing.length?'insufficient':'');
   var status=bad.length?(severe.length||bad.length>1?'bad':'warn'):(reason?'unknown':'good');
   return {metrics:m,bad:bad,severe:severe,flags:flags,checked:checked,used:on,
-    missing:missing,view:view,side:side.side,reason:reason,status:status};
+    missing:missing,view:view,side:side.side,neckSide:neckSide.side,headMode:headMode,reason:reason,status:status};
 }
 var COACH={
   'คอยื่น':['ยกหน้าจอขึ้น','Raise your screen','คอยื่นไปข้างหน้า ยกจอขึ้นและเก็บคางเข้า'],
+  'ก้ม/เงยศีรษะ':['ปรับระดับศีรษะ','Level your gaze','ก้มหรือเงยศีรษะมากเกินไป ปรับสายตาให้มองตรง'],
   'หลังค่อม':['ยืดหลังให้ตรง','Sit tall','หลังค่อม ยืดหลังขึ้นให้ตรง'],
   'ไหล่เอียง':['ปรับไหล่ให้เท่ากัน','Level your shoulders','ไหล่เอียง ปรับไหล่สองข้างให้เท่ากัน'],
   'ศีรษะเอียง':['ตั้งศีรษะให้ตรง','Straighten your head','ศีรษะเอียง ตั้งหัวให้ตรง'],
@@ -907,6 +975,7 @@ var COACH={
 };
 var ADVICE={
   'คอยื่น':'ยกจอขึ้นให้ขอบบนอยู่ระดับสายตา เก็บคางเข้า และเลื่อนเก้าอี้เข้าใกล้โต๊ะ',
+  'ก้ม/เงยศีรษะ':'ปรับจอให้อยู่ระดับสายตา มองตรง และหลีกเลี่ยงการก้มค้างหรือเงยค้างเป็นเวลานาน',
   'หลังค่อม':'ดันสะโพกเข้าในสุด ให้พนักพิงรองรับหลังส่วนล่าง ยืดอกขึ้น',
   'ไหล่เอียง':'ลดที่เท้าแขนข้างที่สูงกว่า วางแขนสองข้างบนโต๊ะให้สมดุล',
   'ศีรษะเอียง':'ตั้งหัวตรง เลี่ยงเอียงคอคุยโทรศัพท์ ใช้หูฟังแทน',
@@ -917,6 +986,7 @@ var ADVICE={
 /* ข้อความสั้นสำหรับหน้าตรวจและเสียงพูด ต้องสั้นพอให้ผู้ใช้แก้ตามได้ทัน */
 var VOICE_ADVICE={
   'คอยื่น':'เก็บคางเข้าและยกหน้าจอขึ้นค่ะ',
+  'ก้ม/เงยศีรษะ':'ปรับศีรษะให้มองตรง ไม่ก้มหรือเงยมากเกินไปค่ะ',
   'หลังค่อม':'ยืดหลังและนั่งชิดพนักพิงค่ะ',
   'ไหล่เอียง':'ปรับไหล่ทั้งสองข้างให้เท่ากันค่ะ',
   'ศีรษะเอียง':'ตั้งศีรษะให้ตรงค่ะ',
@@ -924,8 +994,8 @@ var VOICE_ADVICE={
   'มุมเข่า':'ปรับเข่าให้งอใกล้เก้าสิบองศาค่ะ',
   'เท้าไม่วางราบ':'วางเท้าทั้งสองข้างราบเต็มพื้นค่ะ'
 };
-var ISSUE_PRIORITY={'หลังค่อม':1,'คอยื่น':2,'มุมสะโพก':3,'มุมเข่า':4,
-  'เท้าไม่วางราบ':5,'ไหล่เอียง':6,'ศีรษะเอียง':7};
+var ISSUE_PRIORITY={'หลังค่อม':1,'คอยื่น':2,'ก้ม/เงยศีรษะ':3,'มุมสะโพก':4,'มุมเข่า':5,
+  'เท้าไม่วางราบ':6,'ไหล่เอียง':7,'ศีรษะเอียง':8};
 function orderedIssues(list){
   var seen={};return (list||[]).filter(function(x){if(seen[x])return false;seen[x]=1;return true})
     .sort(function(a,b){return (ISSUE_PRIORITY[a]||99)-(ISSUE_PRIORITY[b]||99)});
@@ -1385,6 +1455,7 @@ function beginSession(){
   state.detectedView='unknown';state.activeMetrics=[];
   state.expectedMetrics=state.angle==='auto'?[]:(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).on.slice();
   state.metricEMA={};
+  state.neckSide='';state.neckSideVotes={left:0,right:0};state.currentHeadMode='lateral';
   state.classTracks=[];state.classTracksReady=false;state.lastClassSpeech=0;
   state.lastFrameAt=performance.now();state.lastDetectionAt=Date.now();state.loopErrors=0;
   state.nextSampleAt=5;state.warningKey='';state.lastBadSeen=0;
@@ -1400,7 +1471,7 @@ function tick(){
     var lm=state.lastMetrics;
     state.samples.push({t:s,forwardHead:lm.forwardHead,torsoLean:lm.torsoLean,
       shoulderTilt:lm.shoulderTilt,headTilt:lm.headTilt,hipAngle:lm.hipAngle,
-      kneeAngle:lm.kneeAngle,footFlat:lm.footFlat});
+      headMode:lm.headMode||state.currentHeadMode,kneeAngle:lm.kneeAngle,footFlat:lm.footFlat});
     if(state.samples.length>SAMPLE_MAX)state.samples.shift();
     while(state.nextSampleAt<=s)state.nextSampleAt+=5;
   }
@@ -1622,7 +1693,8 @@ function drawAngleTag(point,label,value,key,opts){
   if(opts.used)opts.used.push(box);return box;
 }
 function drawAngleLabels(kp,r){
-  var checked=r.checked||[],m=r.metrics||{},side=sidePoints(kp),info=angleViewInfo(),used=[];
+  var checked=r.checked||[],m=r.metrics||{},side=sidePoints(kp);
+  var neckSide=packSide(kp,r.neckSide||side.side),info=angleViewInfo(),used=[];
   var sl=pick(kp,K.leftShoulder),sr=pick(kp,K.rightShoulder);
   var el=pick(kp,K.leftEar),er=pick(kp,K.rightEar),face=angleFaceRegion(kp,info);
   var avoid=face?[face]:[];
@@ -1630,9 +1702,13 @@ function drawAngleLabels(kp,r){
   function has(k){return checked.indexOf(k)>-1}
   function options(directions,region,dy){return {info:info,used:used,avoid:avoid,directions:directions,region:region,dy:dy||0}}
   /* ศีรษะวางก่อนและบังคับให้อยู่นอกกรอบใบหน้า จึงไม่บังตา จมูก หรือปาก */
-  if(has('headTilt'))drawAngleTag(midPoint(el,er),'ศีรษะ',m.headTilt,'headTilt',options(['right','left','above','below'],face));
+  if(has('headTilt')){
+    var headAnchor=r.headMode==='pitch'?midPoint(neckSide.ear,pick(kp,K.nose)):midPoint(el,er);
+    var headLabel=r.headMode==='pitch'?'ก้ม/เงย':'ศีรษะ';
+    drawAngleTag(headAnchor,headLabel,m.headTilt,'headTilt',options(['right','left','above','below'],face));
+  }
   if(has('shoulderTilt'))drawAngleTag(midPoint(sl,sr),'ไหล่',m.shoulderTilt,'shoulderTilt',options(['right','left','below','above'],null,12/info.scale));
-  if(has('forwardHead'))drawAngleTag(side.shoulder,'คอ',m.forwardHead,'forwardHead',options(['right','left','below','above'],null,-8/info.scale));
+  if(has('forwardHead'))drawAngleTag(neckSide.shoulder,'คอ',m.forwardHead,'forwardHead',options(['right','left','below','above'],null,-8/info.scale));
   if(has('torsoLean'))drawAngleTag(midPoint(side.shoulder,side.hip),'หลัง',m.torsoLean,'torsoLean',options(['left','right','above','below']));
   if(has('hipAngle'))drawAngleTag(side.hip,'สะโพก',m.hipAngle,'hipAngle',options(['right','left','above','below'],null,8/info.scale));
   if(has('kneeAngle'))drawAngleTag(side.knee,'เข่า',m.kneeAngle,'kneeAngle',options(['right','left','above','below'],null,8/info.scale));
@@ -1739,14 +1815,16 @@ function paintPersonal(pose){
       if(state.worst.length>40)state.worst.shift();
     }
     state.lastStatus=r.status;
-    addOverall(r.status,r.bad,dt,!r.missing.length);
+    addOverall(r.status,r.bad,dt,!r.missing.length&&!r.reason);
     handleWarning(r.status,r.bad,'');
   }
   var issues=orderedIssues(r.bad),main=issues[0],missing=(r.missing||[]).map(function(k){return METRIC_NAMES[k]});
   var missingText=missing.slice(0,2).join(' / ')+(missing.length>2?' +'+(missing.length-2)+' จุด':'');
   var c;
   if(state.calibrating)c=['กำลังจัดตำแหน่งกล้อง','ยังไม่คิดคะแนน',frameInstruction()];
-  else if(r.reason==='turnSide')c=['กรุณาหันด้านข้าง','เพื่อวัดคอและหลัง','หันไหล่ด้านหนึ่งเข้าหากล้อง'];
+  else if(r.reason==='turnSide')c=['กรุณาหันด้านข้าง','เพื่อวัดคอยื่นและก้ม–เงย','หันไหล่ด้านหนึ่งเข้าหากล้อง'];
+  else if(r.reason==='turnFront')c=['กรุณาหันตรงเข้ากล้อง','เพื่อวัดไหล่และศีรษะเอียง','ให้เห็นหูและไหล่ทั้งสองข้าง'];
+  else if(r.reason==='turnOblique')c=['กรุณาวางกล้องเฉียงด้านข้าง','เพื่อให้ตรวจครบทั้ง 7 จุด','ให้เห็นใบหน้า ไหล่ และเต็มตัว'];
   else if(main)c=[issues.length===1?'ควรปรับ: '+main:'พบ '+issues.length+' รายการที่ต้องปรับ',
     issues.length===1?'ตรวจพบ 1 รายการ':'ควรปรับก่อน: '+main,
     main+': '+(VOICE_ADVICE[main]||'ปรับท่าให้อยู่ในช่วงที่เหมาะสม')];
@@ -1761,7 +1839,7 @@ function paintPersonal(pose){
 
   var m=r.metrics,on=r.used||[],checked=r.checked||[];
   var cells=[['forwardHead','คอ'],['torsoLean','หลัง'],['shoulderTilt','ไหล่'],
-    ['headTilt','ศีรษะ'],['hipAngle','สะโพก'],['kneeAngle','เข่า'],['footFlat','เท้า']];
+    ['headTilt',r.headMode==='pitch'?'ก้ม/เงย':'ศีรษะ'],['hipAngle','สะโพก'],['kneeAngle','เข่า'],['footFlat','เท้า']];
   $('metrics').innerHTML=cells.map(function(x){
     var v=m[x[0]],used=on.indexOf(x[0])>-1,measured=checked.indexOf(x[0])>-1;
     var cls='met'+(used&&measured&&overLimit(x[0],v)?' over':'');
@@ -1893,7 +1971,7 @@ function paintClass(poses){
     });
     var ordered=orderedIssues(r.bad);
     if((r.status==='bad'||r.status==='warn')&&ordered.length)wrongPeople.push({name:who,issue:ordered[0],count:ordered.length});
-    addOverall(r.status,r.bad,dt,!r.missing.length);
+    addOverall(r.status,r.bad,dt,!r.missing.length&&!r.reason);
     if(r.status!=='good')cards.push('<div class="person" style="border-color:'+TONE[r.status]+'"><b>'+esc(who)+'</b><span>'+esc(
       ordered.length?(ordered[0]+(ordered.length>1?' +'+(ordered.length-1):'')):'มองไม่ชัด')+'</span></div>');
   }
@@ -2095,13 +2173,13 @@ function scoredLabel(angleKey,usedMetrics){
    หน้าตั้งค่า · ตัวเลือกต่าง ๆ
    ============================================================ */
 var MEASURES=[
-  ['forwardHead','คอยื่น','มุม หู–ไหล่–สะโพก ควรอยู่ 150–180°'],
+  ['forwardHead','คอยื่น','มุมแนว หู–ไหล่–สะโพก ควรไม่น้อยกว่า 150° (180° ยังเป็นท่าตรง)'],
   ['torsoLean','หลังค่อม','องศาเอนของลำตัวจากแนวตั้ง ไม่เกิน 12°'],
   ['hipAngle','มุมสะโพก','มุม ไหล่–สะโพก–เข่า ควรอยู่ 80–115°'],
   ['kneeAngle','มุมเข่า','มุม สะโพก–เข่า–ข้อเท้า ควรอยู่ 80–115°'],
   ['footFlat','การวางเท้า','แนวส้น–ปลายเท้าควรใกล้ขนานพื้น ไม่เกิน 15°'],
   ['shoulderTilt','ไหล่เอียง','ความเอียงของแนวไหล่สองข้าง ไม่เกิน 6°'],
-  ['headTilt','ศีรษะเอียง','ความเอียงของแนวหูสองข้าง ไม่เกิน 8°']
+  ['headTilt','แนวศีรษะ','มุมข้างตรวจก้ม–เงยจากแนวใบหน้าเทียบลำตัว; มุมตรงตรวจเอียงจากแนวหูเทียบแนวไหล่ ไม่เกิน 10°']
 ];
 function renderAngleInfo(){
   var A=ANGLE_INFO[state.angle]||ANGLE_INFO.auto;
@@ -2123,7 +2201,7 @@ function renderAngleInfo(){
 }
 function renderSensInfo(){
   var s=sens();
-  $('sensInfo').textContent=s.label+' · ช่วงที่ยอมรับคูณ '+s.tol+' เท่า และเวลาที่ทนก่อนเตือนคูณ '+s.hold+' เท่า';
+  $('sensInfo').textContent=s.label+' · ระบบปรับช่วงที่ยอมรับตามความไว โดยคอยื่นปรับเฉพาะขอบล่างและยอมรับ 180° เสมอ · เวลารอก่อนเตือนคูณ '+s.hold+' เท่า';
 }
 function durationMin(){var v=Number(store.get('sf.minutes',25));return isNaN(v)||v<0?25:Math.round(v)}
 function paintMinutes(){
@@ -2195,21 +2273,25 @@ function findSession(id){
   return asArray(store.get(LS.hist,[])).filter(function(r){return r.sessionId===id})[0];
 }
 var DETAIL_ROWS=[
-  {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'มุมหู–ไหล่–สะโพก',ok:'150–180°',limit:{center:165,tol:15},fix:'ยกจอให้สูงระดับสายตา เก็บคางเข้า'},
+  {key:'forwardHead',th:'คอยื่นไปข้างหน้า',en:'Forward head',how:'มุมแนวหู–ไหล่–สะโพกจากมุมข้าง/เฉียง',ok:'ไม่น้อยกว่า 150°',limit:{min:150},fix:'ยกจอให้สูงระดับสายตา เก็บคางเข้า'},
   {key:'torsoLean',th:'หลังค่อม / เอนตัว',en:'Slouch',how:'มุมเอียงของแนวไหล่–สะโพกเทียบเส้นดิ่ง',ok:'ไม่เกิน 12°',limit:{center:0,tol:12},fix:'ดันสะโพกชิดพนักพิง ยืดอกขึ้น'},
   {key:'shoulderTilt',th:'ไหล่สองข้างไม่เท่า',en:'Shoulder tilt',how:'มุมเอียงเส้นไหล่ซ้าย–ขวา',ok:'ไม่เกิน 6°',limit:{center:0,tol:6},fix:'ลดที่เท้าแขนข้างที่สูงกว่า'},
-  {key:'headTilt',th:'ศีรษะเอียง',en:'Head tilt',how:'มุมเอียงเส้นหูซ้าย–ขวา',ok:'ไม่เกิน 8°',limit:{center:0,tol:8},fix:'ตั้งหัวตรง เลี่ยงเอียงคอคุยโทรศัพท์'},
+  {key:'headTilt',th:'แนวศีรษะ',en:'Head alignment',how:'มุมข้าง: แนวหู–จมูกเทียบลำตัว / มุมตรง: แนวหูเทียบแนวไหล่',ok:'เบี่ยงไม่เกิน 10°',limit:{center:0,tol:10},fix:'ปรับสายตาให้มองตรง ไม่ก้ม เงย หรือเอียงศีรษะค้าง'},
   {key:'hipAngle',th:'มุมสะโพก',en:'Hip angle',how:'มุมไหล่–สะโพก–เข่า',ok:'80–115°',limit:{center:97.5,tol:17.5},fix:'ปรับความสูงเก้าอี้ให้สะโพกสูงกว่าเข่าเล็กน้อย'},
   {key:'kneeAngle',th:'มุมเข่า',en:'Knee angle',how:'มุมสะโพก–เข่า–ข้อเท้า',ok:'80–115°',limit:{center:97.5,tol:17.5},fix:'ปรับความสูงหรือระยะเก้าอี้ให้เข่างอใกล้ 90°'},
   {key:'footFlat',th:'การวางเท้า',en:'Foot support',how:'ความเอียงแนวส้น–ปลายเท้าเทียบพื้น',ok:'ไม่เกิน 15°',limit:{center:0,tol:15},fix:'วางฝ่าเท้าทั้งสองข้างราบเต็มพื้น หรือใช้ที่พักเท้าหากเท้าไม่ถึงพื้น'}
 ];
+function detailOver(v,limit){
+  if(limit&&typeof limit.min==='number')return v<limit.min;
+  return Math.abs(v-limit.center)>limit.tol;
+}
 function detailStat(samples,row){
   var vals=samples.map(function(p){return p[row.key]}).filter(function(v){return typeof v==='number'});
   if(!vals.length)return null;
   var sum=0,over=0,min=vals[0],max=vals[0];
   vals.forEach(function(v){
     sum+=v;if(v<min)min=v;if(v>max)max=v;
-    if(Math.abs(v-row.limit.center)>row.limit.tol)over++;
+    if(detailOver(v,row.limit))over++;
   });
   return {avg:Math.round(sum/vals.length),min:min,max:max,overPct:Math.round(100*over/vals.length),n:vals.length};
 }
@@ -2225,7 +2307,7 @@ function detailCard(samples,row){
       if(typeof v!=='number')return '<div style="flex:1"></div>';
       var span=Math.max(1,st.max-st.min);
       var h=6+Math.round(28*(v-st.min)/span);
-      var bad=Math.abs(v-row.limit.center)>row.limit.tol;
+      var bad=detailOver(v,row.limit);
       return '<div style="flex:1;height:'+h+'px;border-radius:2px;background:'+(bad?'var(--bad)':'var(--good)')+'"></div>';
     }).join('')+'</div>';
   var nums='<div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">'+
@@ -2296,7 +2378,7 @@ function openDetail(id){
   goto('detail');
 }
 var GUIDE=[
-  ['สายตาระดับขอบบนจอ','ขอบบนของจอควรอยู่ระดับสายตาหรือต่ำกว่าเล็กน้อย ห่างประมาณหนึ่งช่วงแขน ช่วยลดการก้มคอ','คอยื่น'],
+  ['สายตาระดับขอบบนจอ','ขอบบนของจอควรอยู่ระดับสายตาหรือต่ำกว่าเล็กน้อย ห่างประมาณหนึ่งช่วงแขน ช่วยลดทั้งคอยื่นและการก้มศีรษะค้าง','คอยื่น / ก้ม–เงยศีรษะ'],
   ['หลังตรง สะโพกชิดพนักพิง','ดันสะโพกเข้าในสุด ให้พนักพิงรองรับหลังส่วนล่าง ไม่นั่งครึ่งเก้าอี้','หลังค่อม'],
   ['ไหล่ผ่อน ศอกแนบลำตัว','ต้นแขนแนบข้างลำตัว ศอกงอประมาณ 90–120° วางแขนบนโต๊ะหรือที่เท้าแขน','ไหล่เอียง'],
   ['มุมสะโพกเหมาะสม','ปรับความสูงเก้าอี้ให้มุมไหล่–สะโพก–เข่าอยู่ประมาณ 80–115° และให้สะโพกสูงกว่าเข่าเล็กน้อย','มุมสะโพก'],
