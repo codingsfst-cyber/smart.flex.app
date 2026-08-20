@@ -333,10 +333,11 @@ a:hover{color:var(--g900)}
     <div class="eyebrow">เวลาตรวจต่อเซสชัน</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div class="row" style="align-items:flex-end">
-        <div class="field"><label for="inMinutes">ตั้งเวลา (นาที)</label><input id="inMinutes" type="number" min="0" max="240" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="inMinutes">ตั้งเวลา (นาที · 0.5 = 30 วิ)</label><input id="inMinutes" type="number" min="0" max="240" step="0.5" inputmode="decimal"></div>
         <button class="btn sec" id="btnSaveMin" style="width:110px;height:44px">บันทึก</button>
       </div>
       <div class="row" style="flex-wrap:wrap">
+        <button class="chip" data-min="0.5" style="flex:0 0 auto">30 วินาที</button>
         <button class="chip" data-min="1" style="flex:0 0 auto">1 นาที</button>
         <button class="chip" data-min="5" style="flex:0 0 auto">5 นาที</button>
         <button class="chip" data-min="10" style="flex:0 0 auto">10 นาที</button>
@@ -345,7 +346,7 @@ a:hover{color:var(--g900)}
         <button class="chip" data-min="45" style="flex:0 0 auto">45 นาที</button>
         <button class="chip" data-min="0" style="flex:0 0 auto">ไม่จำกัด</button>
       </div>
-      <div class="note">ตั้งได้ 1–240 นาที · ครบเวลาแล้วแอปจะหยุดเองแล้วพาไปหน้าสรุป · หน้าตรวจนับเวลาถอยหลังให้</div>
+      <div class="note">เลือกตรวจได้ตั้งแต่ 30 วินาที หรือกำหนดเอง 0.5–240 นาที · ใส่ 0 เมื่อต้องการไม่จำกัดเวลา · ครบเวลาแล้วแอปจะหยุดเองและพาไปหน้าสรุป</div>
     </div>
     <div class="eyebrow">เกณฑ์ STREAK</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -489,7 +490,7 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.15 — เพิ่มเสียงเตือนสถานะสีเทาเมื่อเห็นตัวแต่ยังวัดไม่ครบ · คงระบบเดิม
+   SmartFlex v4.16 — เพิ่มตัวเลือกตรวจ 30 วินาที · คงระบบเดิม
    แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
    เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
@@ -1541,7 +1542,7 @@ $('btnGoLive').onclick=async function(){
   $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · Classroom':'กำลังตรวจ · Live';
   $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+
     ' · ความไว'+({low:'ต่ำ',mid:'กลาง',high:'สูง'})[state.sens]+
-    (durationMin()?' · '+durationMin()+' นาที':' · ไม่จำกัดเวลา');
+    ' · '+durationLabel();
   showOverlay('กำลังเปิดกล้อง',inspectionPlanText(plannedModelName(),'กำลังขอสิทธิ์และเตรียมภาพจากกล้อง…'),true);
   try{
     await startCamera();
@@ -2363,8 +2364,7 @@ function pickCols(cols,row){
 function showSummary(row,issues){
   goto('summary');$('tabs').classList.remove('hidden');
   issues=(row._issues&&row._issues.length?row._issues:issues)||[];
-  var mins=Math.floor(row.totalSeconds/60),secs=row.totalSeconds%60;
-  $('sumHead').textContent=mins+' นาที '+secs+' วินาที · '+(ANGLE_INFO[row.cameraAngle]||ANGLE_INFO.auto).name;
+  $('sumHead').textContent=formatDuration(row.totalSeconds)+' · '+(ANGLE_INFO[row.cameraAngle]||ANGLE_INFO.auto).name;
   $('sumScore').textContent=row.score;
   $('sumRing').style.background='conic-gradient(var(--good) 0 '+row.score+'%,#E7EFEA '+row.score+'% 100%)';
   $('sumNote').textContent='ได้ '+row.score+' คะแนน · ข้อมูลครบ '+row.coverage+'% · เตือน '+row.alertCount+' ครั้ง';
@@ -2431,7 +2431,17 @@ function renderSensInfo(){
   var s=sens();
   $('sensInfo').textContent=s.label+' · ระบบปรับช่วงยอมรับของเกณฑ์ปฏิบัติการตามความไว และต้องเห็นมุมกล้องเหมาะสมก่อนตัดคะแนน · เวลารอก่อนเตือนคูณ '+s.hold+' เท่า';
 }
-function durationMin(){var v=Number(store.get('sf.minutes',25));return isNaN(v)||v<0?25:Math.round(v)}
+function durationMin(){
+  var v=Number(store.get('sf.minutes',25));
+  return isNaN(v)||v<0?25:Math.min(240,Math.round(v*2)/2);
+}
+function formatDuration(seconds){
+  seconds=Math.max(0,Math.round(Number(seconds)||0));
+  var mins=Math.floor(seconds/60),secs=seconds%60;
+  if(!mins)return secs+' วินาที';
+  return mins+' นาที'+(secs?' '+secs+' วินาที':'');
+}
+function durationLabel(){var m=durationMin();return m?formatDuration(m*60):'ไม่จำกัดเวลา'}
 function paintMinutes(){
   var m=durationMin();
   $('inMinutes').value=m;
@@ -2440,7 +2450,7 @@ function paintMinutes(){
   });
 }
 $('btnSaveMin').onclick=function(){
-  var v=Math.max(0,Math.min(240,Math.round(Number($('inMinutes').value)||0)));
+  var v=Math.max(0,Math.min(240,Math.round((Number($('inMinutes').value)||0)*2)/2));
   store.set('sf.minutes',v);paintMinutes();
 };
 function streakMin(){var v=Number(store.get('sf.streakMin',80));return isNaN(v)?80:Math.max(50,Math.min(95,v))}
@@ -2491,10 +2501,9 @@ document.addEventListener('input',function(e){
    ============================================================ */
 function rowCard(r){
   var when=new Date(r.startedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-  var mins=Math.max(1,Math.round(r.totalSeconds/60));
   return '<div class="sesrow" data-open="'+esc(r.sessionId)+'" style="cursor:pointer"><span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+esc(r.score)+'</span>'+
     '<span class="txt"><span class="when">'+esc(when)+'</span>'+
-    '<span class="note">'+esc(mins+' นาที · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-'))+'</span></span>'+
+    '<span class="note">'+esc(formatDuration(r.totalSeconds)+' · '+(r.appMode==='classroom'?'ตรวจหมู่':'ตรวจเดี่ยว')+' · '+(r.mainIssue||'-'))+'</span></span>'+
     '<span style="color:#B9CCC2;font-size:18px">›</span></div>';
 }
 function findSession(id){
@@ -2572,7 +2581,7 @@ function openDetail(id){
       '<div class="note">'+esc(when+' · '+(r.activity||'-')+' · '+(r.device||'-')+' · '+(ANGLE_INFO[r.cameraAngle]||ANGLE_INFO.auto).name)+'</div></div>'+
       '<span class="pillscore '+(r.score>=80?'':r.score>=60?'warn':'bad')+'">'+r.score+'</span></div>'+
     '<div class="grid2">'+
-      '<div class="stat"><b>'+Math.max(1,Math.round(r.totalSeconds/60))+' นาที</b><span>เวลารวม</span></div>'+
+      '<div class="stat"><b>'+formatDuration(r.totalSeconds)+'</b><span>เวลารวม</span></div>'+
       '<div class="stat"><b>'+r.alertCount+' ครั้ง</b><span>เตือนท่าแย่</span></div>'+
       '<div class="stat"><b>'+r.goodSeconds+' วิ</b><span>นั่งถูกท่า</span></div>'+
       '<div class="stat"><b>'+r.badSeconds+' วิ</b><span>นั่งผิดท่า</span></div>'+
