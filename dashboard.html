@@ -24,7 +24,8 @@ button{cursor:pointer}
 .shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
 .sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#0d3f2b 0%,#0a2e20 100%);color:#fff;padding:24px 18px;display:flex;flex-direction:column;z-index:20}
 .brand{display:flex;align-items:center;gap:12px;padding:4px 8px 24px}
-.brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#4ee09a,#1e9c65);display:grid;place-items:center;font-weight:900;font-size:17px;box-shadow:0 10px 24px rgba(48,207,133,.2)}
+.brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#4ee09a,#1e9c65);display:grid;place-items:center;font-weight:900;font-size:17px;box-shadow:0 10px 24px rgba(48,207,133,.2);overflow:hidden}
+.brand-mark img{width:100%;height:100%;object-fit:cover;display:block}
 .brand b{display:block;font-size:17px}.brand small{display:block;color:rgba(255,255,255,.62);font-size:10px;margin-top:2px}
 .nav{display:flex;flex-direction:column;gap:6px}.nav a{color:rgba(255,255,255,.72);text-decoration:none;padding:11px 12px;border-radius:13px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}.nav a:hover,.nav a.on{background:rgba(255,255,255,.1);color:#fff}.nav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
 .side-note{margin-top:auto;border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:13px;background:rgba(255,255,255,.06);font-size:11px;line-height:1.6;color:rgba(255,255,255,.72)}
@@ -57,7 +58,7 @@ button{cursor:pointer}
 <body>
 <div class="shell">
   <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">SF</div><div><b>SmartFlex</b><small>ANALYTICS DASHBOARD</small></div></div>
+    <div class="brand"><div class="brand-mark"><img src="https://raw.githubusercontent.com/codingsfst-cyber/smart.flex.app/main/logo_sf.png" alt="SmartFlex"></div><div><b>SmartFlex</b><small>ANALYTICS DASHBOARD</small></div></div>
     <nav class="nav">
       <a class="on" href="#overview"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>ภาพรวม</a>
       <a href="#issues"><svg viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3z"/><path d="M12 9v4M12 16h.01"/></svg>ปัญหาท่าทาง</a>
@@ -68,7 +69,7 @@ button{cursor:pointer}
   </aside>
 
   <main class="main">
-    <div class="mobile-head"><div class="brand-mark">SF</div><div><b style="color:var(--green-950)">SmartFlex</b><div style="font-size:10px;color:var(--muted)">Analytics Dashboard</div></div></div>
+    <div class="mobile-head"><div class="brand-mark"><img src="https://raw.githubusercontent.com/codingsfst-cyber/smart.flex.app/main/logo_sf.png" alt="SmartFlex"></div><div><b style="color:var(--green-950)">SmartFlex</b><div style="font-size:10px;color:var(--muted)">Analytics Dashboard</div></div></div>
     <section id="overview">
       <div class="topbar">
         <div class="title">
