@@ -885,8 +885,8 @@ function paintDistanceBadge(cm,zone){
    นับเวลาต่อเนื่องขณะกล้องตรวจพบว่ามีคนอยู่หน้าจอ และรีเซ็ต/หยุดนับเมื่อลุกออกจากหน้าจอ
    ============================================================ */
 function sedentaryMinutes(){
-  var v=Number(store.get('sf.sedentaryMinutes',20));
-  return isNaN(v)||v<0?20:Math.min(480,v);
+  var v=Number(store.get('sf.sedentaryMinutes',60));
+  return isNaN(v)||v<0?60:Math.min(480,v);
 }
 /* แปลงนาที (รองรับทศนิยม เช่น 0.1) เป็นวินาทีตามสเปก: 0.1 นาที = 6 วินาที */
 function sedentaryThresholdSeconds(){
