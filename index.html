@@ -351,17 +351,16 @@ a:hover{color:var(--g900)}
     <div class="eyebrow">แจ้งเตือนนั่งต่อเนื่องนานเกินไป (SEDENTARY ALERT)</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div class="row" style="align-items:flex-end">
-        <div class="field"><label for="inSedentary">เวลานั่งต่อเนื่องก่อนเตือน (นาที · รองรับทศนิยม เช่น 0.1 = 6 วินาที)</label>
+        <div class="field"><label for="inSedentary">เวลานั่งต่อเนื่องก่อนเตือน (นาที · 0.1 = 6 วินาที)</label>
           <input id="inSedentary" type="number" min="0" max="480" step="0.05" inputmode="decimal"></div>
         <button class="btn sec" id="btnSaveSedentary" style="width:110px;height:44px">บันทึก</button>
       </div>
       <div class="row" style="flex-wrap:wrap">
-        <button class="chip" data-sed="0.1" style="flex:0 0 auto">0.1 นาที (6 วิ) ทดสอบ</button>
+        <button class="chip" data-sed="0.2" style="flex:0 0 auto">12 วินาที (ทดสอบตรวจจับ)</button>
+        <button class="chip" data-sed="10" style="flex:0 0 auto">10 นาที</button>
         <button class="chip" data-sed="20" style="flex:0 0 auto">20 นาที</button>
         <button class="chip" data-sed="30" style="flex:0 0 auto">30 นาที</button>
-        <button class="chip" data-sed="45" style="flex:0 0 auto">45 นาที</button>
         <button class="chip" data-sed="60" style="flex:0 0 auto">60 นาที</button>
-        <button class="chip" data-sed="0" style="flex:0 0 auto">ปิดการเตือน</button>
       </div>
       <div class="note">ระบบแปลงค่าที่ตั้งเป็นวินาทีอัตโนมัติ (ตัวอย่าง: 0.1 นาที = 6 วินาที) ตัวจับเวลาจะเริ่มนับเมื่อกล้องตรวจพบว่ามีคนนั่งอยู่ และจะหยุด/รีเซ็ตเมื่อคุณลุกออกจากหน้าจอ · เมื่อครบเวลาระบบจะแจ้งเตือนพร้อมกันทั้งข้อความ สี และเสียง แล้วเริ่มนับรอบใหม่</div>
     </div>
