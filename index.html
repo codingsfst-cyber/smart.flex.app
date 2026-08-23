@@ -168,6 +168,18 @@ a:hover{color:var(--g900)}
 .person b{display:block;font-size:10.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .person span{display:block;font-size:8.5px;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hidden{display:none!important}
+.dashCard{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:rgba(31,169,113,.22);border:1px solid rgba(48,207,133,.5);backdrop-filter:blur(10px);transition:background .25s ease,border-color .25s ease}
+.dashIcon{font-size:28px;line-height:1;flex:none}
+.dashBody{flex:1;min-width:0}
+.dashBody b{display:block;color:#fff;font-size:16px;font-weight:800;line-height:1.28;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashBody span{display:block;color:rgba(255,255,255,.8);font-size:11px;margin-top:2px;line-height:1.35}
+.dashTimerBig{font-size:23px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;flex:none;text-align:right}
+.gaugeWrap{padding:1px 3px 0}
+.gaugeTrack{position:relative;height:9px;border-radius:5px;background:rgba(255,255,255,.2)}
+.gaugeZone{position:absolute;top:0;bottom:0;background:rgba(48,207,133,.6);border-radius:5px}
+.gaugeMarker{position:absolute;top:-3.5px;width:4px;height:16px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.3);transform:translateX(-2px);transition:left .25s ease}
+.gaugeLabels{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.62);margin-top:3px}
+#live.camHidden #vid{opacity:0}
 .note{font-size:11.5px;color:var(--ink-soft);line-height:1.55}
 .pillscore{width:42px;height:42px;border-radius:21px;background:#E7F8F0;color:var(--good);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none}
 .pillscore.warn{background:#FDF3E7;color:#B07A18}
@@ -348,6 +360,24 @@ a:hover{color:var(--g900)}
       </div>
       <div class="note">เลือกตรวจได้ตั้งแต่ 30 วินาที หรือกำหนดเอง 0.5–240 นาที · ใส่ 0 เมื่อต้องการไม่จำกัดเวลา · ครบเวลาแล้วแอปจะหยุดเองและพาไปหน้าสรุป</div>
     </div>
+    <div class="eyebrow">แจ้งเตือนนั่งต่อเนื่องนานเกินไป (SEDENTARY ALERT)</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row" style="align-items:flex-end">
+        <div class="field"><label for="inSedentary">เวลานั่งต่อเนื่องก่อนเตือน (นาที · 0.1 = 6 วินาที)</label>
+          <input id="inSedentary" type="number" min="0" max="480" step="0.05" inputmode="decimal"></div>
+        <button class="btn sec" id="btnSaveSedentary" style="width:110px;height:44px">บันทึก</button>
+      </div>
+      <div class="row" style="flex-wrap:wrap">
+        <button class="chip" data-sed="0.2" style="flex:0 0 auto">12 วินาที (ทดสอบตรวจจับ)</button>
+        <button class="chip" data-sed="10" style="flex:0 0 auto">10 นาที</button>
+        <button class="chip" data-sed="20" style="flex:0 0 auto">20 นาที</button>
+        <button class="chip" data-sed="30" style="flex:0 0 auto">30 นาที</button>
+        <button class="chip" data-sed="60" style="flex:0 0 auto">60 นาที</button>
+      </div>
+      <div class="note">ระบบแปลงค่าที่ตั้งเป็นวินาทีอัตโนมัติ (ตัวอย่าง: 0.1 นาที = 6 วินาที) ตัวจับเวลาจะเริ่มนับเมื่อกล้องตรวจพบว่ามีคนนั่งอยู่ และจะหยุด/รีเซ็ตเมื่อคุณลุกออกจากหน้าจอ · เมื่อครบเวลาระบบจะแจ้งเตือนพร้อมกันทั้งข้อความ สี และเสียง แล้วเริ่มนับรอบใหม่</div>
+    </div>
+    <div class="eyebrow">ระยะห่างจากหน้าจอ (SCREEN DISTANCE)</div>
+    <div class="card note">ระบบประเมินระยะห่างจากกล้องแบบประมาณค่า (จากระยะห่างระหว่างดวงตาในภาพ) ช่วงที่เหมาะสมคือ 50–70 ซม. หากใกล้กว่า 50 ซม. ระบบจะแจ้งเตือนทันทีด้วยสีแดง และหากไกลกว่า 70 ซม. จะแจ้งเตือนด้วยสีเหลือง/ส้ม · เป็นค่าประมาณสำหรับคัดกรองพฤติกรรม ไม่ใช่การวัดระยะทางที่แม่นยำระดับเครื่องมือแพทย์</div>
     <div class="eyebrow">เกณฑ์ STREAK</div>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
       <div class="row" style="align-items:flex-end">
@@ -463,7 +493,26 @@ a:hover{color:var(--g900)}
       <div style="flex:1"><b style="color:#fff;font-size:14.5px" id="liveMode">กำลังตรวจ</b>
       <div style="color:rgba(207,241,225,.75);font-size:10.5px" id="liveAngle">—</div></div>
       <button id="btnVoice" class="livevoice">🔊 เปิด</button>
+      <button id="btnCamToggle" class="icobtn" title="ซ่อน/แสดงภาพกล้อง">👁️</button>
+      <button id="btnPip" class="icobtn" title="ลอยหน้าจอ (Picture-in-Picture)">🗔</button>
       <div style="padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700" id="clock">0:00</div>
+    </div>
+    <div class="dashCard" id="dashCard">
+      <div class="dashIcon" id="dashIcon">🟢</div>
+      <div class="dashBody"><b id="dashStatus">กำลังตรวจจับ…</b><span id="dashSub">Detecting…</span></div>
+      <div class="dashTimerBig" id="dashTimerBig">0:00</div>
+    </div>
+    <div class="gaugeWrap" id="gaugeWrap">
+      <div class="gaugeTrack" id="gaugeTrack"><div class="gaugeZone" id="gaugeZone"></div><div class="gaugeMarker" id="gaugeMarker" style="display:none"></div></div>
+      <div class="gaugeLabels"><span>30</span><span>50</span><span>70</span><span>110+ ซม.</span></div>
+    </div>
+    <div class="liverow">
+      <div style="padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:10.5px;font-weight:700" id="distBadge">ระยะ —</div>
+      <div style="padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:10.5px;font-weight:700" id="sedBadge">นั่งต่อเนื่อง 0:00</div>
+    </div>
+    <div id="camBanner" class="hidden" style="display:flex;align-items:center;gap:10px;background:rgba(229,72,77,.94);color:#fff;border-radius:13px;padding:9px 12px;font-size:11.5px;font-weight:700">
+      <span style="flex:1" id="camBannerMsg">กำลังเชื่อมต่อกล้องใหม่อีกครั้ง…</span>
+      <button id="btnCamRetry" class="hidden" style="border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:5px 10px;font-size:11px;font-weight:800">ลองใหม่</button>
     </div>
     <div class="band" id="band"><span style="flex:1"><b id="coachTh">กำลังตรวจจับ…</b><small id="coachEn">Detecting…</small></span><i id="liveScore">–</i></div>
     <div id="liveTip" style="padding:6px 9px;border-radius:10px;background:rgba(10,26,19,.72);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:10.5px;line-height:1.3">จัดตัวให้อยู่กลางภาพและให้เห็นจุดที่เลือกครบ</div>
@@ -490,9 +539,16 @@ a:hover{color:var(--g900)}
 'use strict';
 
 /* ============================================================
-   SmartFlex v4.16 — เพิ่มตัวเลือกตรวจ 30 วินาที · คงระบบเดิม
-   แก้: ตรวจเข่า/การวางเท้า · ตรวจครบตามมุมที่เลือก · รายงานทุกจุดที่ต้องปรับ
-   เสริม: ป้ายมุม 7 จุด · แจ้งจุดที่มองไม่ครบ · เก็บเฉพาะจุดที่ AI วัดได้จริง
+   SmartFlex v4.20 — State Machine ของ Timer + UI Dashboard ใหม่ + ปรับ Moving Average
+   แก้/เสริม: ตัวจับเวลานั่งต่อเนื่องมีสถานะชัดเจน ACTIVE/PAUSED/RESET (state.sedentaryTimerState)
+        ยังคงคำนวณจาก performance.now() Delta Time จริงเหมือนเดิม (ไม่ผูกกับจำนวนรอบ)
+   แก้: ปรับ Moving Average Filter ของระยะห่างจาก 8 เป็น 10 เฟรมตามสเปกล่าสุด
+   ใหม่: Status Dashboard การ์ดใหญ่ (ไอคอน+สถานะ+นาฬิกาตัวเลขใหญ่) รวมสถานะ ยืน/นั่ง/ระยะ/ท่าทาง
+        ไว้ที่เดียว พร้อม Gauge แถบแสดงช่วงระยะ 30–110 ซม. ไฮไลต์โซนที่เหมาะสม 50–70 ซม.
+   ใหม่: ปุ่มซ่อน/แสดงภาพกล้อง (Camera Preview Toggle) — ซ่อนเฉพาะภาพวิดีโอ เส้นโครงร่างยังโชว์อยู่
+   คงเดิม: v4.19 แก้บั๊ก Timer + IPD Moving Average + Sit/Stand Classifier
+   คงเดิม: v4.18 Page Visibility Lifecycle + Auto-reconnect + Web Worker timer + PiP
+   คงเดิม: v4.17 ระบบตรวจระยะห่างจากหน้าจอ + Sedentary Alert · v4.16 ตัวเลือกตรวจ 30 วินาที
    ต้องใช้คู่กับ Code.gs v3 (ตอบ callback เสมอ + กันแถวซ้ำฝั่งชีท)
    ============================================================ */
 
@@ -526,7 +582,9 @@ var state={mode:'personal',angle:'auto',act:'เรียน',dev:'มือถ�
   classTracks:[],classTracksReady:false,lastClassSpeech:0,recoveringDetector:false,
   neckSide:'',neckSideVotes:{left:0,right:0},currentHeadMode:'lateral',
   graySince:0,lastGrayAlert:0,grayReason:'',lastClassGraySpeech:0,
-  timeWarn60:false,timeWarn10:false,timeExpired:false};
+  timeWarn60:false,timeWarn10:false,timeExpired:false,
+  totalPausedMs:0,hiddenSince:0,videoTrack:null,trackMuted:false,
+  reconnecting:false,reconnectAttempts:0,pipActive:false};
 
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function asArray(v){return Array.isArray(v)?v:[]}
@@ -565,6 +623,8 @@ document.addEventListener('click',function(e){
     paintChoice('angle');renderAngleInfo();}
   var mn=e.target.closest('[data-min]');
   if(mn){store.set('sf.minutes',Number(mn.getAttribute('data-min')));paintMinutes()}
+  var sd=e.target.closest('[data-sed]');
+  if(sd){store.set('sf.sedentaryMinutes',Number(sd.getAttribute('data-sed')));paintSedentaryMinutes()}
   ['act','dev','sens'].forEach(function(k){
     var el=e.target.closest('[data-'+k+']');
     if(!el)return;
@@ -764,7 +824,7 @@ function parallelDeviation2D(a,b,c,d){
    - ใช้แนวไหล่→หูเทียบแนวนอนของภาพ และใช้หู→จมูกช่วยยืนยันทิศด้านหน้า
    - ค่ายิ่งมาก = ศีรษะอยู่เหนือไหล่มากขึ้น, ค่ายิ่งต่ำ = ศีรษะยื่นไปด้านหน้า
    - MediaPipe ไม่มี landmark C7 โดยตรง จึงเป็น CVA แบบประมาณค่าสำหรับ SmartFlex ไม่ใช่ clinical CVA
-   - ไม่ใช้ world Z และจะตัดคะแนนเฉพาะ view==='side' เพื่อลด false alert จากมุมเฉียง */
+   - ไม่ใช้แกน Z และจะตัดคะแนนเฉพาะ view==='side' เพื่อลด false alert จากมุมเฉียง */
 function forwardHeadCVA2D(ear,nose,shoulder){
   if(!(ear&&nose&&shoulder))return null;
   var faceDx=nose.x-ear.x;
@@ -812,6 +872,218 @@ var K={nose:0,leftEye:1,rightEye:2,leftEar:3,rightEar:4,leftShoulder:5,rightShou
    ลดเฉพาะโหมดกลุ่มเท่านั้น โหมดรายบุคคลยังใช้เกณฑ์เดิม */
 function keypointScoreFloor(){return state.mode==='classroom'?.24:.35}
 function pick(kp,i){var p=kp[i];return p&&p.score>keypointScoreFloor()?p:null}
+
+/* ============================================================
+   ระยะห่างจากหน้าจอ (Screen Distance Boundary Check)
+   เทคนิค: ประมาณระยะจริง (ซม.) จาก Interpupillary Distance (IPD) — ระยะห่างระหว่างรูม่านตา/ดวงตา
+   ในภาพ เทียบกับสูตร Focal Length: distance_cm = (real_IPD_cm * focal_px) / ipd_px
+   โดย focal_px ประมาณจากความกว้างภาพและมุมมองกล้อง (FOV) โดยสมมติ
+   หมายเหตุ: โมเดลที่ใช้อยู่ (MediaPipe Pose Landmarker / MoveNet) เป็นโมเดลตรวจจับ "ร่างกาย"
+   ไม่ใช่ MediaPipe Face Mesh จึงไม่มี landmark ม่านตา (Iris) ให้ใช้โดยตรง — ระบบจึงใช้จุดตา
+   ซ้าย/ขวา (Eye landmarks) ที่ทั้งสองโมเดลมีอยู่แล้วเป็นตัวแทนของ IPD แทน Iris diameter
+   ซึ่งยังคงเป็นค่าประมาณสำหรับคัดกรองพฤติกรรม ไม่ใช่การวัดระยะทางที่แม่นยำระดับเครื่องมือ
+   ============================================================ */
+var DIST_OPTIMAL_MIN=50,DIST_OPTIMAL_MAX=70;
+var DIST_REAL_EYE_CM=6.3,DIST_FOV_DEG=60;
+var DIST_MA_WINDOW=10; /* Moving Average Filter: เรียบค่าระยะย้อนหลัง 10 เฟรมตามสเปก */
+function rawDistanceCm(kp){
+  var le=pick(kp,K.leftEye),re=pick(kp,K.rightEye);
+  if(!le||!re)return null;
+  var eyePx=Math.hypot(le.x-re.x,le.y-re.y);
+  if(eyePx<4)return null;
+  var w=cv&&cv.width;
+  if(!w)return null;
+  var focalPx=(w/2)/Math.tan(DIST_FOV_DEG*Math.PI/360);
+  return (DIST_REAL_EYE_CM*focalPx)/eyePx;
+}
+/* Moving Average Filter แบบ sliding window (ไม่ใช่ EMA) ตามที่โจทย์ระบุ: เก็บค่าดิบย้อนหลัง N เฟรม
+   แล้วหาค่าเฉลี่ย ช่วยลดอาการค่าวูบวาบจากการขยับตัวเล็กน้อยหรือจุดตาสั่นเป็นเฟรม ๆ
+   bufferHolder: อ็อบเจ็กต์ที่ใช้เก็บ history เฉพาะของแต่ละคน (ค่าเริ่มต้นคือ state กลางของเซสชัน
+   สำหรับโหมดรายบุคคล ส่วนโหมดห้องเรียนควรส่ง rec ของนักเรียนแต่ละคนเข้ามา กันค่าของหลายคนปนกัน) */
+function movingAverageDistance(raw,bufferHolder){
+  bufferHolder=bufferHolder||state;
+  if(typeof raw!=='number'||!isFinite(raw))return null;
+  bufferHolder.distanceHistory=bufferHolder.distanceHistory||[];
+  bufferHolder.distanceHistory.push(raw);
+  if(bufferHolder.distanceHistory.length>DIST_MA_WINDOW)bufferHolder.distanceHistory.shift();
+  var arr=bufferHolder.distanceHistory;
+  var sum=arr.reduce(function(a,b){return a+b},0);
+  return Math.round(sum/arr.length);
+}
+function resetDistanceFilter(bufferHolder){(bufferHolder||state).distanceHistory=[]}
+function distanceZone(cm){
+  if(typeof cm!=='number')return '';
+  if(cm<DIST_OPTIMAL_MIN)return 'close';
+  if(cm>DIST_OPTIMAL_MAX)return 'far';
+  return 'ok';
+}
+function analyseDistance(kp,bufferHolder){
+  var cm=movingAverageDistance(rawDistanceCm(kp),bufferHolder),zone=distanceZone(cm);
+  var label=zone==='close'?'ระยะใกล้เกินไป':(zone==='far'?'ระยะไกลเกินไป':'');
+  /* ใกล้เกินไป (<50 ซม.) ถือเป็นระดับรุนแรง (แดง) ทันทีตามสเปก
+     ไกลเกินไป (>70 ซม.) ถือเป็นระดับเตือน (ส้ม/เหลือง) */
+  var level=zone==='close'?2:(zone==='far'?1:0);
+  return {cm:cm,zone:zone,label:label,level:level};
+}
+function paintDistanceBadge(cm,zone){
+  var el=$('distBadge');
+  if(el){
+    if(zone==='stand'){el.textContent='ยืนอยู่ · ไม่ตรวจระยะ';el.style.background='rgba(255,255,255,.14)';}
+    else{
+      el.textContent=typeof cm==='number'?('ระยะ '+cm+' ซม.'):'ระยะ —';
+      el.style.background=zone==='close'?'rgba(229,72,77,.92)':(zone==='far'?'rgba(200,160,46,.94)':'rgba(31,169,113,.85)');
+    }
+  }
+  paintGauge(zone==='stand'?null:cm);
+}
+/* แถบ Gauge แสดงช่วงระยะ 30–110 ซม. พร้อมไฮไลต์โซนที่เหมาะสม (50–70 ซม.) และหมุดตำแหน่งปัจจุบัน */
+var GAUGE_MIN_CM=30,GAUGE_MAX_CM=110;
+function gaugePct(v){return Math.max(0,Math.min(100,(v-GAUGE_MIN_CM)/(GAUGE_MAX_CM-GAUGE_MIN_CM)*100))}
+function paintGauge(cm){
+  var zoneEl=$('gaugeZone'),marker=$('gaugeMarker');
+  if(!zoneEl||!marker)return;
+  var left=gaugePct(DIST_OPTIMAL_MIN),right=gaugePct(DIST_OPTIMAL_MAX);
+  zoneEl.style.left=left+'%';zoneEl.style.width=(right-left)+'%';
+  if(typeof cm==='number'){marker.style.display='block';marker.style.left=gaugePct(cm)+'%'}
+  else marker.style.display='none';
+}
+
+/* ============================================================
+   Status Dashboard — การ์ดสถานะขนาดใหญ่ อ่านง่ายจากระยะไกล (UI/UX ตามสเปก)
+   รวมสถานะทั้งหมด (ท่าทาง/ระยะห่าง/นั่งยืน/นั่งนานเกินไป) ให้เหลือข้อความเดียวที่สำคัญที่สุด ณ ขณะนั้น
+   ============================================================ */
+var DASH_BG={good:'rgba(31,169,113,.22)',warn:'rgba(200,160,46,.22)',bad:'rgba(229,72,77,.22)',pause:'rgba(120,140,165,.24)'};
+var DASH_BORDER={good:'rgba(48,207,133,.5)',warn:'rgba(200,160,46,.6)',bad:'rgba(229,72,77,.6)',pause:'rgba(180,195,210,.45)'};
+function paintDashboard(opts){
+  var card=$('dashCard');if(!card)return;
+  card.style.background=DASH_BG[opts.tone]||DASH_BG.good;
+  card.style.borderColor=DASH_BORDER[opts.tone]||DASH_BORDER.good;
+  if($('dashIcon'))$('dashIcon').textContent=opts.icon||'🟢';
+  if($('dashStatus'))$('dashStatus').textContent=opts.title||'—';
+  if($('dashSub'))$('dashSub').textContent=opts.sub||'';
+}
+function paintDashTimer(seconds,threshold){
+  var el=$('dashTimerBig');if(!el)return;
+  var s=Math.max(0,Math.floor(seconds||0));
+  el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  el.style.color=(threshold>0&&s>=threshold)?'#FFC3C4':(threshold>0&&s>=threshold*0.8?'#FFE3A6':'#fff');
+}
+
+/* ============================================================
+   ระบบจำแนกท่าทาง "นั่ง vs ยืน" (Sit/Stand Classifier)
+   ตรวจจับเฉพาะตอนนั่งเท่านั้น — ถ้ายืน ให้ข้าม (ไม่จับเวลา/ไม่แจ้งเตือนระยะ)
+   วิธีที่ 1 (แม่นกว่า): ถ้าเห็นสะโพก–เข่า–ข้อเท้าครบ ใช้มุมเข่า (Knee Angle)
+     เข่าตรง (มุมกว้างใกล้ 180°) = ยืน, เข่างอ (มุมแคบกว่าชัดเจน) = นั่ง
+   วิธีที่ 2 (สำรอง เมื่อกล้องเห็นแค่ครึ่งตัว ไม่เห็นขา): เทียบตำแหน่งแนวตั้งของสะโพกในเฟรม (Hip Y)
+     กับเส้นฐาน (Baseline) ที่ปรับเทียบไว้ตอนเริ่มเซสชัน (สมมติว่าท่านั่งปกติตอนเริ่มตรวจ)
+     หากสะโพกขยับสูงขึ้นในเฟรมเกินเกณฑ์ (เช่น ลุกยืนทำให้ตัวสูงขึ้น กล้องเห็นสะโพกอยู่สูงกว่าฐาน)
+     ให้ตัดสินว่า "ยืน"
+   ============================================================ */
+var SIT_STAND_KNEE_STAND_DEG=155; /* มุมเข่า >= ค่านี้ถือว่าขาเหยียดตรง = ยืน */
+var SIT_STAND_HIP_RISE_FRAC=0.12; /* สะโพกขยับสูงขึ้นเกิน 12% ของความสูงเฟรม เทียบเส้นฐาน = ยืน */
+function classifySitStand(kp){
+  var hip=midPoint(pick(kp,K.leftHip),pick(kp,K.rightHip));
+  var knee=midPoint(pick(kp,K.leftKnee),pick(kp,K.rightKnee));
+  var ankle=midPoint(pick(kp,K.leftAnkle),pick(kp,K.rightAnkle));
+  if(hip&&knee&&ankle){
+    var kneeAng=bodyAngle(hip,knee,ankle);
+    return kneeAng>=SIT_STAND_KNEE_STAND_DEG?'stand':'sit';
+  }
+  if(hip&&cv&&cv.height){
+    var hipFrac=hip.y/cv.height;
+    if(typeof state.sitBaselineHipFrac!=='number')return 'unknown';
+    var risen=state.sitBaselineHipFrac-hipFrac; /* บวก = สะโพกขยับขึ้นสูงกว่าฐาน (เฟรมภาพ y ยิ่งน้อยยิ่งอยู่สูง) */
+    return risen>=SIT_STAND_HIP_RISE_FRAC?'stand':'sit';
+  }
+  return 'unknown';
+}
+/* เก็บตัวอย่างตำแหน่งสะโพกระหว่างช่วงคาลิเบรตต้นเซสชัน (สมมติว่าผู้ใช้นั่งอยู่ตอนเริ่มตรวจ)
+   เพื่อใช้เป็นเส้นฐานของวิธีที่ 2 เมื่อกล้องเห็นแค่ครึ่งตัว */
+function collectSitBaseline(kp){
+  if(!cv||!cv.height)return;
+  var hip=midPoint(pick(kp,K.leftHip),pick(kp,K.rightHip));
+  if(!hip)return;
+  state.sitBaselineSamples=state.sitBaselineSamples||[];
+  state.sitBaselineSamples.push(hip.y/cv.height);
+}
+function finalizeSitBaseline(){
+  var arr=state.sitBaselineSamples;
+  if(arr&&arr.length){
+    arr=arr.slice().sort(function(a,b){return a-b});
+    state.sitBaselineHipFrac=arr[Math.floor(arr.length/2)]; /* median กันค่าผิดปกติ (outlier) */
+  }
+}
+
+/* ============================================================
+   ระยะเวลาการนั่ง (Sitting Duration Counter) — Sedentary Alert
+   แก้บั๊ก Timer นับเร็วเกินจริง: เดิมนับ +1 ทุกครั้งที่ setInterval ยิง (สมมติว่าตรง 1 วิเป๊ะ)
+   ซึ่งคลาดเคลื่อนได้เมื่อเบราว์เซอร์หน่วง/throttle ตอนแท็บเป็นพื้นหลังหรือเครื่องประมวลผล AI หนัก
+   ใหม่: คำนวณจาก performance.now() Delta Time จริงทุกครั้ง (ไม่ผูกกับจำนวนรอบ loop/interval)
+   จึงนับเวลาได้ตรงหน่วยวินาทีจริง ไม่ว่า tick จะถี่หรือห่างกว่าที่ตั้งไว้แค่ไหน
+   นับเวลาต่อเนื่องเฉพาะขณะ "นั่ง" เท่านั้น และหยุด/รีเซ็ตเมื่อยืนหรือลุกออกจากหน้าจอ
+   ============================================================ */
+function sedentaryMinutes(){
+  var v=Number(store.get('sf.sedentaryMinutes',60));
+  return isNaN(v)||v<0?60:Math.min(480,v);
+}
+/* แปลงนาที (รองรับทศนิยม เช่น 0.1) เป็นวินาทีตามสเปก: 0.1 นาที = 6 วินาที */
+function sedentaryThresholdSeconds(){
+  return Math.round(sedentaryMinutes()*60);
+}
+function paintSedentaryMinutes(){
+  var el=$('inSedentary');if(el)el.value=sedentaryMinutes();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sed]'),function(b){
+    b.classList.toggle('on',Number(b.getAttribute('data-sed'))===sedentaryMinutes());
+  });
+}
+function paintSedentaryBadge(){
+  var el=$('sedBadge');if(!el)return;
+  var s=Math.max(0,state.sedentarySeconds||0);
+  var suffix=state.currentPosture==='stand'?' (ยืน · พัก)':'';
+  el.textContent='นั่งต่อเนื่อง '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+suffix;
+  var th=sedentaryThresholdSeconds();
+  el.style.background=(th>0&&s>=th*0.8)?(s>=th?'rgba(229,72,77,.92)':'rgba(200,160,46,.94)'):'rgba(255,255,255,.14)';
+}
+/* State Machine ของตัวจับเวลานั่งต่อเนื่อง ตามสเปก:
+   ACTIVE = กำลังนับ (นั่งอยู่จริง) / PAUSED = หยุดชั่วคราว (ยืน/ลุกแต่ยังไม่นานพอจะรีเซ็ต) / RESET = เพิ่งล้างเวลา */
+var TIMER_STATE={ACTIVE:'ACTIVE',PAUSED:'PAUSED',RESET:'RESET'};
+function triggerSedentaryAlert(){
+  chime();
+  setTimeout(function(){say('แจ้งเตือน คุณนั่งต่อเนื่องครบกำหนดแล้วค่ะ กรุณาลุกขึ้นยืดเส้นยืดสายหรือพักสายตาเป็นเวลายี่สิบวินาทีค่ะ',true)},180);
+  state.forcedBandUntil=Date.now()+4200;
+  state.forcedBandMsg=['แจ้งเตือน: คุณนั่งต่อเนื่องครบกำหนดแล้ว',
+    'กรุณาลุกขึ้นยืดเส้นยืดสายหรือพักสายตาเป็นเวลา 20 วินาที',
+    'ลุกออกจากหน้าจอเพื่อรีเซ็ตตัวจับเวลานั่งต่อเนื่อง'];
+  state.alerts=(state.alerts||0)+1;
+  state.sedentarySecondsFloat=0;state.sedentarySeconds=0; /* เริ่มนับรอบใหม่หลังแจ้งเตือน */
+  state.sedentaryTimerState=TIMER_STATE.RESET;
+}
+function updateSedentaryTimer(){
+  var th=sedentaryThresholdSeconds();
+  var now=performance.now(),last=state.sedentaryLastTs||now;
+  var elapsed=(now-last)/1000;
+  state.sedentaryLastTs=now;
+  /* กันเวลากระโดดผิดปกติ (เช่น แท็บถูกพักการทำงานนาน ๆ แล้วกลับมาทีเดียว) ไม่ให้บวกเวลาที่ไม่ได้ตรวจสอบจริงเข้าไปทั้งก้อน */
+  elapsed=Math.max(0,Math.min(elapsed,5));
+  var sitting=state.personPresentNow&&state.currentPosture!=='stand'; /* posture==='unknown' ถือว่านั่ง (fail-open) */
+  if(sitting){
+    state.sedentarySecondsFloat=(state.sedentarySecondsFloat||0)+elapsed;
+    state.sedentaryAbsentSeconds=0;
+    state.sedentaryTimerState=TIMER_STATE.ACTIVE;
+  }else{
+    state.sedentaryAbsentSeconds=(state.sedentaryAbsentSeconds||0)+elapsed;
+    /* ยืนหรือลุกออกจากหน้าจอต่อเนื่องนานพอ (~8 วิ) ถือว่าเปลี่ยนอิริยาบถแล้ว จึงรีเซ็ตตัวนับ (Pause/Reset ตามสเปก) */
+    if(state.sedentaryAbsentSeconds>=8&&state.sedentarySecondsFloat>0){
+      state.sedentarySecondsFloat=0;
+      state.sedentaryTimerState=TIMER_STATE.RESET;
+    }else{
+      state.sedentaryTimerState=TIMER_STATE.PAUSED;
+    }
+  }
+  state.sedentarySeconds=Math.floor(state.sedentarySecondsFloat||0);
+  if(th>0&&state.sedentarySecondsFloat>=th)triggerSedentaryAlert();
+  paintSedentaryBadge();
+}
 
 /* ความไว: ขยาย/บีบช่วงที่ยอมรับ และเวลาที่ทนก่อนเตือน */
 var SENS={low:{tol:1.35,hold:1.8,label:'ยอมให้เพี้ยนได้มากขึ้น 35% และพูดเตือนเมื่อผิดท่าค้างประมาณ 5 วินาที'},
@@ -1072,7 +1344,9 @@ var COACH={
   'ข้อมือหัก':['ตั้งข้อมือให้ตรง','Keep wrists neutral','ปรับข้อมือให้ตรงแนวเดียวกับปลายแขน'],
   'มุมสะโพก':['ปรับความสูงเก้าอี้','Adjust chair height','มุมสะโพกไม่พอดี ปรับความสูงเก้าอี้'],
   'มุมเข่า':['ปรับเข่าให้อยู่ใกล้ 90 องศา','Adjust your knee angle','มุมเข่าไม่พอดี ปรับความสูงหรือระยะเก้าอี้'],
-  'เท้าไม่วางราบ':['วางเท้าให้เต็มพื้น','Place both feet flat','วางฝ่าเท้าทั้งสองข้างราบเต็มพื้น']
+  'เท้าไม่วางราบ':['วางเท้าให้เต็มพื้น','Place both feet flat','วางฝ่าเท้าทั้งสองข้างราบเต็มพื้น'],
+  'ระยะใกล้เกินไป':['ถอยห่างจากจอ','Move back from screen','กรุณาถอยห่างให้อยู่ในช่วง 50–70 ซม. เพื่อรักษาสายตา'],
+  'ระยะไกลเกินไป':['ขยับเข้าใกล้จอ','Move closer to screen','กรุณาขยับเข้าใกล้ให้อยู่ในช่วง 50–70 ซม.']
 };
 var ADVICE={
   'คอยื่น':'ยกจอขึ้นให้ขอบบนอยู่ระดับสายตา เก็บคางเข้า และเลื่อนเก้าอี้เข้าใกล้โต๊ะ',
@@ -1084,7 +1358,9 @@ var ADVICE={
   'ข้อมือหัก':'วางมือและข้อมือให้ตรงเป็นแนวเดียวกับปลายแขน เลี่ยงการหักขึ้น ลง หรือเอียงข้าง',
   'มุมสะโพก':'ดันสะโพกชิดพนักพิงและปรับเก้าอี้ให้มุมสะโพกประมาณ 90–120°',
   'มุมเข่า':'ปรับความสูงหรือระยะเก้าอี้ให้เข่างอประมาณ 90–120° และให้เท้ารับน้ำหนักได้เต็มพื้น',
-  'เท้าไม่วางราบ':'วางฝ่าเท้าทั้งสองข้างราบเต็มพื้น ไม่เขย่งหรือเกี่ยวขา หากเท้าไม่ถึงพื้นให้ใช้ที่พักเท้า'
+  'เท้าไม่วางราบ':'วางฝ่าเท้าทั้งสองข้างราบเต็มพื้น ไม่เขย่งหรือเกี่ยวขา หากเท้าไม่ถึงพื้นให้ใช้ที่พักเท้า',
+  'ระยะใกล้เกินไป':'ถอยห่างจากหน้าจอให้อยู่ในช่วง 50–70 ซม. เพื่อถนอมสายตา',
+  'ระยะไกลเกินไป':'ขยับเข้าใกล้หน้าจอให้อยู่ในช่วง 50–70 ซม. เพื่อให้มองเห็นชัดเจนโดยไม่ต้องโน้มตัว'
 };
 /* ข้อความสั้นสำหรับหน้าตรวจและเสียงพูด ต้องสั้นพอให้ผู้ใช้แก้ตามได้ทัน */
 var VOICE_ADVICE={
@@ -1097,9 +1373,11 @@ var VOICE_ADVICE={
   'ข้อมือหัก':'ตั้งข้อมือให้ตรงแนวเดียวกับแขนค่ะ',
   'มุมสะโพก':'ขยับสะโพกชิดพนักพิงค่ะ',
   'มุมเข่า':'ปรับเข่าให้งอใกล้เก้าสิบองศาค่ะ',
-  'เท้าไม่วางราบ':'วางเท้าทั้งสองข้างราบเต็มพื้นค่ะ'
+  'เท้าไม่วางราบ':'วางเท้าทั้งสองข้างราบเต็มพื้นค่ะ',
+  'ระยะใกล้เกินไป':'กรุณาถอยห่างจากหน้าจอให้อยู่ในช่วงห้าสิบถึงเจ็ดสิบเซนติเมตรค่ะ',
+  'ระยะไกลเกินไป':'กรุณาขยับเข้าใกล้หน้าจอให้อยู่ในช่วงห้าสิบถึงเจ็ดสิบเซนติเมตรค่ะ'
 };
-var ISSUE_PRIORITY={'หลังค่อม':1,'คอยื่น':2,'ก้ม/เงยศีรษะ':3,'ข้อมือหัก':4,'มุมศอก':5,'มุมสะโพก':6,'มุมเข่า':7,
+var ISSUE_PRIORITY={'ระยะใกล้เกินไป':0,'ระยะไกลเกินไป':0.5,'หลังค่อม':1,'คอยื่น':2,'ก้ม/เงยศีรษะ':3,'ข้อมือหัก':4,'มุมศอก':5,'มุมสะโพก':6,'มุมเข่า':7,
   'เท้าไม่วางราบ':8,'ไหล่เอียง':9,'ศีรษะเอียง':10};
 function orderedIssues(list){
   var seen={};return (list||[]).filter(function(x){if(seen[x])return false;seen[x]=1;return true})
@@ -1273,6 +1551,36 @@ $('voiceSelect').onchange=function(){
    LIVE
    ============================================================ */
 var vid=$('vid'),cv=$('cv'),ctx=cv.getContext('2d'),rafId=null,bgLoopTimer=null,tickTimer=null;
+
+/* ============================================================
+   ตัวจับเวลาแม่นยำผ่าน Web Worker
+   เหตุผล: เบราว์เซอร์จะ throttle/suspend setInterval บน main thread เมื่อแท็บถูกซ่อน
+   จึงย้าย "ตัวกระตุ้น" การอัปเดตนาฬิกาไปรันบน Worker (เธรดแยก ไม่ถูก throttle ตามนโยบาย
+   เดียวกับ main thread) ส่วนความถูกต้องของเวลาจริงยังคงอ้างอิงจาก Date.now()/performance.now()
+   ใน tick() เสมอ ไม่พึ่งจำนวนครั้งที่ interval ยิง — และเมื่อซ่อนแท็บ ระบบจะสั่งหยุด worker
+   และ "พัก" ตัวจับเวลาโดยตรง (ดู onAppHidden/onAppVisible) ไม่ใช่ปล่อยให้นับเวลาต่อเบื้องหลัง
+   ============================================================ */
+var timerWorker=null,timerWorkerOk=false;
+function createTimerWorker(){
+  if(typeof Worker==='undefined')return;
+  try{
+    var src="var iv=null;onmessage=function(e){if(e.data==='start'){if(iv)clearInterval(iv);iv=setInterval(function(){postMessage('tick')},250);}else if(e.data==='stop'){if(iv)clearInterval(iv);iv=null;}};";
+    var blob=new Blob([src],{type:'application/javascript'});
+    timerWorker=new Worker(URL.createObjectURL(blob));
+    timerWorker.onmessage=function(e){if(e.data==='tick')tick()};
+    timerWorker.onerror=function(){timerWorkerOk=false};
+    timerWorkerOk=true;
+  }catch(e){timerWorker=null;timerWorkerOk=false}
+}
+createTimerWorker();
+function startTimerLoop(){
+  if(timerWorkerOk)timerWorker.postMessage('start');
+  else if(!tickTimer)tickTimer=setInterval(tick,1000);
+}
+function stopTimerLoop(){
+  if(timerWorkerOk)timerWorker.postMessage('stop');
+  if(tickTimer){clearInterval(tickTimer);tickTimer=null}
+}
 var AI_LIBS=[
   ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js',
    'https://unpkg.com/@tensorflow/tfjs@4.11.0/dist/tf.min.js'],
@@ -1466,22 +1774,14 @@ vid.addEventListener('loadedmetadata',syncCanvasSize);
 vid.addEventListener('resize',syncCanvasSize);
 window.addEventListener('resize',refreshCameraView);
 window.addEventListener('orientationchange',refreshCameraView);
-document.addEventListener('visibilitychange',function(){
-  if(!document.hidden)refreshCameraView();
-  /* requestAnimationFrame จะหยุดเมื่อแท็บถูกซ่อน จึงสลับ scheduler อัตโนมัติ
-     สำหรับคอม/โน้ตบุ๊ก และเริ่มวงรอบใหม่ทันทีเมื่อกลับมาที่ SmartFlex */
-  if(state.running){
-    cancelLoopSchedule();
-    state.lastFrameAt=performance.now();
-    scheduleLoop(state.loopToken);
-  }
-});
 function leaveLive(){
   state.running=false;state.calibrating=false;state.loopToken++;
   cancelLoopSchedule();
-  if(tickTimer)clearInterval(tickTimer);
+  stopTimerLoop();
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);
   state.calibrationTimer=null;state.startedAt=null;
+  state.videoTrack=null;state.hiddenSince=0;state.totalPausedMs=0;
+  hideReconnectBanner();
   stopStream();hideOverlay();
   $('live').classList.remove('on','classroom');$('tabs').classList.remove('hidden');
   goto('setup');
@@ -1501,6 +1801,19 @@ async function startCamera(){
   if(classroom)videoOptions.aspectRatio={ideal:16/9};
   var stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoOptions});
   vid.muted=true;vid.playsInline=true;vid.srcObject=stream;
+  var track=stream.getVideoTracks()[0]||null;
+  state.videoTrack=track;state.trackMuted=false;
+  if(track){
+    /* 'ended' = กล้องหลุดจริง (ถูกดึงสายออก/แอปอื่นแย่งใช้/OS ยกเลิกสิทธิ์) ต้องขอ stream ใหม่
+       'mute'/'unmute' = เบราว์เซอร์ระงับ/คืนภาพชั่วคราว (เช่น iOS Safari พับแอปไปเบื้องหลัง)
+       ใช้แยกจาก visibilitychange เพราะบางครั้งเบราว์เซอร์ตัดภาพโดยไม่รอให้ document ซ่อนก่อน */
+    track.onended=function(){handleTrackEnded()};
+    track.onmute=function(){state.trackMuted=true};
+    track.onunmute=function(){
+      state.trackMuted=false;
+      if(!document.hidden&&state.running)ensureCameraHealthy();
+    };
+  }
   await vid.play();
   await waitForVideoFrame(5000);
   syncCanvasSize();state.mpVideoTime=-1;state.mpLastPoses=[];
@@ -1508,6 +1821,133 @@ async function startCamera(){
   /* กล้องหน้าเท่านั้นที่ควรกลับด้านภาพ กล้องหลังกลับด้านแล้วจะสับสน */
   var mir=state.facing==='user';
   vid.classList.toggle('mirror',mir);cv.classList.toggle('mirror',mir);
+}
+
+/* ============================================================
+   วงจรชีวิตของหน้าเว็บ (Page Visibility Lifecycle) + Auto-reconnect กล้อง
+   หลักการ: เมื่อแท็บถูกซ่อน (สลับแท็บ/สลับแอป/พับหน้าจอ) เบราว์เซอร์ส่วนใหญ่จะระงับ
+   การอัปเดตวิดีโอและอาจหยุดกล้องจริง ๆ — จึง "พัก" การประมวลผลและตัวจับเวลาทันทีอย่างชัดเจน
+   (ไม่ใช่พยายามฝืนประมวลผลต่อเบื้องหลัง เพราะกล้อง/เธรดหลักถูกระงับอยู่ดี) แล้วเมื่อกลับมา
+   หน้าเว็บให้ตรวจสุขภาพของ MediaStreamTrack ก่อนเสมอ หากหลุดจริงค่อย re-initialize กล้องใหม่
+   แบบไร้รอยต่อ โดยเวลาที่ถูกซ่อนไปจะไม่ถูกนับรวมเป็นเวลานั่ง/เวลาเซสชัน
+   ============================================================ */
+function showReconnectBanner(msg,allowRetry){
+  var b=$('camBanner');if(!b)return;
+  $('camBannerMsg').textContent=msg;
+  b.classList.remove('hidden');
+  $('btnCamRetry').classList.toggle('hidden',!allowRetry);
+}
+function hideReconnectBanner(){
+  var b=$('camBanner');if(b)b.classList.add('hidden');
+}
+function handleTrackEnded(){
+  if(!state.running||document.hidden)return; /* ถ้าซ่อนอยู่ ปล่อยให้ onAppVisible เป็นคนจัดการตอนกลับมา */
+  cancelLoopSchedule();
+  reconnectCamera();
+}
+function reconnectCamera(){
+  if(state.reconnecting)return Promise.resolve(false);
+  state.reconnecting=true;
+  showReconnectBanner('กำลังเชื่อมต่อกล้องใหม่อีกครั้ง…',false);
+  return startCamera().then(function(){
+    hideReconnectBanner();
+    state.reconnecting=false;state.reconnectAttempts=0;
+    if(state.running){state.lastFrameAt=performance.now();state.loopToken++;loop(state.loopToken)}
+    return true;
+  }).catch(function(e){
+    state.reconnecting=false;
+    state.reconnectAttempts=(state.reconnectAttempts||0)+1;
+    if(state.reconnectAttempts<3&&!document.hidden&&state.running){
+      showReconnectBanner('เชื่อมต่อกล้องไม่สำเร็จ กำลังลองใหม่…',false);
+      setTimeout(function(){if(state.running&&!document.hidden)reconnectCamera()},2000*state.reconnectAttempts);
+    }else{
+      showReconnectBanner('เชื่อมต่อกล้องไม่สำเร็จ: '+(e&&e.message||'ไม่ทราบสาเหตุ'),true);
+    }
+    return false;
+  });
+}
+$('btnCamRetry').onclick=function(){state.reconnectAttempts=0;reconnectCamera()};
+/* ตรวจสุขภาพของ track+video ก่อน resume: เล่นวิดีโอต่อเฉยๆ ถ้ายังปกติ,
+   เชื่อมต่อกล้องใหม่ทั้งชุดถ้า track หลุดจริงหรือเล่นไม่ขึ้น */
+function ensureCameraHealthy(){
+  var track=state.videoTrack;
+  if(!track||track.readyState==='ended'||!vid.srcObject)return reconnectCamera();
+  return vid.play().then(function(){return waitForVideoFrame(4000)})
+    .then(function(){return true})
+    .catch(function(){return reconnectCamera()});
+}
+function onAppHidden(){
+  if(!state.running)return;
+  state.hiddenSince=performance.now();
+  cancelLoopSchedule();
+  stopTimerLoop();
+  if(speechSupported())speechSynthesis.cancel();
+}
+function onAppVisible(){
+  if(!state.running)return;
+  if(state.hiddenSince){
+    state.totalPausedMs=(state.totalPausedMs||0)+(performance.now()-state.hiddenSince);
+    state.hiddenSince=0;
+  }
+  refreshCameraView();
+  ensureCameraHealthy().then(function(ok){
+    if(!ok)return; /* ล้มเหลว: reconnectCamera ได้ตั้งคิว retry หรือแสดงปุ่มลองใหม่ไว้แล้ว */
+    /* รีเซ็ตตัวจับเวลาผิดท่า/สีเทา + ให้เวลาปรับตัวสั้นๆ เพื่อไม่ให้แจ้งเตือนทันทีจากข้อมูลเก่าก่อนหน้าจอถูกซ่อน */
+    state.badSince=0;state.warningKey='';state.wasBad=false;
+    state.graySince=0;state.grayReason='';
+    state.lastAlert=Date.now();state.lastGrayAlert=Date.now();
+    state.classTracksReady=false;
+    state.calibrating=true;
+    if(state.calibrationTimer)clearTimeout(state.calibrationTimer);
+    state.calibrationTimer=setTimeout(function(){
+      state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();
+    },1500);
+    state.lastFrameAt=performance.now();
+    state.sedentaryLastTs=performance.now();
+    startTimerLoop();
+    state.loopToken++;loop(state.loopToken);
+  });
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)onAppHidden();else onAppVisible();
+});
+/* บางเบราว์เซอร์ (เช่น iOS Safari) อาจคืนหน้าเว็บจาก back-forward cache โดยไม่ยิง
+   visibilitychange ให้ครบ จึงเสริมด้วย pageshow/persisted เพื่อความชัวร์ */
+window.addEventListener('pageshow',function(e){if(e.persisted&&!document.hidden)onAppVisible()});
+
+/* ============================================================
+   Camera Preview Area — เปิด/ปิดภาพกล้องได้ตามสเปก UI/UX
+   ซ่อนเฉพาะภาพวิดีโอ (video ยังคงเล่น/ประมวลผลอยู่เบื้องหลังตามปกติ) โครงร่างบน canvas ยังโชว์อยู่
+   ============================================================ */
+if($('btnCamToggle')){
+  function applyCamHidden(hidden){
+    $('live').classList.toggle('camHidden',hidden);
+    $('btnCamToggle').textContent=hidden?'🚫':'👁️';
+    $('btnCamToggle').title=hidden?'แสดงภาพกล้อง':'ซ่อนภาพกล้อง';
+  }
+  applyCamHidden(store.get('sf.camHidden',false));
+  $('btnCamToggle').onclick=function(){
+    var hidden=!$('live').classList.contains('camHidden');
+    store.set('sf.camHidden',hidden);applyCamHidden(hidden);
+  };
+}
+
+/* ============================================================
+   Picture-in-Picture (โหมดลอยหน้าจอ) — ทางเลือกเสริม
+   หมายเหตุ: PiP มาตรฐานของเบราว์เซอร์แสดงได้เฉพาะภาพจาก <video> ดิบเท่านั้น
+   ไม่รวมเส้นโครงร่างและป้ายมุมที่วาดบน canvas ทับอยู่ด้านบน
+   ============================================================ */
+function pipSupported(){return document.pictureInPictureEnabled&&!vid.disablePictureInPicture}
+if($('btnPip')){
+  vid.addEventListener('enterpictureinpicture',function(){state.pipActive=true});
+  vid.addEventListener('leavepictureinpicture',function(){state.pipActive=false});
+  $('btnPip').onclick=async function(){
+    if(!pipSupported()){alert('เบราว์เซอร์นี้ไม่รองรับโหมดลอยหน้าจอ (Picture-in-Picture)');return}
+    try{
+      if(document.pictureInPictureElement)await document.exitPictureInPicture();
+      else await vid.requestPictureInPicture();
+    }catch(e){alert('เปิดโหมดลอยหน้าจอไม่สำเร็จ: '+(e&&e.message||e))}
+  };
 }
 $('btnFlip').onclick=function(){
   state.facing=state.facing==='user'?'environment':'user';
@@ -1539,6 +1979,9 @@ $('btnGoLive').onclick=async function(){
   $('live').classList.add('on');$('live').classList.toggle('classroom',state.mode==='classroom');$('tabs').classList.add('hidden');
   $('people').classList.toggle('hidden',state.mode!=='classroom');
   $('metrics').classList.toggle('hidden',state.mode==='classroom');
+  $('dashCard').classList.toggle('hidden',state.mode==='classroom');
+  $('gaugeWrap').classList.toggle('hidden',state.mode==='classroom');
+  $('distBadge').closest('.liverow').classList.toggle('hidden',state.mode==='classroom');
   $('liveMode').textContent=state.mode==='classroom'?'ตรวจหมู่ · Classroom':'กำลังตรวจ · Live';
   $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+
     ' · ความไว'+({low:'ต่ำ',mid:'กลาง',high:'สูง'})[state.sens]+
@@ -1556,6 +1999,7 @@ $('btnGoLive').onclick=async function(){
       setBand('unknown',['กำลังจัดตำแหน่งกล้อง','ยังไม่คิดคะแนน',frameInstruction()],liveScore());
       state.calibrationTimer=setTimeout(function(){
         state.calibrationTimer=null;state.calibrating=false;state.lastFrameAt=performance.now();
+        finalizeSitBaseline();
       },3500);
     }else{
       hideOverlay();
@@ -1584,13 +2028,22 @@ function beginSession(){
   state.voiceIssueCursor=0;state.classVoiceCursor=0;
   state.graySince=0;state.lastGrayAlert=0;state.grayReason='';state.lastClassGraySpeech=0;
   state.timeWarn60=false;state.timeWarn10=false;state.timeExpired=false;
+  state.sedentarySeconds=0;state.sedentarySecondsFloat=0;state.sedentaryAbsentSeconds=0;
+  state.sedentaryLastTs=performance.now();state.sedentaryTimerState=TIMER_STATE.PAUSED;
+  state.personPresentNow=false;state.currentPosture='unknown';
+  state.sitBaselineSamples=[];state.sitBaselineHipFrac=null;
+  state.distanceHistory=[];
+  state.forcedBandUntil=0;state.forcedBandMsg=null;
+  state.totalPausedMs=0;state.hiddenSince=0;state.reconnecting=false;state.reconnectAttempts=0;
+  paintSedentaryBadge();paintDistanceBadge(null,'');paintDashTimer(0,sedentaryThresholdSeconds());
   state.loopToken++;loop(state.loopToken);
-  tickTimer=setInterval(tick,1000);
+  startTimerLoop();
 }
 function tick(){
-  if(!state.running)return;
-  var s=Math.max(0,Math.floor((Date.now()-state.startedAt)/1000));
+  if(!state.running||document.hidden)return;
+  var s=Math.max(0,Math.floor((Date.now()-state.startedAt-(state.totalPausedMs||0))/1000));
   state.total=s;
+  if(!state.calibrating)updateSedentaryTimer();
   if(s>=state.nextSampleAt&&state.lastMetrics){
     var lm=state.lastMetrics;
     state.samples.push({t:s,forwardHead:lm.forwardHead,torsoLean:lm.torsoLean,
@@ -1704,14 +2157,10 @@ function cancelLoopSchedule(){
   if(bgLoopTimer){clearTimeout(bgLoopTimer);bgLoopTimer=null}
 }
 function scheduleLoop(token){
-  if(!state.running||token!==state.loopToken)return;
-  if(document.hidden&&backgroundMonitorEnabled()){
-    /* Background tabs ไม่มี requestAnimationFrame: ใช้ timer แบบประหยัดแทน
-       เบราว์เซอร์ยังมีสิทธิ์ลดความถี่ timer ตามนโยบายพลังงานของเครื่อง */
-    bgLoopTimer=setTimeout(function(){bgLoopTimer=null;loop(token)},350);
-  }else if(!document.hidden){
-    rafId=requestAnimationFrame(function(){rafId=null;loop(token)});
-  }
+  if(!state.running||token!==state.loopToken||document.hidden)return;
+  /* ไม่ประมวลผลต่อเบื้องหลังอีกต่อไป — เมื่อแท็บถูกซ่อน onAppHidden() จะสั่งพักไว้ทั้งหมด
+     แล้ว onAppVisible() จะตรวจสุขภาพกล้องและเริ่มวงรอบใหม่ให้เองเมื่อกลับมาที่แท็บนี้ */
+  rafId=requestAnimationFrame(function(){rafId=null;loop(token)});
 }
 async function loop(token){
   if(!state.running||token!==state.loopToken)return;
@@ -1999,12 +2448,32 @@ function handleGrayWarning(r,context){
 }
 function paintPersonal(pose){
   var dt=frameDelta();
+  state.personPresentNow=!!pose;
   if(!pose){
     state.lastMetrics=null;state.lastStatus='unknown';addOverall('unknown',[],dt,false);handleWarning('unknown',[]);resetGrayWarning();
-    setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],liveScore());
+    paintDistanceBadge(null,'');
+    resetDistanceFilter();
+    if(state.forcedBandUntil&&Date.now()<state.forcedBandUntil)setBand('bad',state.forcedBandMsg,liveScore());
+    else setBand('unknown',['ไม่พบผู้ใช้ในเฟรม','No person detected'],liveScore());
     return;
   }
   var r=analyse(pose.keypoints);
+  var posture=classifySitStand(pose.keypoints);
+  state.currentPosture=posture;
+  if(state.calibrating)collectSitBaseline(pose.keypoints);
+  if(posture==='stand'){
+    /* ยืนอยู่: ตามสเปกให้ข้ามการตรวจระยะห่างทันที และเคลียร์ตัวกรองค่าเฉลี่ยไว้ กันค่าปนกับตอนนั่งครั้งถัดไป */
+    paintDistanceBadge(null,'stand');
+    resetDistanceFilter();
+  }else{
+    var dInfo=analyseDistance(pose.keypoints);
+    paintDistanceBadge(dInfo.cm,dInfo.zone);
+    if(dInfo.label){
+      r.bad.push(dInfo.label);
+      if(dInfo.level===2){r.severe.push(dInfo.label);r.status='bad';}
+      else if(dInfo.level===1&&r.status==='good')r.status='warn';
+    }
+  }
   state.lastMetrics=r.metrics;
   state.detectedView=r.view;
   (r.used||[]).forEach(function(k){if(state.expectedMetrics.indexOf(k)<0)state.expectedMetrics.push(k)});
@@ -2037,7 +2506,27 @@ function paintPersonal(pose){
     main+': '+(VOICE_ADVICE[main]||'ปรับท่าให้อยู่ในช่วงที่เหมาะสม')];
   else if(r.reason==='insufficient')c=['ยังวัดไม่ครบ: '+(missingText||'บางจุด'),'ขยับกล้องเล็กน้อย','ให้เห็น '+(missingText||'ทุกจุดที่เลือก')+' ชัดเจน'];
   else c=['ท่านี้อยู่ในเกณฑ์','รักษาท่าไว้',''];
-  setBand(state.calibrating?'unknown':r.status,c,liveScore());
+  if(state.forcedBandUntil&&Date.now()<state.forcedBandUntil)setBand('bad',state.forcedBandMsg,liveScore());
+  else setBand(state.calibrating?'unknown':r.status,c,liveScore());
+
+  paintDashTimer(state.sedentarySeconds,sedentaryThresholdSeconds());
+  if(state.forcedBandUntil&&Date.now()<state.forcedBandUntil){
+    paintDashboard({icon:'🔴',title:'นั่งต่อเนื่องนานเกินไป',sub:'กรุณาลุกขึ้นยืดเส้นยืดสายหรือพักสายตา 20 วินาที',tone:'bad'});
+  }else if(state.calibrating){
+    paintDashboard({icon:'🟡',title:'กำลังจัดตำแหน่งกล้อง',sub:'กรุณารอสักครู่ ยังไม่เริ่มนับเวลา',tone:'warn'});
+  }else if(posture==='stand'){
+    paintDashboard({icon:'⏸️',title:'ยืนอยู่ · พักการตรวจจับ',sub:'ระบบจะกลับมาตรวจระยะและนับเวลาอัตโนมัติเมื่อนั่งลง',tone:'pause'});
+  }else if(dInfo&&dInfo.zone==='close'){
+    paintDashboard({icon:'🔴',title:'นั่งใกล้หน้าจอเกินไป',sub:'ระยะปัจจุบัน '+dInfo.cm+' ซม. — ถอยห่างให้อยู่ 50–70 ซม.',tone:'bad'});
+  }else if(dInfo&&dInfo.zone==='far'){
+    paintDashboard({icon:'🟠',title:'นั่งไกลหน้าจอเกินไป',sub:'ระยะปัจจุบัน '+dInfo.cm+' ซม. — ขยับเข้าใกล้ให้อยู่ 50–70 ซม.',tone:'warn'});
+  }else if(r.status==='bad'){
+    paintDashboard({icon:'🔴',title:main?('ท่านั่งผิด: '+main):'ท่านั่งไม่เหมาะสม',sub:'ดูคำแนะนำด้านล่างเพื่อปรับท่า',tone:'bad'});
+  }else if(r.status==='warn'){
+    paintDashboard({icon:'🟠',title:main?('ควรปรับ: '+main):'ท่านั่งควรปรับเล็กน้อย',sub:'ดูคำแนะนำด้านล่างเพื่อปรับท่า',tone:'warn'});
+  }else{
+    paintDashboard({icon:'🟢',title:'นั่งในระยะและท่าทางที่เหมาะสม',sub:'รักษาท่านี้ไว้ต่อเนื่อง',tone:'good'});
+  }
 
   var gs=groupStats(r.used||[],r.checked||[]),checkedCount=gs.done,expectedCount=gs.expected;
   $('liveAngle').textContent=(ANGLE_INFO[state.angle]||ANGLE_INFO.auto).name+' · '+
@@ -2190,7 +2679,19 @@ function paintClass(poses){
       continue;
     }
     detected++;
-    var r=analyse(p.keypoints);results.push({rec:rec,result:r});
+    var r=analyse(p.keypoints);
+    var posture=classifySitStand(p.keypoints);
+    if(posture!=='stand'){
+      var dInfo=analyseDistance(p.keypoints,rec);
+      if(dInfo.label){
+        r.bad.push(dInfo.label);
+        if(dInfo.level===2){r.severe.push(dInfo.label);r.status='bad';}
+        else if(dInfo.level===1&&r.status==='good')r.status='warn';
+      }
+    }else{
+      resetDistanceFilter(rec);
+    }
+    results.push({rec:rec,result:r});
     r.checked.forEach(function(k){if(usedMetrics.indexOf(k)<0)usedMetrics.push(k)});
     r.used.forEach(function(k){if(state.expectedMetrics.indexOf(k)<0)state.expectedMetrics.push(k)});
     drawSkeleton(p.keypoints,r.flags,r.status);
@@ -2211,12 +2712,16 @@ function paintClass(poses){
   $('people').innerHTML=cards.join('');
   usedMetrics.forEach(function(k){if(state.activeMetrics.indexOf(k)<0)state.activeMetrics.push(k)});
   state.detectedView=usedMetrics.length?'mixed':'unknown';
+  state.personPresentNow=detected>0;
+  paintDistanceBadge(null,'');
   $('liveMode').textContent='ตรวจหมู่ · พบ '+detected+'/'+expected+' คน';
   $('liveAngle').textContent='ระยะ 1–2 เมตร · ชื่อเรียงซ้าย→ขวา';
+  var forcedActive=state.forcedBandUntil&&Date.now()<state.forcedBandUntil;
   if(state.calibrating){
     setBand('unknown',['กำลังยืนยันตำแหน่ง '+detected+'/'+expected+' คน','ยังไม่คิดคะแนน','จัดกล้องให้ทุกคนอยู่ในเฟรมและไม่บังกัน'],liveScore());return;
   }
   handleClassWarnings(results);
+  if(forcedActive){setBand('bad',state.forcedBandMsg,liveScore());return}
   var overallStatus=counts.bad?'bad':counts.warn?'warn':(counts.good===expected?'good':'unknown');
   var need=counts.bad+counts.warn;
   if(need){
@@ -2278,12 +2783,14 @@ function endSession(keepFinishVoice){
   if(speechSupported()&&!keepFinishVoice)speechSynthesis.cancel();
   state.running=false;state.calibrating=false;state.loopToken++;
   if(state.calibrationTimer)clearTimeout(state.calibrationTimer);state.calibrationTimer=null;
-  cancelLoopSchedule();if(tickTimer)clearInterval(tickTimer);
+  cancelLoopSchedule();stopTimerLoop();
+  state.videoTrack=null;state.hiddenSince=0;
+  hideReconnectBanner();
   stopStream();
   $('live').classList.remove('on','classroom');$('tabs').classList.remove('hidden');
 
   var ended=new Date(),prof=store.get(LS.prof,{name:'ผู้ใช้',userId:'SF-0001'});
-  state.total=Math.max(state.total,Math.floor((ended-started)/1000));
+  state.total=Math.max(state.total,Math.floor((ended-started-(state.totalPausedMs||0))/1000));
   var g=state.good,w=state.warn,b=state.bad,u=state.unknown;
   var seen=g+w+b,denom=Math.max(1,seen+u);
   /* warn = ผิดข้อเดียว นับครึ่งหนึ่ง ไม่ใช่ศูนย์ */
@@ -2452,6 +2959,10 @@ function paintMinutes(){
 $('btnSaveMin').onclick=function(){
   var v=Math.max(0,Math.min(240,Math.round((Number($('inMinutes').value)||0)*2)/2));
   store.set('sf.minutes',v);paintMinutes();
+};
+$('btnSaveSedentary').onclick=function(){
+  var v=Math.max(0,Math.min(480,Number($('inSedentary').value)||0));
+  store.set('sf.sedentaryMinutes',v);paintSedentaryMinutes();
 };
 function streakMin(){var v=Number(store.get('sf.streakMin',80));return isNaN(v)?80:Math.max(50,Math.min(95,v))}
 $('btnSaveStreak').onclick=function(){
@@ -2747,7 +3258,7 @@ $('btnCSV').onclick=toCSV;
 $('btnPrintAll').onclick=function(){window.print()};
 $('inSearch').oninput=renderHistory;
 $('btnFullReport').onclick=function(){if(state.lastSessionId)openDetail(state.lastSessionId);else goto('history')};
-renderAngleInfo();renderSensInfo();paintMinutes();paintVoiceBtn();
+renderAngleInfo();renderSensInfo();paintMinutes();paintSedentaryMinutes();paintVoiceBtn();
 paintSheet();renderHome();paintStoreInfo();
 if(navigator.onLine)flushQueue();
 scheduleRetry();
